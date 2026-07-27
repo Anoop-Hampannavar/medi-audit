@@ -43,7 +43,7 @@ SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD", os.getenv("SENDER_PASSWORD")
 USER_DB = "users.json"
 PDF_PATH = os.path.join("data", "raw_gazzete", "cghs_rates_2026.pdf")
 
-# --- 2. ADVANCED FAIL-SAFE SCANNER ENGINE (UNCHANGED) ---
+# --- 2. ADVANCED FAIL-SAFE SCANNER ENGINE ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     """Resizes and compresses image to <2MB to prevent Groq API payload errors."""
     uploaded_file.seek(0)
@@ -59,7 +59,7 @@ def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
 
 def extract_clean_text_from_image(uploaded_file):
     """
-    Dual-Engine Scanner with Explicit Diagnostics:
+    Dual-Engine Scanner:
     1. Groq Vision AI (qwen/qwen3.6-27b, meta-llama/llama-4-scout-17b-16e-instruct)
     2. Enhanced PIL + Tesseract OCR Fallback
     """
@@ -90,7 +90,7 @@ def extract_clean_text_from_image(uploaded_file):
             }
         ]
 
-        # Use current supported Groq vision models
+        # Active Groq vision models
         for vision_model in ["qwen/qwen3.6-27b", "meta-llama/llama-4-scout-17b-16e-instruct"]:
             try:
                 response = groq_client.chat.completions.create(
@@ -243,7 +243,48 @@ Return ONLY a valid JSON object:
         st.session_state.scan_error = f"Logic Error: {e}"
         return None
 
-# --- 4. AUTHENTICATION & DATABASE ---
+# --- 4. REAL-TIME AUDIT LOGGING HELPER ---
+def auto_log_audit(department_name, result_json):
+    """Automatically logs scan metrics directly into real-time Executive Dashboard state."""
+    if not result_json:
+        return
+    
+    items = result_json.get('audit_results', [])
+    entity = result_json.get('hospital', 'Medical Facility')
+    scan_leakage = 0.0
+    
+    for i in items:
+        try:
+            b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
+            l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
+        except: b, l = 0.0, 0.0
+        
+        if l > 0 and b > l:
+            scan_leakage += round(b - l, 2)
+            
+    # Update total leakage
+    st.session_state.total_leakage += scan_leakage
+    
+    # Append to real-time log dataframe
+    new_entry = pd.DataFrame([{
+        "Day": datetime.now().strftime("%a"), 
+        "Dept": department_name, 
+        "Leakage": scan_leakage, 
+        "Hospital": entity,
+        "Timestamp": datetime.now()
+    }])
+    
+    st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_entry], ignore_index=True)
+    
+    # Update risk level based on cumulative leakage
+    if st.session_state.total_leakage > 10000:
+        st.session_state.risk_level = "CRITICAL RISK"
+    elif st.session_state.total_leakage > 2500:
+        st.session_state.risk_level = "ELEVATED RISK"
+    else:
+        st.session_state.risk_level = "STABLE"
+
+# --- 5. AUTHENTICATION & DATABASE ---
 def load_users():
     if os.path.exists(USER_DB):
         with open(USER_DB, "r") as f:
@@ -273,15 +314,15 @@ def send_otp(receiver_email):
         return otp
     except: return None
 
-# --- 5. SESSION STATE INITIALIZATION ---
+# --- 6. SESSION STATE INITIALIZATION ---
 if "logged_in" not in st.session_state:
     for key, val in [("logged_in", False), ("otp_sent", False), ("user_email", ""), ("messages", []), 
-                     ("total_leakage", 0), ("audit_accuracy", 99.8), ("risk_level", "STABLE"),
+                     ("total_leakage", 0.0), ("audit_accuracy", 99.8), ("risk_level", "STABLE"),
                      ("ai_result_data", None), ("raw_extracted_text", ""), ("scan_error", None),
                      ("audit_log", pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"]))]:
         st.session_state[key] = val
 
-# --- 6. GEOGRAPHIC FRAUD MAP DATA ---
+# --- 7. GEOGRAPHIC FRAUD MAP DATA ---
 fraud_map_data = pd.DataFrame({
     'lat': [28.6139, 19.0760, 12.9716, 22.5726, 13.0827, 21.1458, 26.8467, 17.3850, 23.0225, 30.7333],
     'lon': [77.2090, 72.8777, 77.5946, 88.3639, 80.2707, 79.0882, 80.9462, 78.4867, 72.5714, 76.7794],
@@ -289,7 +330,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 7. UI STYLING & MOBILE-FIRST LAYOUT ---
+# --- 8. UI STYLING & MOBILE-FIRST LAYOUT ---
 st.set_page_config(
     page_title="Medi-Audit Pro", 
     layout="wide",
@@ -363,7 +404,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 8. AUTHENTICATION MODULE ---
+# --- 9. AUTHENTICATION MODULE ---
 if not st.session_state.logged_in:
     st.markdown("<h1 class='glitch'>🛡️ MEDI-AUDIT PRO</h1>", unsafe_allow_html=True)
     t1, t2, t3 = st.tabs(["🔑 LOGIN", "📝 REGISTER", "🆘 FORGOT"])
@@ -424,7 +465,7 @@ if not st.session_state.logged_in:
                 else:
                     st.error("Invalid Verification Code")
 
-# --- 9. MAIN APPLICATION WORKSPACE ---
+# --- 10. MAIN APPLICATION WORKSPACE ---
 else:
     with st.sidebar:
         st.markdown("<h2 class='glitch' style='font-size:1.4rem;'>MEDI-AUDIT</h2>", unsafe_allow_html=True)
@@ -435,7 +476,7 @@ else:
         st.divider()
         if st.button("🗑️ RESET ALL AUDIT DATA", use_container_width=True):
             st.session_state.audit_log = pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"])
-            st.session_state.total_leakage = 0
+            st.session_state.total_leakage = 0.0
             st.session_state.risk_level = "STABLE"
             st.session_state.ai_result_data = None
             st.session_state.raw_extracted_text = ""
@@ -452,8 +493,8 @@ else:
         
         if st.session_state.audit_log.empty:
             trend_data = pd.DataFrame({'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'Leakage': [0]*7})
-            pie_data = pd.DataFrame({'Dept': ['Pharma', 'Radiology', 'Surgery', 'Consultation'], 'Value': [1, 1, 1, 1]})
-            entity_data = pd.DataFrame({'Hospital': ['No Data'], 'Leakage': [0]})
+            pie_data = pd.DataFrame({'Dept': ['Pharma', 'Hospital', 'Insurance'], 'Value': [0, 0, 0]})
+            entity_data = pd.DataFrame({'Hospital': ['No Audited Data'], 'Leakage': [0]})
             variance_text = "0% (No baseline)"
         else:
             trend_data = st.session_state.audit_log.groupby('Day')['Leakage'].sum().reset_index()
@@ -462,8 +503,8 @@ else:
             pie_data = st.session_state.audit_log.groupby('Dept')['Leakage'].sum().reset_index().rename(columns={'Leakage':'Value'})
             entity_data = st.session_state.audit_log.groupby('Hospital')['Leakage'].sum().sort_values(ascending=False).reset_index()
             last_week_avg = 15000 
-            variance_val = ((st.session_state.total_leakage - last_week_avg) / last_week_avg) * 100
-            variance_text = f"{variance_val:+.1f}% vs Last Week"
+            variance_val = ((st.session_state.total_leakage - last_week_avg) / last_week_avg) * 100 if st.session_state.total_leakage > 0 else 0
+            variance_text = f"{variance_val:+.1f}% vs Baseline"
 
         m1, m2 = st.columns(2)
         m3, m4 = st.columns(2)
@@ -471,10 +512,11 @@ else:
         m1.markdown(f'<div class="med-metric-box"><div class="med-label">Variance</div><div class="med-value" style="color:#0EA5E9; font-size:1.1rem;">{variance_text}</div></div>', unsafe_allow_html=True)
         m2.markdown(f'<div class="med-metric-box" style="border-top:3px solid #F59E0B;"><div class="med-label">Leakage</div><div class="med-value" style="color:#F59E0B;">₹{st.session_state.total_leakage:,.2f}</div></div>', unsafe_allow_html=True)
         m3.markdown(f'<div class="med-metric-box" style="border-top:3px solid #10B981;"><div class="med-label">Accuracy</div><div class="med-value" style="color:#10B981;">{st.session_state.audit_accuracy}%</div></div>', unsafe_allow_html=True)
-        r_col = "#10B981" if st.session_state.risk_level == "STABLE" else "#EF4444"
-        m4.markdown(f'<div class="med-metric-box" style="border-top:3px solid {r_col};"><div class="med-label">Risk</div><div class="med-value" style="color:{r_col};">{st.session_state.risk_level}</div></div>', unsafe_allow_html=True)
+        
+        r_col = "#10B981" if st.session_state.risk_level == "STABLE" else ("#F59E0B" if st.session_state.risk_level == "ELEVATED RISK" else "#EF4444")
+        m4.markdown(f'<div class="med-metric-box" style="border-top:3px solid {r_col};"><div class="med-label">Risk</div><div class="med-value" style="color:{r_col}; font-size:1.4rem;">{st.session_state.risk_level}</div></div>', unsafe_allow_html=True)
 
-        st.markdown("### 📈 7-Day Fraud Trend")
+        st.markdown("### 📈 Real-Time Fraud Trend")
         fig_line = px.line(trend_data, x='Day', y='Leakage', markers=True, template="plotly_white", color_discrete_sequence=['#0EA5E9'])
         fig_line.update_layout(margin=dict(l=10, r=10, t=10, b=10), height=220)
         st.plotly_chart(fig_line, use_container_width=True)
@@ -501,8 +543,6 @@ else:
         
         tab_upload, tab_text = st.tabs(["🖼️ Upload Receipt Image", "📝 Paste Receipt Text"])
         
-        txt_to_audit = ""
-        
         with tab_upload:
             u_p = st.file_uploader("Upload Pharma Receipt", type=["jpg", "png", "jpeg"], key="pharma_upload")
             if u_p and st.button("🔍 EXECUTE AI FORENSIC SCAN", use_container_width=True):
@@ -511,14 +551,18 @@ else:
                     txt_to_audit = extract_clean_text_from_image(u_p)
                     st.session_state.raw_extracted_text = txt_to_audit
                     if txt_to_audit:
-                        st.session_state.ai_result_data = ai_audit_logic(txt_to_audit)
+                        res = ai_audit_logic(txt_to_audit)
+                        st.session_state.ai_result_data = res
+                        auto_log_audit("Pharma", res)
 
         with tab_text:
             manual_txt_p = st.text_area("Paste receipt text directly (e.g., Paracetamol: 150, Amoxicillin: 450)", height=120, key="manual_pharma_txt")
             if manual_txt_p and st.button("🚀 AUDIT PASTED PHARMA TEXT", use_container_width=True):
                 st.session_state.scan_error = None
                 st.session_state.raw_extracted_text = manual_txt_p
-                st.session_state.ai_result_data = ai_audit_logic(manual_txt_p)
+                res = ai_audit_logic(manual_txt_p)
+                st.session_state.ai_result_data = res
+                auto_log_audit("Pharma", res)
                 
         if st.session_state.get("scan_error"):
             st.error(st.session_state.get("scan_error"))
@@ -541,7 +585,6 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
 
-                # SAFE LEAKAGE MATH: If no legal cap or billed <= legal, leakage is ZERO
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 total_p_leak += leak
                 
@@ -555,23 +598,12 @@ else:
                     ))
                     fig.update_layout(height=180, margin=dict(l=0, r=0, t=0, b=0))
                     st.plotly_chart(fig, use_container_width=True, key=f"pharma_chart_{idx}")
-                    verdict_msg = i.get('summary', 'Overcharged') if leak > 0 else "Billed within acceptable limits or rate unspecified."
+                    verdict_msg = i.get('summary', 'Overcharged') if leak > 0 else "Billed within acceptable limits."
                     st.write(f"**Verdict:** {verdict_msg}")
 
             st.divider()
             st.metric("Total Pharma Leakage", f"₹{total_p_leak:,.2f}")
-            
-            if st.button("📥 COMMIT TO NATIONAL RADAR", use_container_width=True, type="primary"):
-                st.session_state.total_leakage += total_p_leak
-                new_log = pd.DataFrame([{
-                    "Day": datetime.now().strftime("%a"), 
-                    "Dept": "Pharma", 
-                    "Leakage": total_p_leak, 
-                    "Hospital": pharmacy,
-                    "Timestamp": datetime.now()
-                }])
-                st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_log], ignore_index=True)
-                st.success("Committed to Radar!")
+            st.success("✅ Automatically synced to Executive Dashboard in real time!")
 
     elif dept == "🏥 Hospital Audit":
         st.markdown("<h1 class='glitch'>INVOICE FORENSIC SCAN</h1>", unsafe_allow_html=True)
@@ -586,14 +618,18 @@ else:
                     txt = extract_clean_text_from_image(u_h)
                     st.session_state.raw_extracted_text = txt
                     if txt:
-                        st.session_state.ai_result_data = hospital_audit_logic(txt)
+                        res = hospital_audit_logic(txt)
+                        st.session_state.ai_result_data = res
+                        auto_log_audit("Hospital", res)
 
         with tab_h_text:
             manual_txt_h = st.text_area("Paste invoice text directly (e.g., Consultation Fee: 1500, CBC Blood Test: 800, MRI Brain: 12000)", height=120, key="manual_hosp_txt")
             if manual_txt_h and st.button("🚀 AUDIT PASTED INVOICE TEXT", use_container_width=True):
                 st.session_state.scan_error = None
                 st.session_state.raw_extracted_text = manual_txt_h
-                st.session_state.ai_result_data = hospital_audit_logic(manual_txt_h)
+                res = hospital_audit_logic(manual_txt_h)
+                st.session_state.ai_result_data = res
+                auto_log_audit("Hospital", res)
 
         if st.session_state.get("scan_error"):
             st.error(st.session_state.get("scan_error"))
@@ -616,7 +652,6 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
                 
-                # SAFE LEAKAGE MATH: If no legal cap or billed <= legal, leakage is ZERO
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 total_h_leak += leak
                 
@@ -635,18 +670,7 @@ else:
 
             st.divider()
             st.metric("Total Hospital Leakage", f"₹{total_h_leak:,.2f}")
-            
-            if st.button("📥 COMMIT TO NATIONAL RADAR", use_container_width=True, type="primary"):
-                st.session_state.total_leakage += total_h_leak
-                new_log = pd.DataFrame([{
-                    "Day": datetime.now().strftime("%a"), 
-                    "Dept": "Hospital", 
-                    "Leakage": total_h_leak, 
-                    "Hospital": hosp,
-                    "Timestamp": datetime.now()
-                }])
-                st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_log], ignore_index=True)
-                st.success("Committed to Radar!")
+            st.success("✅ Automatically synced to Executive Dashboard in real time!")
 
     elif dept == "🛡️ Insurance Armor":
         st.markdown("<h1 class='glitch'>INSURANCE FORENSIC SCAN</h1>", unsafe_allow_html=True)
@@ -661,14 +685,18 @@ else:
                     txt = extract_clean_text_from_image(u_i)
                     st.session_state.raw_extracted_text = txt
                     if txt:
-                        st.session_state.ai_result_data = insurance_audit_logic(txt)
+                        res = insurance_audit_logic(txt)
+                        st.session_state.ai_result_data = res
+                        auto_log_audit("Insurance", res)
 
         with tab_i_text:
             manual_txt_i = st.text_area("Paste settlement letter text directly", height=120, key="manual_ins_txt")
             if manual_txt_i and st.button("🚀 AUDIT PASTED CLAIM TEXT", use_container_width=True):
                 st.session_state.scan_error = None
                 st.session_state.raw_extracted_text = manual_txt_i
-                st.session_state.ai_result_data = insurance_audit_logic(manual_txt_i)
+                res = insurance_audit_logic(manual_txt_i)
+                st.session_state.ai_result_data = res
+                auto_log_audit("Insurance", res)
 
         if st.session_state.get("scan_error"):
             st.error(st.session_state.get("scan_error"))
@@ -691,7 +719,6 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
                 
-                # SAFE LEAKAGE MATH
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 total_i_leak += leak
                 
@@ -709,18 +736,7 @@ else:
 
             st.divider()
             st.metric("Total Claim Shortfall", f"₹{total_i_leak:,.2f}")
-            
-            if st.button("📥 COMMIT TO NATIONAL RADAR", use_container_width=True, type="primary"):
-                st.session_state.total_leakage += total_i_leak
-                new_log = pd.DataFrame([{
-                    "Day": datetime.now().strftime("%a"), 
-                    "Dept": "Insurance", 
-                    "Leakage": total_i_leak, 
-                    "Hospital": company,
-                    "Timestamp": datetime.now()
-                }])
-                st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_log], ignore_index=True)
-                st.success("Claim Recorded!")
+            st.success("✅ Automatically synced to Executive Dashboard in real time!")
 
     elif dept == "⚖️ Justice Portal":
         st.markdown("<h1 class='glitch'>LEGAL DISPUTE GENESIS</h1>", unsafe_allow_html=True)

@@ -22,7 +22,7 @@ else:
 
 load_dotenv()
 
-# Safely fetch API keys from Secrets or Environment
+# Safely fetch API keys
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
 
 if not GROQ_API_KEY:
@@ -44,50 +44,32 @@ USER_DB = "users.json"
 PDF_PATH = os.path.join("data", "raw_gazzete", "cghs_rates_2026.pdf")
 
 # --- 2. ADVANCED FAIL-SAFE SCANNER ENGINE ---
-def preprocess_for_tesseract(pil_img):
-    """Enhances image contrast and resolution for OCR accuracy."""
-    try:
-        img = pil_img.convert('L')
-        img = ImageOps.autocontrast(img)
-        enhancer = ImageEnhance.Contrast(img)
-        img = enhancer.enhance(2.5)
-        w, h = img.size
-        if w < 1500:
-            scale = 1500 / w
-            img = img.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
-        return img
-    except Exception:
-        return pil_img
-
-def clean_extracted_text(text):
-    """Strips currency symbols (₹, Rs.) and thousands commas so numbers parse perfectly."""
-    if not text:
-        return ""
-    cleaned = text.replace('₹', ' ')
-    cleaned = re.sub(r'(?i)\b(rs\.?|inr|rupees)\b', ' ', cleaned)
-    cleaned = re.sub(r'(\d+),(\d+)', r'\1\2', cleaned)
-    return cleaned.strip()
+def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
+    """Resizes and compresses image to <2MB to prevent Groq API payload errors."""
+    uploaded_file.seek(0)
+    img = Image.open(uploaded_file)
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
+    
+    img.thumbnail(max_size, Image.Resampling.LANCZOS)
+    
+    buffered = io.BytesIO()
+    img.save(buffered, format="JPEG", quality=85)
+    return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
 def extract_clean_text_from_image(uploaded_file):
     """
-    Dual-Engine Scanner:
-    1. Tries Groq Llama 3.2 Vision.
-    2. Falls back to Enhanced PIL + Tesseract OCR if Vision fails.
-    Guarantees readable, clean text.
+    Dual-Engine Scanner with Explicit Diagnostics:
+    1. Groq Vision AI (Llama 3.2 Vision)
+    2. Enhanced PIL + Tesseract OCR
     """
     raw_text = ""
+    error_logs = []
     
     # Engine 1: Groq Vision AI
     try:
-        uploaded_file.seek(0)
-        img = Image.open(uploaded_file)
-        if img.mode != 'RGB':
-            img = img.convert('RGB')
-            
-        buffered = io.BytesIO()
-        img.save(buffered, format="JPEG", quality=95)
-        base64_image = base64.b64encode(buffered.getvalue()).decode('utf-8')
-
+        base64_image = compress_and_encode_image(uploaded_file)
+        
         messages = [
             {
                 "role": "user",
@@ -95,9 +77,9 @@ def extract_clean_text_from_image(uploaded_file):
                     {
                         "type": "text", 
                         "text": (
-                            "Extract all text, line items, and prices from this medical bill accurately. "
+                            "Extract all text, line items, and prices from this medical receipt accurately. "
                             "Pay close attention to numbers: do NOT confuse the rupee symbol '₹' with '7' or '2'. "
-                            "Transcribe '₹1,500' accurately as '1500'. Output ONLY the clean document text."
+                            "Transcribe '₹1,500' accurately as '1500'. Output ONLY the clean transcribed text."
                         )
                     },
                     {
@@ -119,23 +101,34 @@ def extract_clean_text_from_image(uploaded_file):
                 if res_text and len(res_text.strip()) > 5:
                     raw_text = res_text
                     break
-            except Exception:
-                continue
-    except Exception:
-        pass
+            except Exception as v_err:
+                error_logs.append(f"Vision ({vision_model}): {str(v_err)[:80]}")
+    except Exception as e:
+        error_logs.append(f"Vision Preprocess: {str(e)[:80]}")
 
     # Engine 2: Enhanced Tesseract OCR Fallback
     if not raw_text:
         try:
             uploaded_file.seek(0)
-            pil_img = Image.open(uploaded_file)
-            processed_img = preprocess_for_tesseract(pil_img)
-            raw_text = pytesseract.image_to_string(processed_img, config='--psm 6')
+            pil_img = Image.open(uploaded_file).convert('L')
+            pil_img = ImageOps.autocontrast(pil_img)
+            enhancer = ImageEnhance.Contrast(pil_img)
+            pil_img = enhancer.enhance(2.0)
+            
+            raw_text = pytesseract.image_to_string(pil_img, config='--psm 6')
         except Exception as ocr_err:
-            st.session_state.scan_error = f"OCR Scan Error: {ocr_err}"
-            return ""
+            error_logs.append(f"Tesseract OCR: {str(ocr_err)[:80]}")
 
-    return clean_extracted_text(raw_text)
+    # Process and sanitize extracted text
+    if raw_text and len(raw_text.strip()) > 2:
+        cleaned = raw_text.replace('₹', ' ')
+        cleaned = re.sub(r'(?i)\b(rs\.?|inr|rupees)\b', ' ', cleaned)
+        cleaned = re.sub(r'(\d+),(\d+)', r'\1\2', cleaned)
+        return cleaned.strip()
+    else:
+        err_msg = " | ".join(error_logs) if error_logs else "Unable to parse image data."
+        st.session_state.scan_error = f"⚠️ Scan Failed: {err_msg}"
+        return ""
 
 # --- 3. CORE RAG & AUDIT LOGIC ---
 def get_pdf_context(query):
@@ -158,7 +151,7 @@ def get_pdf_context(query):
 
 def hospital_audit_logic(bill_text):
     if not bill_text:
-        st.session_state.scan_error = "⚠️ Could not extract text from the bill image. Please upload a clear photo."
+        st.session_state.scan_error = "⚠️ Could not extract text from the bill image. Please try uploading a clearer image or use manual text entry."
         return None
 
     pdf_context = get_pdf_context(bill_text)
@@ -188,7 +181,7 @@ Return ONLY valid JSON with this exact schema:
 
 def insurance_audit_logic(txt):
     if not txt:
-        st.session_state.scan_error = "⚠️ Could not read document. Please upload a clearer image."
+        st.session_state.scan_error = "⚠️ Could not read document text. Please upload a clearer image or use manual text entry."
         return None
 
     prompt = f"""You are a Senior Insurance Claims Auditor. 
@@ -223,7 +216,7 @@ Return ONLY a valid JSON object:
 
 def ai_audit_logic(bill_text):
     if not bill_text:
-        st.session_state.scan_error = "⚠️ Could not extract text from the pharmacy receipt image."
+        st.session_state.scan_error = "⚠️ Could not extract text from the pharmacy receipt. Please try manual text entry."
         return None
 
     pdf_context = get_pdf_context(bill_text)
@@ -501,19 +494,32 @@ else:
     elif dept == "💊 Pharma Forensic":
         st.markdown("<h1 class='glitch'>PHARMA-AUDIT ENGINE</h1>", unsafe_allow_html=True)
         
-        u_p = st.file_uploader("Upload Pharma Receipt", type=["jpg", "png", "jpeg"], key="pharma_upload")
-        if u_p and st.button("🔍 EXECUTE AI FORENSIC SCAN", use_container_width=True):
-            st.session_state.scan_error = None
-            with st.spinner("Processing Receipt..."):
-                txt = extract_clean_text_from_image(u_p)
-                st.session_state.raw_extracted_text = txt
-                st.session_state.ai_result_data = ai_audit_logic(txt)
+        tab_upload, tab_text = st.tabs(["🖼️ Upload Receipt Image", "📝 Paste Receipt Text"])
+        
+        txt_to_audit = ""
+        
+        with tab_upload:
+            u_p = st.file_uploader("Upload Pharma Receipt", type=["jpg", "png", "jpeg"], key="pharma_upload")
+            if u_p and st.button("🔍 EXECUTE AI FORENSIC SCAN", use_container_width=True):
+                st.session_state.scan_error = None
+                with st.spinner("Processing Receipt via AI..."):
+                    txt_to_audit = extract_clean_text_from_image(u_p)
+                    st.session_state.raw_extracted_text = txt_to_audit
+                    if txt_to_audit:
+                        st.session_state.ai_result_data = ai_audit_logic(txt_to_audit)
+
+        with tab_text:
+            manual_txt_p = st.text_area("Paste receipt text directly (e.g., Paracetamol: 150, Amoxicillin: 450)", height=120, key="manual_pharma_txt")
+            if manual_txt_p and st.button("🚀 AUDIT PASTED PHARMA TEXT", use_container_width=True):
+                st.session_state.scan_error = None
+                st.session_state.raw_extracted_text = manual_txt_p
+                st.session_state.ai_result_data = ai_audit_logic(manual_txt_p)
                 
         if st.session_state.get("scan_error"):
             st.error(st.session_state.get("scan_error"))
 
         if st.session_state.get("raw_extracted_text"):
-            with st.expander("📄 View Extracted Text"):
+            with st.expander("📄 View Extracted / Input Text"):
                 st.code(st.session_state.get("raw_extracted_text"))
 
         if st.session_state.ai_result_data:
@@ -563,19 +569,30 @@ else:
     elif dept == "🏥 Hospital Audit":
         st.markdown("<h1 class='glitch'>INVOICE FORENSIC SCAN</h1>", unsafe_allow_html=True)
         
-        u_h = st.file_uploader("Upload Hospital Bill/Invoice", type=["jpg", "png", "jpeg"], key="hosp_upload_main")
-        if u_h and st.button("🚀 EXECUTE AI DEEP SCAN", use_container_width=True):
-            st.session_state.scan_error = None
-            with st.spinner("Analyzing Hospital Invoice..."):
-                txt = extract_clean_text_from_image(u_h)
-                st.session_state.raw_extracted_text = txt
-                st.session_state.ai_result_data = hospital_audit_logic(txt)
+        tab_h_upload, tab_h_text = st.tabs(["🖼️ Upload Bill Image", "📝 Paste Invoice Text"])
+        
+        with tab_h_upload:
+            u_h = st.file_uploader("Upload Hospital Bill/Invoice", type=["jpg", "png", "jpeg"], key="hosp_upload_main")
+            if u_h and st.button("🚀 EXECUTE AI DEEP SCAN", use_container_width=True):
+                st.session_state.scan_error = None
+                with st.spinner("Analyzing Hospital Invoice..."):
+                    txt = extract_clean_text_from_image(u_h)
+                    st.session_state.raw_extracted_text = txt
+                    if txt:
+                        st.session_state.ai_result_data = hospital_audit_logic(txt)
+
+        with tab_h_text:
+            manual_txt_h = st.text_area("Paste invoice text directly (e.g., Consultation Fee: 1500, CBC Blood Test: 800, MRI Brain: 12000)", height=120, key="manual_hosp_txt")
+            if manual_txt_h and st.button("🚀 AUDIT PASTED INVOICE TEXT", use_container_width=True):
+                st.session_state.scan_error = None
+                st.session_state.raw_extracted_text = manual_txt_h
+                st.session_state.ai_result_data = hospital_audit_logic(manual_txt_h)
 
         if st.session_state.get("scan_error"):
             st.error(st.session_state.get("scan_error"))
 
         if st.session_state.get("raw_extracted_text"):
-            with st.expander("📄 View Extracted Text"):
+            with st.expander("📄 View Extracted / Input Text"):
                 st.code(st.session_state.get("raw_extracted_text"))
 
         if st.session_state.ai_result_data:
@@ -625,19 +642,30 @@ else:
     elif dept == "🛡️ Insurance Armor":
         st.markdown("<h1 class='glitch'>INSURANCE FORENSIC SCAN</h1>", unsafe_allow_html=True)
         
-        u_i = st.file_uploader("Upload Settlement Letter / Policy", type=["jpg", "png", "jpeg"], key="ins_upload_main")
-        if u_i and st.button("🚀 EXECUTE CLAIM AUDIT", use_container_width=True):
-            st.session_state.scan_error = None
-            with st.spinner("Reconciling Settlement..."):
-                txt = extract_clean_text_from_image(u_i)
-                st.session_state.raw_extracted_text = txt
-                st.session_state.ai_result_data = insurance_audit_logic(txt)
+        tab_i_upload, tab_i_text = st.tabs(["🖼️ Upload Letter Image", "📝 Paste Document Text"])
+        
+        with tab_i_upload:
+            u_i = st.file_uploader("Upload Settlement Letter / Policy", type=["jpg", "png", "jpeg"], key="ins_upload_main")
+            if u_i and st.button("🚀 EXECUTE CLAIM AUDIT", use_container_width=True):
+                st.session_state.scan_error = None
+                with st.spinner("Reconciling Settlement..."):
+                    txt = extract_clean_text_from_image(u_i)
+                    st.session_state.raw_extracted_text = txt
+                    if txt:
+                        st.session_state.ai_result_data = insurance_audit_logic(txt)
+
+        with tab_i_text:
+            manual_txt_i = st.text_area("Paste settlement letter text directly", height=120, key="manual_ins_txt")
+            if manual_txt_i and st.button("🚀 AUDIT PASTED CLAIM TEXT", use_container_width=True):
+                st.session_state.scan_error = None
+                st.session_state.raw_extracted_text = manual_txt_i
+                st.session_state.ai_result_data = insurance_audit_logic(manual_txt_i)
 
         if st.session_state.get("scan_error"):
             st.error(st.session_state.get("scan_error"))
 
         if st.session_state.get("raw_extracted_text"):
-            with st.expander("📄 View Extracted Text"):
+            with st.expander("📄 View Extracted / Input Text"):
                 st.code(st.session_state.get("raw_extracted_text"))
 
         if st.session_state.ai_result_data:

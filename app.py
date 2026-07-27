@@ -29,7 +29,7 @@ if not GROQ_API_KEY:
     st.error("⚠️ GROQ_API_KEY is missing! Please configure it in Streamlit Secrets or your .env file.")
     st.stop()
 
-# Initialize LangChain ChatGroq and Native Groq Client for Vision
+# Initialize LangChain ChatGroq and Native Groq Client
 llm = ChatGroq(
     groq_api_key=GROQ_API_KEY,
     model_name="llama-3.3-70b-versatile",
@@ -73,7 +73,6 @@ def extract_clean_text_from_image(uploaded_file):
     Dual-Engine Scanner:
     1. Tries Groq Llama 3.2 Vision.
     2. Falls back to Enhanced PIL + Tesseract OCR if Vision fails.
-    Guarantees readable, clean text.
     """
     raw_text = ""
     
@@ -132,7 +131,7 @@ def extract_clean_text_from_image(uploaded_file):
             processed_img = preprocess_for_tesseract(pil_img)
             raw_text = pytesseract.image_to_string(processed_img, config='--psm 6')
         except Exception as ocr_err:
-            st.error(f"OCR Scan Error: {ocr_err}")
+            st.session_state.scan_error = f"OCR Scan Error: {ocr_err}"
             return ""
 
     return clean_extracted_text(raw_text)
@@ -158,7 +157,7 @@ def get_pdf_context(query):
 
 def hospital_audit_logic(bill_text):
     if not bill_text:
-        st.error("⚠️ Could not read any legible text from the uploaded bill. Please ensure a clear image is uploaded.")
+        st.session_state.scan_error = "⚠️ Could not extract text from the bill image. Please upload a clear photo."
         return None
 
     pdf_context = get_pdf_context(bill_text)
@@ -183,12 +182,12 @@ Return ONLY valid JSON with this exact schema:
         clean_json = response.content.replace("```json", "").replace("```", "").strip()
         return json.loads(clean_json)
     except Exception as e:
-        st.error(f"Audit Processing Error: {e}")
+        st.session_state.scan_error = f"Audit Processing Error: {e}"
         return None
-    
+
 def insurance_audit_logic(txt):
     if not txt:
-        st.error("⚠️ Could not read document. Please upload a clearer image.")
+        st.session_state.scan_error = "⚠️ Could not read document. Please upload a clearer image."
         return None
 
     prompt = f"""You are a Senior Insurance Claims Auditor. 
@@ -223,7 +222,7 @@ Return ONLY a valid JSON object:
 
 def ai_audit_logic(bill_text):
     if not bill_text:
-        st.error("⚠️ Could not read any legible text from the pharmacy receipt.")
+        st.session_state.scan_error = "⚠️ Could not extract text from the pharmacy receipt image."
         return None
 
     pdf_context = get_pdf_context(bill_text)
@@ -242,7 +241,7 @@ Return ONLY a valid JSON object:
         clean_json = response.content.replace("```json", "").replace("```", "").strip()
         return json.loads(clean_json)
     except Exception as e:
-        st.error(f"Logic Error: {e}")
+        st.session_state.scan_error = f"Logic Error: {e}"
         return None
 
 # --- 4. AUTHENTICATION & DATABASE ---
@@ -275,29 +274,11 @@ def send_otp(receiver_email):
         return otp
     except: return None
 
-HISTORY_DB = "audit_history.json"
-
-def save_audit_to_db(email, new_row_df):
-    history = {}
-    if os.path.exists(HISTORY_DB):
-        with open(HISTORY_DB, "r") as f:
-            try: history = json.load(f)
-            except: history = {}
-    
-    user_key = email.strip().lower()
-    if user_key not in history:
-        history[user_key] = []
-    
-    history[user_key].extend(new_row_df.to_dict('records'))
-    
-    with open(HISTORY_DB, "w") as f:
-        json.dump(history, f, default=str, indent=4)
-
 # --- 5. SESSION STATE INITIALIZATION ---
 if "logged_in" not in st.session_state:
     for key, val in [("logged_in", False), ("otp_sent", False), ("user_email", ""), ("messages", []), 
                      ("total_leakage", 0), ("audit_accuracy", 99.8), ("risk_level", "STABLE"),
-                     ("ai_result_data", None),
+                     ("ai_result_data", None), ("raw_extracted_text", ""), ("scan_error", None),
                      ("audit_log", pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"]))]:
         st.session_state[key] = val
 
@@ -458,6 +439,8 @@ else:
             st.session_state.total_leakage = 0
             st.session_state.risk_level = "STABLE"
             st.session_state.ai_result_data = None
+            st.session_state.raw_extracted_text = ""
+            st.session_state.scan_error = None
             st.rerun()
         if st.button("🚪 LOGOUT SYSTEM", use_container_width=True):
             st.session_state.logged_in = False; st.rerun()
@@ -519,11 +502,19 @@ else:
         
         u_p = st.file_uploader("Upload Pharma Receipt", type=["jpg", "png", "jpeg"], key="pharma_upload")
         if u_p and st.button("🔍 EXECUTE AI FORENSIC SCAN", use_container_width=True):
+            st.session_state.scan_error = None
             with st.spinner("Processing Receipt..."):
                 txt = extract_clean_text_from_image(u_p)
+                st.session_state.raw_extracted_text = txt
                 st.session_state.ai_result_data = ai_audit_logic(txt)
-                st.rerun()
                 
+        if st.session_state.scan_error:
+            st.error(st.session_state.scan_error)
+
+        if st.session_state.raw_extracted_text:
+            with st.expander("📄 View Extracted Text"):
+                st.code(st.session_state.raw_extracted_text)
+
         if st.session_state.ai_result_data:
             res = st.session_state.ai_result_data
             items = res.get('audit_results', [])
@@ -538,7 +529,7 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
 
-                leak = max(0.0, round(b - l, 2))  # Precise Python Math
+                leak = max(0.0, round(b - l, 2))
                 total_p_leak += leak
                 
                 with st.expander(f"📦 {i['item']} | Leakage: ₹{leak:,.2f}"):
@@ -567,19 +558,25 @@ else:
                 }])
                 st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_log], ignore_index=True)
                 st.success("Committed to Radar!")
-                time.sleep(1)
-                st.rerun()
 
     elif dept == "🏥 Hospital Audit":
         st.markdown("<h1 class='glitch'>INVOICE FORENSIC SCAN</h1>", unsafe_allow_html=True)
         
         u_h = st.file_uploader("Upload Hospital Bill/Invoice", type=["jpg", "png", "jpeg"], key="hosp_upload_main")
         if u_h and st.button("🚀 EXECUTE AI DEEP SCAN", use_container_width=True):
+            st.session_state.scan_error = None
             with st.spinner("Analyzing Hospital Invoice..."):
                 txt = extract_clean_text_from_image(u_h)
+                st.session_state.raw_extracted_text = txt
                 st.session_state.ai_result_data = hospital_audit_logic(txt)
-                st.rerun()
-    
+
+        if st.session_state.scan_error:
+            st.error(st.session_state.scan_error)
+
+        if st.session_state.raw_extracted_text:
+            with st.expander("📄 View Extracted Text"):
+                st.code(st.session_state.raw_extracted_text)
+
         if st.session_state.ai_result_data:
             res = st.session_state.ai_result_data
             items = res.get('audit_results', [])
@@ -594,7 +591,7 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
                 
-                leak = max(0.0, round(b - l, 2))  # Precise Python Math
+                leak = max(0.0, round(b - l, 2))
                 total_h_leak += leak
                 
                 with st.expander(f"📋 {i['item']} | Leakage: ₹{leak:,.2f}"):
@@ -623,19 +620,25 @@ else:
                 }])
                 st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_log], ignore_index=True)
                 st.success("Committed to Radar!")
-                time.sleep(1)
-                st.rerun()
 
     elif dept == "🛡️ Insurance Armor":
         st.markdown("<h1 class='glitch'>INSURANCE FORENSIC SCAN</h1>", unsafe_allow_html=True)
         
         u_i = st.file_uploader("Upload Settlement Letter / Policy", type=["jpg", "png", "jpeg"], key="ins_upload_main")
         if u_i and st.button("🚀 EXECUTE CLAIM AUDIT", use_container_width=True):
+            st.session_state.scan_error = None
             with st.spinner("Reconciling Settlement..."):
                 txt = extract_clean_text_from_image(u_i)
-                st.session_state.ai_result_data = insurance_audit_logic(txt) 
-                st.rerun()
-    
+                st.session_state.raw_extracted_text = txt
+                st.session_state.ai_result_data = insurance_audit_logic(txt)
+
+        if st.session_state.scan_error:
+            st.error(st.session_state.scan_error)
+
+        if st.session_state.raw_extracted_text:
+            with st.expander("📄 View Extracted Text"):
+                st.code(st.session_state.raw_extracted_text)
+
         if st.session_state.ai_result_data:
             res = st.session_state.ai_result_data
             items = res.get('audit_results', [])
@@ -650,7 +653,7 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
                 
-                leak = max(0.0, round(b - l, 2))  # Precise Python Math
+                leak = max(0.0, round(b - l, 2))
                 total_i_leak += leak
                 
                 with st.expander(f"📑 {i['item']} | Shortfall: ₹{leak:,.2f}"):
@@ -679,8 +682,6 @@ else:
                 }])
                 st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_log], ignore_index=True)
                 st.success("Claim Recorded!")
-                time.sleep(1)
-                st.rerun()
 
     elif dept == "⚖️ Justice Portal":
         st.markdown("<h1 class='glitch'>LEGAL DISPUTE GENESIS</h1>", unsafe_allow_html=True)

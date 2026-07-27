@@ -1,0 +1,15 @@
+streamlit
+langchain
+langchain-community
+langchain-core
+langchain-groq
+langgraph
+chromadb
+pypdf
+pymupdf
+python-dotenv
+pytesseract
+pillow
+plotly
+pandas
+streamlit-mic-recorder

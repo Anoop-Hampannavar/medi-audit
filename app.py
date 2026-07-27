@@ -1,11 +1,11 @@
 import streamlit as st
-import base64, json, os, random, smtplib, time, shutil, pandas as pd, pytesseract
+import base64, json, os, random, smtplib, time, shutil, re, pandas as pd, pytesseract
 import fitz  # PyMuPDF for fast PDF search
 import plotly.graph_objects as go
 import plotly.express as px
 from email.message import EmailMessage
 from streamlit_mic_recorder import mic_recorder
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageOps
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from datetime import datetime, timedelta
@@ -14,19 +14,18 @@ from datetime import datetime, timedelta
 if os.name == 'nt':
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 else:
-    # Dynamic location check for Linux / Streamlit Cloud
+    # Dynamic binary detection for Linux / Streamlit Cloud
     tesseract_bin = shutil.which("tesseract") or "/usr/bin/tesseract"
     if os.path.exists(tesseract_bin):
         pytesseract.pytesseract.tesseract_cmd = tesseract_bin
 
 load_dotenv()
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-# Try reading from st.secrets first, then os.getenv
+# Safely fetch API key from st.secrets or environment
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
 
 if not GROQ_API_KEY:
-    st.error("⚠️ GROQ_API_KEY is missing! Please set it in Streamlit Secrets or your .env file.")
+    st.error("⚠️ GROQ_API_KEY is missing! Please configure it in Streamlit Secrets or your .env file.")
     st.stop()
 
 llm = ChatGroq(
@@ -35,12 +34,52 @@ llm = ChatGroq(
     temperature=0
 )
 
-SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
+SENDER_EMAIL = st.secrets.get("SENDER_EMAIL", os.getenv("SENDER_EMAIL"))
+SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD", os.getenv("SENDER_PASSWORD"))
 USER_DB = "users.json"
 PDF_PATH = os.path.join("data", "raw_gazzete", "cghs_rates_2026.pdf")
 
-# --- 2. CORE UTILITY FUNCTIONS ---
+# --- 2. ADVANCED OCR & TEXT CLEANING ENGINE ---
+def preprocess_image_for_ocr(pil_img):
+    """Enhance image contrast, lighting, and resolution for clean OCR scanning."""
+    try:
+        # Convert to Grayscale
+        img = pil_img.convert('L')
+        # Autocontrast to optimize black/white threshold
+        img = ImageOps.autocontrast(img)
+        # Boost contrast by 2.0x
+        enhancer = ImageEnhance.Contrast(img)
+        img = enhancer.enhance(2.0)
+        # Upscale small images to improve Tesseract reading quality
+        w, h = img.size
+        if w < 1200:
+            scale = 1200 / w
+            img = img.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
+        return img
+    except Exception:
+        return pil_img
+
+def clean_ocr_text(text):
+    """Remove currency symbols and artifacts so numbers parse cleanly without corruption."""
+    if not text:
+        return ""
+    # Strip Rupee symbols and variations
+    cleaned = text.replace('₹', ' ')
+    cleaned = re.sub(r'(?i)\b(rs\.?|inr|rupees)\b', ' ', cleaned)
+    # Remove non-ASCII characters
+    cleaned = re.sub(r'[^\x00-\x7F]+', ' ', cleaned)
+    # Convert numbers with commas (e.g. 1,500 -> 1500, 12,000 -> 12000)
+    cleaned = re.sub(r'(\d+),(\d+)', r'\1\2', cleaned)
+    return cleaned
+
+def extract_clean_text_from_image(uploaded_file):
+    """Full scanning pipeline: load -> preprocess -> OCR -> clean text."""
+    img = Image.open(uploaded_file)
+    processed_img = preprocess_image_for_ocr(img)
+    raw_ocr = pytesseract.image_to_string(processed_img, config='--psm 6')
+    return clean_ocr_text(raw_ocr)
+
+# --- 3. CORE RAG & AUDIT LOGIC ---
 def get_pdf_context(query):
     text_context = ""
     if os.path.exists(PDF_PATH):
@@ -62,14 +101,14 @@ def get_pdf_context(query):
 def hospital_audit_logic(bill_text):
     pdf_context = get_pdf_context(bill_text)
     prompt = f"""You are a Senior Hospital Auditor. 
-EXTRACT every service/procedure from the bill (Room Rent, ICU, MRI, etc.).
-Calculate 'billed' (amount on paper) and 'legal' (CGHS 2026 ceiling).
-Ignore Hospital rates; use CGHS caps as the 'legal' price.
+EXTRACT every line item/procedure from the bill (Room Rent, ICU, MRI, Consultation, CBC, etc.).
+Extract the exact numerical billed price. Do NOT append extra digits or currency symbols.
 
-REFERENCE: {pdf_context if pdf_context else "Use internal 2026 CGHS Hospital Price List."}
-TEXT: {bill_text}
+REFERENCE CGHS DATA: {pdf_context if pdf_context else "Use internal 2026 CGHS Hospital Price List caps."}
+TEXT TO AUDIT:
+{bill_text}
 
-Return ONLY valid JSON with this exact structure:
+Return ONLY a valid JSON with this exact structure:
 {{"hospital": "hospital_name", "audit_results": [{{"item": "item_name", "billed": 0.0, "legal": 0.0, "summary": "reasoning"}}]}}"""
 
     try:
@@ -82,18 +121,12 @@ Return ONLY valid JSON with this exact structure:
     
 def insurance_audit_logic(txt):
     prompt = f"""You are a Senior Insurance Claims Auditor. 
-Analyze the provided medical billing and insurance settlement text.
-
-1. Extract the Insurance Provider Name.
-2. Identify line items where the 'Billed' amount is higher than the 'Approved/Legal' amount.
-3. Categorize the discrepancy: 
-   - 'Policy Breach' (if hospital charged more than policy caps)
-   - 'Underpayment' (if insurer paid less than the legal cap)
-   - 'Non-Payable' (items excluded by IRDAI guidelines).
+Analyze the medical billing and settlement text.
+Extract the Insurance Provider Name, line items, Billed amount, and Legal/Approved ceiling.
 
 Document Text: {txt}
 
-Return ONLY a JSON object:
+Return ONLY a valid JSON object:
 {{
   "hospital": "Insurance Company Name",
   "audit_results": [
@@ -105,7 +138,7 @@ Return ONLY a JSON object:
         response = llm.invoke(prompt)
         clean_json = response.content.replace("```json", "").replace("```", "").strip()
         return json.loads(clean_json)
-    except Exception as e:
+    except Exception:
         return {
             "hospital": "Detected Provider",
             "audit_results": [
@@ -117,14 +150,13 @@ Return ONLY a JSON object:
 def ai_audit_logic(bill_text):
     pdf_context = get_pdf_context(bill_text)
     prompt = f"""You are a Medical Fraud Investigator. 
-EXTRACT every item from the bill. 
-Calculate 'billed' (total amount on paper) and 'legal' (CGHS 2026 ceiling).
-Ignore MRP on the bill; use CGHS caps as the 'legal' price.
+EXTRACT every medicine/item from the pharmacy receipt.
+Parse exact numerical billed price and CGHS legal cap.
 
-REFERENCE: {pdf_context if pdf_context else "Use internal 2026 Generic caps."}
+REFERENCE DATA: {pdf_context if pdf_context else "Use internal 2026 Generic caps."}
 TEXT: {bill_text}
 
-Return ONLY JSON:
+Return ONLY a valid JSON object:
 {{"hospital": "pharmacy_name", "audit_results": [{{"item": "medicine_name", "billed": 0.0, "legal": 0.0, "summary": "reason"}}]}}"""
 
     try:
@@ -135,6 +167,7 @@ Return ONLY JSON:
         st.error(f"Logic Error: {e}")
         return None
 
+# --- 4. AUTHENTICATION & HISTORY DATABASE ---
 def load_users():
     if os.path.exists(USER_DB):
         with open(USER_DB, "r") as f:
@@ -182,28 +215,15 @@ def save_audit_to_db(email, new_row_df):
     with open(HISTORY_DB, "w") as f:
         json.dump(history, f, default=str, indent=4)
 
-def load_user_history(email):
-    if os.path.exists(HISTORY_DB):
-        with open(HISTORY_DB, "r") as f:
-            try:
-                history = json.load(f)
-                user_data = history.get(email.strip().lower(), [])
-                if user_data:
-                    df = pd.DataFrame(user_data)
-                    df['Timestamp'] = pd.to_datetime(df['Timestamp'])
-                    return df
-            except: pass
-    return pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"])
-
-# --- 3. SESSION STATE ---
+# --- 5. SESSION STATE ---
 if "logged_in" not in st.session_state:
     for key, val in [("logged_in", False), ("otp_sent", False), ("user_email", ""), ("messages", []), 
-                     ("found_med", None), ("total_leakage", 0), ("audit_accuracy", 99.8), ("risk_level", "STABLE"),
+                     ("total_leakage", 0), ("audit_accuracy", 99.8), ("risk_level", "STABLE"),
                      ("ai_result_data", None),
                      ("audit_log", pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"]))]:
         st.session_state[key] = val
 
-# --- 4. DATA ---
+# --- 6. DATA & MAPS ---
 fraud_map_data = pd.DataFrame({
     'lat': [28.6139, 19.0760, 12.9716, 22.5726, 13.0827, 21.1458, 26.8467, 17.3850, 23.0225, 30.7333],
     'lon': [77.2090, 72.8777, 77.5946, 88.3639, 80.2707, 79.0882, 80.9462, 78.4867, 72.5714, 76.7794],
@@ -211,7 +231,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 5. MOBILE-FIRST UI STYLING ---
+# --- 7. MOBILE-FIRST GLASSMORPHISM UI ---
 st.set_page_config(
     page_title="Medi-Audit Pro", 
     layout="wide",
@@ -220,13 +240,11 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-    /* Main Background Gradient */
     .stApp {
         background: radial-gradient(circle at top right, #F0F9FF 0%, #E0F2FE 100%);
         color: #1E293B;
     }
 
-    /* Glassmorphism Card Style */
     .med-metric-box, .login-card, .stChatMessage {
         background: rgba(255, 255, 255, 0.75) !important;
         backdrop-filter: blur(12px) !important;
@@ -238,7 +256,6 @@ st.markdown("""
         margin-bottom: 10px;
     }
 
-    /* Title Styling */
     .glitch {
         font-size: 2rem;
         font-weight: 800;
@@ -250,21 +267,9 @@ st.markdown("""
         letter-spacing: -1px;
     }
 
-    /* Metric Labeling */
-    .med-label { 
-        color: #64748B; 
-        font-size: 0.75rem; 
-        text-transform: uppercase; 
-        font-weight: 700; 
-        letter-spacing: 0.5px;
-    }
-    .med-value { 
-        color: #0F172A; 
-        font-size: 1.8rem; 
-        font-weight: 800; 
-    }
+    .med-label { color: #64748B; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
+    .med-value { color: #0F172A; font-size: 1.8rem; font-weight: 800; }
 
-    /* Touch-Friendly Buttons */
     div.stButton > button {
         border-radius: 50px !important;
         background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
@@ -278,7 +283,6 @@ st.markdown("""
         width: 100% !important;
     }
 
-    /* Ticker Container */
     .ticker-container {
         background: rgba(15, 23, 42, 0.9);
         color: #38BDF8;
@@ -290,44 +294,20 @@ st.markdown("""
         margin-bottom: 10px;
     }
 
-    /* Responsive Mobile Overrides */
     @media only screen and (max-width: 768px) {
-        .block-container {
-            padding-left: 0.6rem !important;
-            padding-right: 0.6rem !important;
-            padding-top: 0.8rem !important;
-        }
-
-        .glitch {
-            font-size: 1.5rem !important;
-            margin-bottom: 8px !important;
-        }
-
-        .med-value {
-            font-size: 1.3rem !important;
-        }
-
-        .med-label {
-            font-size: 0.65rem !important;
-        }
-
-        [data-testid="stSidebar"] {
-            width: 85vw !important;
-        }
-
-        [data-testid="stTable"], .stDataFrame {
-            overflow-x: auto !important;
-            display: block !important;
-            width: 100% !important;
-        }
+        .block-container { padding-left: 0.6rem !important; padding-right: 0.6rem !important; padding-top: 0.8rem !important; }
+        .glitch { font-size: 1.5rem !important; margin-bottom: 8px !important; }
+        .med-value { font-size: 1.3rem !important; }
+        .med-label { font-size: 0.65rem !important; }
+        [data-testid="stSidebar"] { width: 85vw !important; }
+        [data-testid="stTable"], .stDataFrame { overflow-x: auto !important; display: block !important; width: 100% !important; }
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 6. AUTHENTICATION MODULE ---
+# --- 8. AUTHENTICATION ---
 if not st.session_state.logged_in:
     st.markdown("<h1 class='glitch'>🛡️ MEDI-AUDIT PRO</h1>", unsafe_allow_html=True)
-    
     t1, t2, t3 = st.tabs(["🔑 LOGIN", "📝 REGISTER", "🆘 FORGOT"])
     
     with t1:
@@ -386,7 +366,7 @@ if not st.session_state.logged_in:
                 else:
                     st.error("Invalid Verification Code")
 
-# --- 7. MAIN APPLICATION MODULE ---
+# --- 9. MAIN APP DASHBOARD ---
 else:
     with st.sidebar:
         st.markdown("<h2 class='glitch' style='font-size:1.4rem;'>MEDI-AUDIT</h2>", unsafe_allow_html=True)
@@ -399,6 +379,7 @@ else:
             st.session_state.audit_log = pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"])
             st.session_state.total_leakage = 0
             st.session_state.risk_level = "STABLE"
+            st.session_state.ai_result_data = None
             st.rerun()
         if st.button("🚪 LOGOUT SYSTEM", use_container_width=True):
             st.session_state.logged_in = False; st.rerun()
@@ -424,12 +405,11 @@ else:
             variance_val = ((st.session_state.total_leakage - last_week_avg) / last_week_avg) * 100
             variance_text = f"{variance_val:+.1f}% vs Last Week"
 
-        # Responsive 2x2 Layout on Mobile
         m1, m2 = st.columns(2)
         m3, m4 = st.columns(2)
         
         m1.markdown(f'<div class="med-metric-box"><div class="med-label">Variance</div><div class="med-value" style="color:#0EA5E9; font-size:1.1rem;">{variance_text}</div></div>', unsafe_allow_html=True)
-        m2.markdown(f'<div class="med-metric-box" style="border-top:3px solid #F59E0B;"><div class="med-label">Leakage</div><div class="med-value" style="color:#F59E0B;">₹{st.session_state.total_leakage:,}</div></div>', unsafe_allow_html=True)
+        m2.markdown(f'<div class="med-metric-box" style="border-top:3px solid #F59E0B;"><div class="med-label">Leakage</div><div class="med-value" style="color:#F59E0B;">₹{st.session_state.total_leakage:,.2f}</div></div>', unsafe_allow_html=True)
         m3.markdown(f'<div class="med-metric-box" style="border-top:3px solid #10B981;"><div class="med-label">Accuracy</div><div class="med-value" style="color:#10B981;">{st.session_state.audit_accuracy}%</div></div>', unsafe_allow_html=True)
         r_col = "#10B981" if st.session_state.risk_level == "STABLE" else "#EF4444"
         m4.markdown(f'<div class="med-metric-box" style="border-top:3px solid {r_col};"><div class="med-label">Risk</div><div class="med-value" style="color:{r_col};">{st.session_state.risk_level}</div></div>', unsafe_allow_html=True)
@@ -449,10 +429,6 @@ else:
         fig_rank.update_layout(margin=dict(l=10, r=10, t=10, b=10), height=220)
         st.plotly_chart(fig_rank, use_container_width=True)
         
-        st.markdown("### 🚨 Predictive Risk Window")
-        current_hour = datetime.now().hour
-        risk_msg = "HIGH ALERT" if 10 <= current_hour <= 16 else "LOW ACTIVITY"
-        st.info(f"Forecasting Engine: {risk_msg} for Pharma Dept (Historical Peak: 2 PM)")
         csv = st.session_state.audit_log.to_csv(index=False).encode('utf-8')
         st.download_button("📥 DOWNLOAD REPORT (CSV)", data=csv, file_name=f"audit_report_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
 
@@ -463,12 +439,10 @@ else:
     elif dept == "💊 Pharma Forensic":
         st.markdown("<h1 class='glitch'>PHARMA-AUDIT ENGINE</h1>", unsafe_allow_html=True)
         
-        st.markdown("### 🔍 Forensic Scan")
         u_p = st.file_uploader("Upload Pharma Receipt", type=["jpg", "png", "jpeg"], key="pharma_upload")
         if u_p and st.button("🔍 EXECUTE AI FORENSIC SCAN", use_container_width=True):
-            with st.spinner("Analyzing Receipt..."):
-                img = Image.open(u_p).convert('L')
-                txt = pytesseract.image_to_string(img)
+            with st.spinner("Processing Receipt..."):
+                txt = extract_clean_text_from_image(u_p)
                 st.session_state.ai_result_data = ai_audit_logic(txt)
                 st.rerun()
                 
@@ -481,17 +455,20 @@ else:
             total_p_leak = 0.0
             
             for idx, i in enumerate(items):
-                b = float(str(i.get('billed', 0)).replace(',', ''))
-                l = float(str(i.get('legal', 0)).replace(',', ''))
-                leak = max(0.0, b - l)
+                try:
+                    b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
+                    l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
+                except: b, l = 0.0, 0.0
+
+                leak = max(0.0, round(b - l, 2))  # Deterministic Math in Python
                 total_p_leak += leak
                 
-                with st.expander(f"📦 {i['item']} | Leakage: ₹{leak}"):
+                with st.expander(f"📦 {i['item']} | Leakage: ₹{leak:,.2f}"):
                     fig = go.Figure(go.Bar(
-                        x=['Legal Max', 'Billed'], 
+                        x=['Legal Cap', 'Billed'], 
                         y=[l, b], 
                         marker_color=['#10B981', '#EF4444'],
-                        text=[f"₹{l}", f"₹{b}"],
+                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"],
                         textposition='auto'
                     ))
                     fig.update_layout(height=180, margin=dict(l=0, r=0, t=0, b=0))
@@ -511,19 +488,17 @@ else:
                     "Timestamp": datetime.now()
                 }])
                 st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_log], ignore_index=True)
-                st.success(f"Committed to Radar!")
+                st.success("Committed to Radar!")
                 time.sleep(1)
                 st.rerun()
 
     elif dept == "🏥 Hospital Audit":
         st.markdown("<h1 class='glitch'>INVOICE FORENSIC SCAN</h1>", unsafe_allow_html=True)
         
-        st.markdown("### 🔍 Invoice Analysis")
         u_h = st.file_uploader("Upload Hospital Bill/Invoice", type=["jpg", "png", "jpeg"], key="hosp_upload_main")
         if u_h and st.button("🚀 EXECUTE AI DEEP SCAN", use_container_width=True):
             with st.spinner("Analyzing Hospital Invoice..."):
-                img = Image.open(u_h).convert('L')
-                txt = pytesseract.image_to_string(img)
+                txt = extract_clean_text_from_image(u_h)
                 st.session_state.ai_result_data = hospital_audit_logic(txt)
                 st.rerun()
     
@@ -537,19 +512,19 @@ else:
             
             for idx, i in enumerate(items):
                 try:
-                    b = float(str(i.get('billed', 0)).replace(',', ''))
-                    l = float(str(i.get('legal', 0)).replace(',', ''))
+                    b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
+                    l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
                 
-                leak = max(0.0, b - l)
+                leak = max(0.0, round(b - l, 2))  # Deterministic Math in Python
                 total_h_leak += leak
                 
-                with st.expander(f"📋 {i['item']} | Leakage: ₹{leak}"):
+                with st.expander(f"📋 {i['item']} | Leakage: ₹{leak:,.2f}"):
                     fig = go.Figure(go.Bar(
                         x=['Legal Cap', 'Billed'], 
                         y=[l, b], 
                         marker_color=['#3B82F6', '#EF4444'], 
-                        text=[f"₹{l}", f"₹{b}"], 
+                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
                         textposition='auto'
                     ))
                     fig.update_layout(height=180, margin=dict(l=0, r=0, t=0, b=0))
@@ -569,19 +544,17 @@ else:
                     "Timestamp": datetime.now()
                 }])
                 st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_log], ignore_index=True)
-                st.success(f"Committed to Radar!")
+                st.success("Committed to Radar!")
                 time.sleep(1)
                 st.rerun()
 
     elif dept == "🛡️ Insurance Armor":
         st.markdown("<h1 class='glitch'>INSURANCE FORENSIC SCAN</h1>", unsafe_allow_html=True)
         
-        st.markdown("### 🔍 Claim Analysis")
         u_i = st.file_uploader("Upload Settlement Letter / Policy", type=["jpg", "png", "jpeg"], key="ins_upload_main")
         if u_i and st.button("🚀 EXECUTE CLAIM AUDIT", use_container_width=True):
             with st.spinner("Reconciling Settlement..."):
-                img = Image.open(u_i).convert('L')
-                txt = pytesseract.image_to_string(img)
+                txt = extract_clean_text_from_image(u_i)
                 st.session_state.ai_result_data = insurance_audit_logic(txt) 
                 st.rerun()
     
@@ -595,19 +568,19 @@ else:
             
             for idx, i in enumerate(items):
                 try:
-                    b = float(str(i.get('billed', 0)).replace(',', ''))
-                    l = float(str(i.get('legal', 0)).replace(',', ''))
+                    b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
+                    l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
                 
-                leak = max(0.0, b - l)
+                leak = max(0.0, round(b - l, 2))  # Deterministic Math in Python
                 total_i_leak += leak
                 
-                with st.expander(f"📑 {i['item']} | Shortfall: ₹{leak}"):
+                with st.expander(f"📑 {i['item']} | Shortfall: ₹{leak:,.2f}"):
                     fig = go.Figure(go.Bar(
                         x=['Approved', 'Billed'], 
                         y=[l, b], 
                         marker_color=['#10B981', '#F43F5E'],
-                        text=[f"₹{l}", f"₹{b}"],
+                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"],
                         textposition='auto'
                     ))
                     fig.update_layout(height=180, margin=dict(l=0, r=0, t=0, b=0))
@@ -627,7 +600,7 @@ else:
                     "Timestamp": datetime.now()
                 }])
                 st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_log], ignore_index=True)
-                st.success(f"Claim Recorded!")
+                st.success("Claim Recorded!")
                 time.sleep(1)
                 st.rerun()
 
@@ -640,7 +613,6 @@ else:
             
             ref_no = st.text_input("Notice Ref #", f"MA/2026/LEG/{random.randint(1000, 9999)}")
             grace_period = st.select_slider("Grace Period (Days)", options=[3, 5, 7, 10, 15], value=7)
-            include_nha = st.toggle("Cite NHA Guidelines", value=True)
 
             st.markdown("### 📄 Formal Notice Preview")
             with st.container(border=True):
@@ -664,9 +636,6 @@ else:
                 
                 **DEMAND:** Refund excess amount within **{grace_period} days**. 
                 """)
-                
-                if include_nha:
-                    st.info("⚖️ **LEGAL CITATION:** NHA billing transparency protocols.")
 
             st.button("📧 Dispatch Electronic Notice", type="primary", use_container_width=True)
             st.button("📥 Download Official PDF", use_container_width=True)
@@ -679,7 +648,8 @@ else:
         if u_m:
             st.session_state.messages.append({"role": "user", "content": u_m})
             pdf_data = get_pdf_context(u_m)
-            assistant_prompt = f"Use this PDF data if available: {pdf_data}. If not, use your internal knowledge of India's CGHS 2026 rates to answer correctly. Question: {u_m}"
+            assistant_prompt = f"Use this PDF context if available: {pdf_data}. Otherwise use CGHS 2026 rates to answer. Question: {u_m}"
             response = llm.invoke(assistant_prompt)
             st.session_state.messages.append({"role": "assistant", "content": response.content})
-        for m in st.session_state.messages[-4:]: st.chat_message(m["role"]).write(m["content"])
+        for m in st.session_state.messages[-4:]: 
+            st.chat_message(m["role"]).write(m["content"])

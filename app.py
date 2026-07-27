@@ -22,6 +22,13 @@ else:
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# Try reading from st.secrets first, then os.getenv
+GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
+
+if not GROQ_API_KEY:
+    st.error("⚠️ GROQ_API_KEY is missing! Please set it in Streamlit Secrets or your .env file.")
+    st.stop()
+
 llm = ChatGroq(
     groq_api_key=GROQ_API_KEY,
     model_name="llama-3.3-70b-versatile",

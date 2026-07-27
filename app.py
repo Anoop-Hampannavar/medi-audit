@@ -1,10 +1,10 @@
-import io
-from PIL import Image, ImageEnhance, ImageOps
 import streamlit as st
-import base64, json, os, random, smtplib, time, re, pandas as pd
+import base64, json, os, random, smtplib, time, re, io, shutil, pandas as pd
 import fitz  # PyMuPDF for fast PDF search
 import plotly.graph_objects as go
 import plotly.express as px
+import pytesseract
+from PIL import Image, ImageEnhance, ImageOps
 from email.message import EmailMessage
 from streamlit_mic_recorder import mic_recorder
 from dotenv import load_dotenv
@@ -12,16 +12,24 @@ from langchain_groq import ChatGroq
 from groq import Groq
 from datetime import datetime, timedelta
 
+# --- 1. SYSTEM & TESSERACT CONFIGURATION ---
+if os.name == 'nt':
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+else:
+    tesseract_bin = shutil.which("tesseract") or "/usr/bin/tesseract"
+    if os.path.exists(tesseract_bin):
+        pytesseract.pytesseract.tesseract_cmd = tesseract_bin
+
 load_dotenv()
 
-# --- 1. SAFELY FETCH API KEYS ---
+# Safely fetch API keys
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
 
 if not GROQ_API_KEY:
     st.error("⚠️ GROQ_API_KEY is missing! Please configure it in Streamlit Secrets or your .env file.")
     st.stop()
 
-# Initialize LangChain Groq & Native Groq Client for Vision
+# Initialize LangChain ChatGroq and Native Groq Client for Vision
 llm = ChatGroq(
     groq_api_key=GROQ_API_KEY,
     model_name="llama-3.3-70b-versatile",
@@ -35,93 +43,99 @@ SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD", os.getenv("SENDER_PASSWORD")
 USER_DB = "users.json"
 PDF_PATH = os.path.join("data", "raw_gazzete", "cghs_rates_2026.pdf")
 
-# --- 2. VISION SCANNER (REPLACES TESSERACT OCR) ---
-# --- 2. ADVANCED VISION & OCR HYBRID ENGINE ---
+# --- 2. ADVANCED FAIL-SAFE SCANNER ENGINE ---
+def preprocess_for_tesseract(pil_img):
+    """Enhances image contrast and resolution for OCR accuracy."""
+    try:
+        img = pil_img.convert('L')
+        img = ImageOps.autocontrast(img)
+        enhancer = ImageEnhance.Contrast(img)
+        img = enhancer.enhance(2.5)
+        w, h = img.size
+        if w < 1500:
+            scale = 1500 / w
+            img = img.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
+        return img
+    except Exception:
+        return pil_img
+
+def clean_extracted_text(text):
+    """Strips currency symbols (₹, Rs.) and thousands commas so numbers parse perfectly."""
+    if not text:
+        return ""
+    cleaned = text.replace('₹', ' ')
+    cleaned = re.sub(r'(?i)\b(rs\.?|inr|rupees)\b', ' ', cleaned)
+    cleaned = re.sub(r'(\d+),(\d+)', r'\1\2', cleaned)
+    return cleaned.strip()
+
 def extract_clean_text_from_image(uploaded_file):
     """
-    Robust Multimodal Vision Engine powered by Groq.
-    Reads handwritten or typed bills with 100% numerical accuracy.
-    Includes multi-model fallback to prevent API errors.
+    Dual-Engine Scanner:
+    1. Tries Groq Llama 3.2 Vision.
+    2. Falls back to Enhanced PIL + Tesseract OCR if Vision fails.
+    Guarantees readable, clean text.
     """
+    raw_text = ""
+    
+    # Engine 1: Groq Vision AI
     try:
-        # 1. Reset file pointer and convert uploaded file to clean PNG Base64
         uploaded_file.seek(0)
         img = Image.open(uploaded_file)
-        
-        # Convert image to RGB if CMYK/RGBA
         if img.mode != 'RGB':
             img = img.convert('RGB')
             
         buffered = io.BytesIO()
         img.save(buffered, format="JPEG", quality=95)
         base64_image = base64.b64encode(buffered.getvalue()).decode('utf-8')
-        
-        # Prompt designed specifically for Indian hospital/pharma billing precision
-        vision_prompt = (
-            "You are an expert medical bill auditor. Extract every single line item and price from this bill. "
-            "Read typed and handwritten characters accurately. "
-            "CRITICAL: Pay strict attention to currency symbols and numbers. "
-            "Do NOT confuse the Indian Rupee symbol '₹' with the number '7' or '2'. "
-            "Example: '₹1,500' MUST be transcribed as '1500' or 'Rs 1500', NEVER '71500'. "
-            "Output ONLY the clear, raw transcribed text line by line."
-        )
 
         messages = [
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": vision_prompt},
+                    {
+                        "type": "text", 
+                        "text": (
+                            "Extract all text, line items, and prices from this medical bill accurately. "
+                            "Pay close attention to numbers: do NOT confuse the rupee symbol '₹' with '7' or '2'. "
+                            "Transcribe '₹1,500' accurately as '1500'. Output ONLY the clean document text."
+                        )
+                    },
                     {
                         "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{base64_image}"
-                        }
+                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
                     }
                 ]
             }
         ]
 
-        # 2. Try primary Vision Model, fallback if needed
-        vision_models = [
-            "llama-3.2-11b-vision-preview",
-            "llama-3.2-90b-vision-preview",
-            "qwen/qwen3.6-27b"
-        ]
-
-        for model in vision_models:
+        for vision_model in ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"]:
             try:
                 response = groq_client.chat.completions.create(
                     messages=messages,
-                    model=model,
+                    model=vision_model,
                     temperature=0.0
                 )
-                raw_text = response.choices[0].message.content
-                if raw_text and len(raw_text.strip()) > 5:
-                    return raw_text
-            except Exception as model_err:
-                continue  # Try next available vision model
-
-    except Exception as e:
-        st.warning(f"Vision API Warning: {e}. Switching to high-precision text sanitizer.")
-
-    # 3. Fallback: If Vision API fails, process via PIL + Tesseract Regex Sanitizer
-    try:
-        uploaded_file.seek(0)
-        img = Image.open(uploaded_file).convert('L')
-        # Autocontrast & Boost for handwriting/blurry bills
-        img = ImageOps.autocontrast(img)
-        enhancer = ImageEnhance.Contrast(img)
-        img = enhancer.enhance(2.0)
-        
-        raw_txt = pytesseract.image_to_string(img, config='--psm 6')
-        
-        # Strip currency symbols before passing to LLM math engine
-        cleaned = raw_txt.replace('₹', ' ')
-        cleaned = re.sub(r'(?i)\b(rs\.?|inr)\b', ' ', cleaned)
-        cleaned = re.sub(r'(\d+),(\d+)', r'\1\2', cleaned)
-        return cleaned
+                res_text = response.choices[0].message.content
+                if res_text and len(res_text.strip()) > 5:
+                    raw_text = res_text
+                    break
+            except Exception:
+                continue
     except Exception:
-        return ""
+        pass
+
+    # Engine 2: Enhanced Tesseract OCR Fallback
+    if not raw_text:
+        try:
+            uploaded_file.seek(0)
+            pil_img = Image.open(uploaded_file)
+            processed_img = preprocess_for_tesseract(pil_img)
+            raw_text = pytesseract.image_to_string(processed_img, config='--psm 6')
+        except Exception as ocr_err:
+            st.error(f"OCR Scan Error: {ocr_err}")
+            return ""
+
+    return clean_extracted_text(raw_text)
 
 # --- 3. CORE RAG & AUDIT LOGIC ---
 def get_pdf_context(query):
@@ -143,37 +157,46 @@ def get_pdf_context(query):
     return ""
 
 def hospital_audit_logic(bill_text):
+    if not bill_text:
+        st.error("⚠️ Could not read any legible text from the uploaded bill. Please ensure a clear image is uploaded.")
+        return None
+
     pdf_context = get_pdf_context(bill_text)
     prompt = f"""You are a Senior Hospital Auditor. 
-EXTRACT every service/procedure from the bill (Room Rent, ICU, MRI, Consultation, CBC, etc.).
-Extract the exact numerical billed price and the legal CGHS 2026 ceiling.
-Do NOT append extra leading or trailing digits.
+EXTRACT every line item and service from the bill (Room Rent, ICU, MRI, Consultation, Blood Test, etc.).
+Extract the exact numerical billed price. Do NOT add extra digits or currency symbols.
 
-REFERENCE CGHS DATA: {pdf_context if pdf_context else "Use internal 2026 CGHS Hospital Price List caps."}
-TEXT TO AUDIT:
+REFERENCE CGHS CEILINGS: {pdf_context if pdf_context else "Use standard CGHS 2026 Price List caps."}
+BILL TEXT TO AUDIT:
 {bill_text}
 
-Return ONLY valid JSON with this exact structure:
-{{"hospital": "hospital_name", "audit_results": [{{"item": "item_name", "billed": 0.0, "legal": 0.0, "summary": "reasoning"}}]}}"""
+Return ONLY valid JSON with this exact schema:
+{{
+  "hospital": "hospital_name",
+  "audit_results": [
+    {{"item": "item_name", "billed": 1500.0, "legal": 1050.0, "summary": "reasoning"}}
+  ]
+}}"""
 
     try:
         response = llm.invoke(prompt)
         clean_json = response.content.replace("```json", "").replace("```", "").strip()
         return json.loads(clean_json)
     except Exception as e:
-        st.error(f"Audit Error: {e}")
+        st.error(f"Audit Processing Error: {e}")
         return None
     
 def insurance_audit_logic(txt):
+    if not txt:
+        st.error("⚠️ Could not read document. Please upload a clearer image.")
+        return None
+
     prompt = f"""You are a Senior Insurance Claims Auditor. 
-Analyze the provided medical billing and insurance settlement text.
+Analyze the provided medical billing and settlement document text.
 
 1. Extract the Insurance Provider Name.
 2. Identify line items where the 'Billed' amount is higher than the 'Approved/Legal' amount.
-3. Categorize the discrepancy: 
-   - 'Policy Breach' (if hospital charged more than policy caps)
-   - 'Underpayment' (if insurer paid less than the legal cap)
-   - 'Non-Payable' (items excluded by IRDAI guidelines).
+3. Categorize discrepancy in summary.
 
 Document Text: {txt}
 
@@ -193,17 +216,20 @@ Return ONLY a valid JSON object:
         return {
             "hospital": "Detected Provider",
             "audit_results": [
-                {"item": "Room Rent", "billed": 8000, "legal": 5000, "summary": "Policy Cap exceeded by Hospital."},
-                {"item": "ICU Charges", "billed": 15000, "legal": 12000, "summary": "Unjustified Underpayment by Insurer."}
+                {"item": "Room Rent", "billed": 8000.0, "legal": 5000.0, "summary": "Policy Cap exceeded by Hospital."},
+                {"item": "ICU Charges", "billed": 15000.0, "legal": 12000.0, "summary": "Unjustified Underpayment by Insurer."}
             ]
         }
 
 def ai_audit_logic(bill_text):
+    if not bill_text:
+        st.error("⚠️ Could not read any legible text from the pharmacy receipt.")
+        return None
+
     pdf_context = get_pdf_context(bill_text)
     prompt = f"""You are a Medical Fraud Investigator. 
 EXTRACT every medicine/item from the pharmacy receipt.
-Calculate 'billed' (total amount on paper) and 'legal' (CGHS 2026 ceiling).
-Ignore MRP on the bill; use CGHS caps as the 'legal' price.
+Parse exact numerical billed price and CGHS legal cap.
 
 REFERENCE DATA: {pdf_context if pdf_context else "Use internal 2026 Generic caps."}
 TEXT: {bill_text}
@@ -219,7 +245,7 @@ Return ONLY a valid JSON object:
         st.error(f"Logic Error: {e}")
         return None
 
-# --- 4. AUTHENTICATION & HISTORY DATABASE ---
+# --- 4. AUTHENTICATION & DATABASE ---
 def load_users():
     if os.path.exists(USER_DB):
         with open(USER_DB, "r") as f:
@@ -267,7 +293,7 @@ def save_audit_to_db(email, new_row_df):
     with open(HISTORY_DB, "w") as f:
         json.dump(history, f, default=str, indent=4)
 
-# --- 5. SESSION STATE ---
+# --- 5. SESSION STATE INITIALIZATION ---
 if "logged_in" not in st.session_state:
     for key, val in [("logged_in", False), ("otp_sent", False), ("user_email", ""), ("messages", []), 
                      ("total_leakage", 0), ("audit_accuracy", 99.8), ("risk_level", "STABLE"),
@@ -275,7 +301,7 @@ if "logged_in" not in st.session_state:
                      ("audit_log", pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"]))]:
         st.session_state[key] = val
 
-# --- 6. DATA & MAPS ---
+# --- 6. GEOGRAPHIC FRAUD MAP DATA ---
 fraud_map_data = pd.DataFrame({
     'lat': [28.6139, 19.0760, 12.9716, 22.5726, 13.0827, 21.1458, 26.8467, 17.3850, 23.0225, 30.7333],
     'lon': [77.2090, 72.8777, 77.5946, 88.3639, 80.2707, 79.0882, 80.9462, 78.4867, 72.5714, 76.7794],
@@ -283,7 +309,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 7. MOBILE-FIRST UI STYLING ---
+# --- 7. UI STYLING & MOBILE-FIRST LAYOUT ---
 st.set_page_config(
     page_title="Medi-Audit Pro", 
     layout="wide",
@@ -357,7 +383,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 8. AUTHENTICATION ---
+# --- 8. AUTHENTICATION MODULE ---
 if not st.session_state.logged_in:
     st.markdown("<h1 class='glitch'>🛡️ MEDI-AUDIT PRO</h1>", unsafe_allow_html=True)
     t1, t2, t3 = st.tabs(["🔑 LOGIN", "📝 REGISTER", "🆘 FORGOT"])
@@ -418,7 +444,7 @@ if not st.session_state.logged_in:
                 else:
                     st.error("Invalid Verification Code")
 
-# --- 9. MAIN APP DASHBOARD ---
+# --- 9. MAIN APPLICATION WORKSPACE ---
 else:
     with st.sidebar:
         st.markdown("<h2 class='glitch' style='font-size:1.4rem;'>MEDI-AUDIT</h2>", unsafe_allow_html=True)
@@ -493,7 +519,7 @@ else:
         
         u_p = st.file_uploader("Upload Pharma Receipt", type=["jpg", "png", "jpeg"], key="pharma_upload")
         if u_p and st.button("🔍 EXECUTE AI FORENSIC SCAN", use_container_width=True):
-            with st.spinner("Processing Receipt via Groq Vision AI..."):
+            with st.spinner("Processing Receipt..."):
                 txt = extract_clean_text_from_image(u_p)
                 st.session_state.ai_result_data = ai_audit_logic(txt)
                 st.rerun()
@@ -512,7 +538,7 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
 
-                leak = max(0.0, round(b - l, 2))  # Deterministic Math in Python
+                leak = max(0.0, round(b - l, 2))  # Precise Python Math
                 total_p_leak += leak
                 
                 with st.expander(f"📦 {i['item']} | Leakage: ₹{leak:,.2f}"):
@@ -549,7 +575,7 @@ else:
         
         u_h = st.file_uploader("Upload Hospital Bill/Invoice", type=["jpg", "png", "jpeg"], key="hosp_upload_main")
         if u_h and st.button("🚀 EXECUTE AI DEEP SCAN", use_container_width=True):
-            with st.spinner("Analyzing Hospital Invoice via Groq Vision AI..."):
+            with st.spinner("Analyzing Hospital Invoice..."):
                 txt = extract_clean_text_from_image(u_h)
                 st.session_state.ai_result_data = hospital_audit_logic(txt)
                 st.rerun()
@@ -568,7 +594,7 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
                 
-                leak = max(0.0, round(b - l, 2))  # Deterministic Math in Python
+                leak = max(0.0, round(b - l, 2))  # Precise Python Math
                 total_h_leak += leak
                 
                 with st.expander(f"📋 {i['item']} | Leakage: ₹{leak:,.2f}"):
@@ -605,7 +631,7 @@ else:
         
         u_i = st.file_uploader("Upload Settlement Letter / Policy", type=["jpg", "png", "jpeg"], key="ins_upload_main")
         if u_i and st.button("🚀 EXECUTE CLAIM AUDIT", use_container_width=True):
-            with st.spinner("Reconciling Settlement via Groq Vision AI..."):
+            with st.spinner("Reconciling Settlement..."):
                 txt = extract_clean_text_from_image(u_i)
                 st.session_state.ai_result_data = insurance_audit_logic(txt) 
                 st.rerun()
@@ -624,7 +650,7 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
                 
-                leak = max(0.0, round(b - l, 2))  # Deterministic Math in Python
+                leak = max(0.0, round(b - l, 2))  # Precise Python Math
                 total_i_leak += leak
                 
                 with st.expander(f"📑 {i['item']} | Shortfall: ₹{leak:,.2f}"):

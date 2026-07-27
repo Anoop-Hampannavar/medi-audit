@@ -1,83 +1,80 @@
+
 import streamlit as st
-import base64, json, os, random, smtplib, time, shutil, re, pandas as pd, pytesseract
+import base64, json, os, random, smtplib, time, re, pandas as pd
 import fitz  # PyMuPDF for fast PDF search
 import plotly.graph_objects as go
 import plotly.express as px
 from email.message import EmailMessage
 from streamlit_mic_recorder import mic_recorder
-from PIL import Image, ImageEnhance, ImageOps
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
+from groq import Groq
 from datetime import datetime, timedelta
-
-# --- 1. SYSTEM & TESSERACT CONFIGURATION ---
-if os.name == 'nt':
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-else:
-    # Dynamic binary detection for Linux / Streamlit Cloud
-    tesseract_bin = shutil.which("tesseract") or "/usr/bin/tesseract"
-    if os.path.exists(tesseract_bin):
-        pytesseract.pytesseract.tesseract_cmd = tesseract_bin
 
 load_dotenv()
 
-# Safely fetch API key from st.secrets or environment
+# --- 1. SAFELY FETCH API KEYS ---
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
 
 if not GROQ_API_KEY:
     st.error("⚠️ GROQ_API_KEY is missing! Please configure it in Streamlit Secrets or your .env file.")
     st.stop()
 
+# Initialize LangChain Groq & Native Groq Client for Vision
 llm = ChatGroq(
     groq_api_key=GROQ_API_KEY,
     model_name="llama-3.3-70b-versatile",
     temperature=0
 )
 
+groq_client = Groq(api_key=GROQ_API_KEY)
+
 SENDER_EMAIL = st.secrets.get("SENDER_EMAIL", os.getenv("SENDER_EMAIL"))
 SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD", os.getenv("SENDER_PASSWORD"))
 USER_DB = "users.json"
 PDF_PATH = os.path.join("data", "raw_gazzete", "cghs_rates_2026.pdf")
 
-# --- 2. ADVANCED OCR & TEXT CLEANING ENGINE ---
-def preprocess_image_for_ocr(pil_img):
-    """Enhance image contrast, lighting, and resolution for clean OCR scanning."""
-    try:
-        # Convert to Grayscale
-        img = pil_img.convert('L')
-        # Autocontrast to optimize black/white threshold
-        img = ImageOps.autocontrast(img)
-        # Boost contrast by 2.0x
-        enhancer = ImageEnhance.Contrast(img)
-        img = enhancer.enhance(2.0)
-        # Upscale small images to improve Tesseract reading quality
-        w, h = img.size
-        if w < 1200:
-            scale = 1200 / w
-            img = img.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
-        return img
-    except Exception:
-        return pil_img
-
-def clean_ocr_text(text):
-    """Remove currency symbols and artifacts so numbers parse cleanly without corruption."""
-    if not text:
-        return ""
-    # Strip Rupee symbols and variations
-    cleaned = text.replace('₹', ' ')
-    cleaned = re.sub(r'(?i)\b(rs\.?|inr|rupees)\b', ' ', cleaned)
-    # Remove non-ASCII characters
-    cleaned = re.sub(r'[^\x00-\x7F]+', ' ', cleaned)
-    # Convert numbers with commas (e.g. 1,500 -> 1500, 12,000 -> 12000)
-    cleaned = re.sub(r'(\d+),(\d+)', r'\1\2', cleaned)
-    return cleaned
-
+# --- 2. VISION SCANNER (REPLACES TESSERACT OCR) ---
 def extract_clean_text_from_image(uploaded_file):
-    """Full scanning pipeline: load -> preprocess -> OCR -> clean text."""
-    img = Image.open(uploaded_file)
-    processed_img = preprocess_image_for_ocr(img)
-    raw_ocr = pytesseract.image_to_string(processed_img, config='--psm 6')
-    return clean_ocr_text(raw_ocr)
+    """
+    Uses Groq's Llama 3.2 Vision Model to accurately transcribe handwritten or printed bills.
+    Prevents currency symbol misreadings (e.g. ₹1,500 becoming 71,500).
+    """
+    try:
+        # Reset file pointer and encode image to Base64
+        uploaded_file.seek(0)
+        base64_image = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
+        
+        response = groq_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text", 
+                            "text": (
+                                "You are an expert medical bill scanner. Extract all text, line items, and prices from this bill/receipt. "
+                                "Read handwritten or typed text carefully. "
+                                "Pay strict attention to numbers and currency: do NOT confuse '₹' for '7' or '2'. "
+                                "Do NOT confuse '1,500' with '71,500'. Output ONLY the clean transcribed text of the document."
+                            )
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}"
+                            }
+                        }
+                    ]
+                }
+            ],
+            model="llama-3.2-11b-vision-preview",
+            temperature=0.0
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        st.error(f"Vision Scanner Error: {e}")
+        return ""
 
 # --- 3. CORE RAG & AUDIT LOGIC ---
 def get_pdf_context(query):
@@ -101,14 +98,15 @@ def get_pdf_context(query):
 def hospital_audit_logic(bill_text):
     pdf_context = get_pdf_context(bill_text)
     prompt = f"""You are a Senior Hospital Auditor. 
-EXTRACT every line item/procedure from the bill (Room Rent, ICU, MRI, Consultation, CBC, etc.).
-Extract the exact numerical billed price. Do NOT append extra digits or currency symbols.
+EXTRACT every service/procedure from the bill (Room Rent, ICU, MRI, Consultation, CBC, etc.).
+Extract the exact numerical billed price and the legal CGHS 2026 ceiling.
+Do NOT append extra leading or trailing digits.
 
 REFERENCE CGHS DATA: {pdf_context if pdf_context else "Use internal 2026 CGHS Hospital Price List caps."}
 TEXT TO AUDIT:
 {bill_text}
 
-Return ONLY a valid JSON with this exact structure:
+Return ONLY valid JSON with this exact structure:
 {{"hospital": "hospital_name", "audit_results": [{{"item": "item_name", "billed": 0.0, "legal": 0.0, "summary": "reasoning"}}]}}"""
 
     try:
@@ -121,8 +119,14 @@ Return ONLY a valid JSON with this exact structure:
     
 def insurance_audit_logic(txt):
     prompt = f"""You are a Senior Insurance Claims Auditor. 
-Analyze the medical billing and settlement text.
-Extract the Insurance Provider Name, line items, Billed amount, and Legal/Approved ceiling.
+Analyze the provided medical billing and insurance settlement text.
+
+1. Extract the Insurance Provider Name.
+2. Identify line items where the 'Billed' amount is higher than the 'Approved/Legal' amount.
+3. Categorize the discrepancy: 
+   - 'Policy Breach' (if hospital charged more than policy caps)
+   - 'Underpayment' (if insurer paid less than the legal cap)
+   - 'Non-Payable' (items excluded by IRDAI guidelines).
 
 Document Text: {txt}
 
@@ -151,7 +155,8 @@ def ai_audit_logic(bill_text):
     pdf_context = get_pdf_context(bill_text)
     prompt = f"""You are a Medical Fraud Investigator. 
 EXTRACT every medicine/item from the pharmacy receipt.
-Parse exact numerical billed price and CGHS legal cap.
+Calculate 'billed' (total amount on paper) and 'legal' (CGHS 2026 ceiling).
+Ignore MRP on the bill; use CGHS caps as the 'legal' price.
 
 REFERENCE DATA: {pdf_context if pdf_context else "Use internal 2026 Generic caps."}
 TEXT: {bill_text}
@@ -231,7 +236,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 7. MOBILE-FIRST GLASSMORPHISM UI ---
+# --- 7. MOBILE-FIRST UI STYLING ---
 st.set_page_config(
     page_title="Medi-Audit Pro", 
     layout="wide",
@@ -441,7 +446,7 @@ else:
         
         u_p = st.file_uploader("Upload Pharma Receipt", type=["jpg", "png", "jpeg"], key="pharma_upload")
         if u_p and st.button("🔍 EXECUTE AI FORENSIC SCAN", use_container_width=True):
-            with st.spinner("Processing Receipt..."):
+            with st.spinner("Processing Receipt via Groq Vision AI..."):
                 txt = extract_clean_text_from_image(u_p)
                 st.session_state.ai_result_data = ai_audit_logic(txt)
                 st.rerun()
@@ -497,7 +502,7 @@ else:
         
         u_h = st.file_uploader("Upload Hospital Bill/Invoice", type=["jpg", "png", "jpeg"], key="hosp_upload_main")
         if u_h and st.button("🚀 EXECUTE AI DEEP SCAN", use_container_width=True):
-            with st.spinner("Analyzing Hospital Invoice..."):
+            with st.spinner("Analyzing Hospital Invoice via Groq Vision AI..."):
                 txt = extract_clean_text_from_image(u_h)
                 st.session_state.ai_result_data = hospital_audit_logic(txt)
                 st.rerun()
@@ -553,7 +558,7 @@ else:
         
         u_i = st.file_uploader("Upload Settlement Letter / Policy", type=["jpg", "png", "jpeg"], key="ins_upload_main")
         if u_i and st.button("🚀 EXECUTE CLAIM AUDIT", use_container_width=True):
-            with st.spinner("Reconciling Settlement..."):
+            with st.spinner("Reconciling Settlement via Groq Vision AI..."):
                 txt = extract_clean_text_from_image(u_i)
                 st.session_state.ai_result_data = insurance_audit_logic(txt) 
                 st.rerun()

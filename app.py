@@ -22,14 +22,14 @@ else:
 
 load_dotenv()
 
-# Safely fetch API keys
+# Safely fetch API keys from Secrets or Environment
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
 
 if not GROQ_API_KEY:
     st.error("⚠️ GROQ_API_KEY is missing! Please configure it in Streamlit Secrets or your .env file.")
     st.stop()
 
-# Initialize LangChain ChatGroq and Native Groq Client
+# Initialize LangChain ChatGroq and Native Groq Client for Vision
 llm = ChatGroq(
     groq_api_key=GROQ_API_KEY,
     model_name="llama-3.3-70b-versatile",
@@ -73,6 +73,7 @@ def extract_clean_text_from_image(uploaded_file):
     Dual-Engine Scanner:
     1. Tries Groq Llama 3.2 Vision.
     2. Falls back to Enhanced PIL + Tesseract OCR if Vision fails.
+    Guarantees readable, clean text.
     """
     raw_text = ""
     
@@ -508,12 +509,12 @@ else:
                 st.session_state.raw_extracted_text = txt
                 st.session_state.ai_result_data = ai_audit_logic(txt)
                 
-        if st.session_state.scan_error:
-            st.error(st.session_state.scan_error)
+        if st.session_state.get("scan_error"):
+            st.error(st.session_state.get("scan_error"))
 
-        if st.session_state.raw_extracted_text:
+        if st.session_state.get("raw_extracted_text"):
             with st.expander("📄 View Extracted Text"):
-                st.code(st.session_state.raw_extracted_text)
+                st.code(st.session_state.get("raw_extracted_text"))
 
         if st.session_state.ai_result_data:
             res = st.session_state.ai_result_data
@@ -570,12 +571,12 @@ else:
                 st.session_state.raw_extracted_text = txt
                 st.session_state.ai_result_data = hospital_audit_logic(txt)
 
-        if st.session_state.scan_error:
-            st.error(st.session_state.scan_error)
+        if st.session_state.get("scan_error"):
+            st.error(st.session_state.get("scan_error"))
 
-        if st.session_state.raw_extracted_text:
+        if st.session_state.get("raw_extracted_text"):
             with st.expander("📄 View Extracted Text"):
-                st.code(st.session_state.raw_extracted_text)
+                st.code(st.session_state.get("raw_extracted_text"))
 
         if st.session_state.ai_result_data:
             res = st.session_state.ai_result_data
@@ -632,12 +633,12 @@ else:
                 st.session_state.raw_extracted_text = txt
                 st.session_state.ai_result_data = insurance_audit_logic(txt)
 
-        if st.session_state.scan_error:
-            st.error(st.session_state.scan_error)
+        if st.session_state.get("scan_error"):
+            st.error(st.session_state.get("scan_error"))
 
-        if st.session_state.raw_extracted_text:
+        if st.session_state.get("raw_extracted_text"):
             with st.expander("📄 View Extracted Text"):
-                st.code(st.session_state.raw_extracted_text)
+                st.code(st.session_state.get("raw_extracted_text"))
 
         if st.session_state.ai_result_data:
             res = st.session_state.ai_result_data

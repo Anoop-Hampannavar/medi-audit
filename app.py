@@ -60,8 +60,8 @@ def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
 def extract_clean_text_from_image(uploaded_file):
     """
     Dual-Engine Scanner with Explicit Diagnostics:
-    1. Groq Vision AI (Llama 3.2 Vision)
-    2. Enhanced PIL + Tesseract OCR
+    1. Groq Vision AI (qwen/qwen3.6-27b, meta-llama/llama-4-scout-17b-16e-instruct)
+    2. Enhanced PIL + Tesseract OCR Fallback
     """
     raw_text = ""
     error_logs = []
@@ -90,7 +90,8 @@ def extract_clean_text_from_image(uploaded_file):
             }
         ]
 
-        for vision_model in ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"]:
+        # Use current supported Groq vision models
+        for vision_model in ["qwen/qwen3.6-27b", "meta-llama/llama-4-scout-17b-16e-instruct"]:
             try:
                 response = groq_client.chat.completions.create(
                     messages=messages,

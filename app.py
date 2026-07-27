@@ -1,4 +1,5 @@
-
+import io
+from PIL import Image, ImageEnhance, ImageOps
 import streamlit as st
 import base64, json, os, random, smtplib, time, re, pandas as pd
 import fitz  # PyMuPDF for fast PDF search

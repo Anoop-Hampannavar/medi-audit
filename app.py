@@ -43,7 +43,7 @@ SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD", os.getenv("SENDER_PASSWORD")
 USER_DB = "users.json"
 PDF_PATH = os.path.join("data", "raw_gazzete", "cghs_rates_2026.pdf")
 
-# --- 2. ADVANCED FAIL-SAFE SCANNER ENGINE ---
+# --- 2. ADVANCED FAIL-SAFE SCANNER ENGINE (UNCHANGED) ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     """Resizes and compresses image to <2MB to prevent Groq API payload errors."""
     uploaded_file.seek(0)
@@ -158,7 +158,11 @@ def hospital_audit_logic(bill_text):
     pdf_context = get_pdf_context(bill_text)
     prompt = f"""You are a Senior Hospital Auditor. 
 EXTRACT every line item and service from the bill (Room Rent, ICU, MRI, Consultation, Blood Test, etc.).
-Extract the exact numerical billed price. Do NOT add extra digits or currency symbols.
+Extract the exact numerical billed price and legal CGHS ceiling.
+
+CRITICAL INSTRUCTIONS:
+- If a line item (e.g. MRI Brain Plain) is not explicitly found in PDF context, use standard CGHS benchmark rates (e.g., MRI Brain ~ 2500, Consultation ~ 350, CBC ~ 150).
+- Do NOT output 0.0 for legal ceiling unless it is completely unknown.
 
 REFERENCE CGHS CEILINGS: {pdf_context if pdf_context else "Use standard CGHS 2026 Price List caps."}
 BILL TEXT TO AUDIT:
@@ -223,7 +227,7 @@ def ai_audit_logic(bill_text):
     pdf_context = get_pdf_context(bill_text)
     prompt = f"""You are a Medical Fraud Investigator. 
 EXTRACT every medicine/item from the pharmacy receipt.
-Parse exact numerical billed price and CGHS legal cap.
+Parse exact numerical billed price and CGHS legal cap. If item cap is missing, use standard generic market rates.
 
 REFERENCE DATA: {pdf_context if pdf_context else "Use internal 2026 Generic caps."}
 TEXT: {bill_text}
@@ -537,7 +541,8 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
 
-                leak = max(0.0, round(b - l, 2))
+                # SAFE LEAKAGE MATH: If no legal cap or billed <= legal, leakage is ZERO
+                leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 total_p_leak += leak
                 
                 with st.expander(f"📦 {i['item']} | Leakage: ₹{leak:,.2f}"):
@@ -550,7 +555,8 @@ else:
                     ))
                     fig.update_layout(height=180, margin=dict(l=0, r=0, t=0, b=0))
                     st.plotly_chart(fig, use_container_width=True, key=f"pharma_chart_{idx}")
-                    st.write(f"**Verdict:** {i.get('summary', 'Overcharged')}")
+                    verdict_msg = i.get('summary', 'Overcharged') if leak > 0 else "Billed within acceptable limits or rate unspecified."
+                    st.write(f"**Verdict:** {verdict_msg}")
 
             st.divider()
             st.metric("Total Pharma Leakage", f"₹{total_p_leak:,.2f}")
@@ -610,7 +616,8 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
                 
-                leak = max(0.0, round(b - l, 2))
+                # SAFE LEAKAGE MATH: If no legal cap or billed <= legal, leakage is ZERO
+                leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 total_h_leak += leak
                 
                 with st.expander(f"📋 {i['item']} | Leakage: ₹{leak:,.2f}"):
@@ -623,7 +630,8 @@ else:
                     ))
                     fig.update_layout(height=180, margin=dict(l=0, r=0, t=0, b=0))
                     st.plotly_chart(fig, use_container_width=True, key=f"hosp_audit_chart_{idx}")
-                    st.error(f"**Verdict:** {i.get('summary', 'Discrepancy detected.')}")
+                    verdict_msg = i.get('summary', 'Discrepancy detected.') if leak > 0 else "Billed within acceptable CGHS limits."
+                    st.error(f"**Verdict:** {verdict_msg}") if leak > 0 else st.success(f"**Verdict:** {verdict_msg}")
 
             st.divider()
             st.metric("Total Hospital Leakage", f"₹{total_h_leak:,.2f}")
@@ -683,7 +691,8 @@ else:
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except: b, l = 0.0, 0.0
                 
-                leak = max(0.0, round(b - l, 2))
+                # SAFE LEAKAGE MATH
+                leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 total_i_leak += leak
                 
                 with st.expander(f"📑 {i['item']} | Shortfall: ₹{leak:,.2f}"):

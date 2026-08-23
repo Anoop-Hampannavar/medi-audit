@@ -372,7 +372,30 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 12. CORPORATE SKYLINE THEME WITH TOP NAVIGATION (CSS) ---
+# --- 12. DYNAMIC HEALTHCARE + TECH BACKGROUND MAPPER ---
+PAGE_BACKGROUNDS = {
+    "auth": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1920&q=80",
+    "📊 Executive Terminal": "https://images.unsplash.com/photo-1504813184591-01572f98c85f?auto=format&fit=crop&w=1920&q=80",
+    "🗺️ Fraud Radar": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1920&q=80",
+    "💊 Pharma Forensic": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1920&q=80",
+    "🛡️ Insurance Armor": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1920&q=80",
+    "🏥 Hospital Audit": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1920&q=80",
+    "⚖️ Legal Dispatch": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1920&q=80",
+    "💬 AI Copilot": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80"
+}
+
+def apply_page_theme(bg_url):
+    st.markdown(f"""
+    <style>
+    .stApp {{
+        background: linear-gradient(180deg, rgba(7, 13, 26, 0.86) 0%, rgba(11, 20, 38, 0.94) 100%),
+                    url('{bg_url}') no-repeat center center fixed !important;
+        background-size: cover !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- 13. CORE UI & STYLE DEFINITIONS (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Automated Healthcare Forensic Defense", 
     page_icon="🧬", layout="wide", initial_sidebar_state="collapsed"
@@ -396,16 +419,6 @@ header, [data-testid="stHeader"], [data-testid="stToolbar"], .stAppHeader, #Main
 
 [data-testid="stSidebar"] {
     display: none !important;
-}
-
-/* Deep Skyline Navy Background with Atmospheric Glows */
-.stApp {
-    background-color: #0b1426 !important;
-    background-image: 
-        radial-gradient(circle at 50% 10%, rgba(0, 163, 255, 0.22) 0%, transparent 50%),
-        radial-gradient(circle at 10% 90%, rgba(13, 27, 54, 0.95) 0%, transparent 60%),
-        linear-gradient(180deg, #070d1a 0%, #0d1a33 50%, #080f1e 100%) !important;
-    color: #ffffff !important;
 }
 
 .block-container {
@@ -476,16 +489,6 @@ h1, h2, h3, h4, h5, h6, p, .stMarkdown p {
 }
 
 /* Top Horizontal Department Navigation Bar */
-.top-nav-container {
-    background: rgba(13, 27, 54, 0.9);
-    border: 1px solid rgba(0, 163, 255, 0.25);
-    border-radius: 9999px;
-    padding: 8px 16px;
-    backdrop-filter: blur(20px);
-    margin-bottom: 26px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
 div[data-testid="stRadio"] > div[role="radiogroup"] {
     display: flex !important;
     flex-direction: row !important;
@@ -495,8 +498,8 @@ div[data-testid="stRadio"] > div[role="radiogroup"] {
 }
 
 div[data-testid="stRadio"] label {
-    background: rgba(18, 35, 70, 0.75) !important;
-    border: 1px solid rgba(0, 163, 255, 0.2) !important;
+    background: rgba(18, 35, 70, 0.8) !important;
+    border: 1px solid rgba(0, 163, 255, 0.25) !important;
     border-radius: 9999px !important;
     padding: 6px 16px !important;
     color: #ffffff !important;
@@ -507,7 +510,7 @@ div[data-testid="stRadio"] label {
 
 div[data-testid="stRadio"] label:hover {
     border-color: #00d2ff !important;
-    background: rgba(0, 102, 255, 0.3) !important;
+    background: rgba(0, 102, 255, 0.35) !important;
 }
 
 /* White Corporate Breakout Card */
@@ -577,18 +580,6 @@ div[data-testid="stRadio"] label:hover {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-}
-
-/* Metrics */
-.metric-pod-skyline {
-    background: rgba(14, 28, 56, 0.8);
-    border: 1px solid rgba(0, 163, 255, 0.2);
-    border-radius: 16px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
 }
 
 /* Expanders */
@@ -726,18 +717,9 @@ div.stButton > button:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# --- 13. AUTHENTICATION MODULE ---
+# --- 14. AUTHENTICATION MODULE ---
 if not st.session_state.logged_in:
-    # MEDICAL BILLING & CLINICAL ANALYTICS BACKGROUND FOR LOGIN & REGISTER
-    st.markdown("""
-    <style>
-    .stApp {
-        background: linear-gradient(180deg, rgba(7, 13, 26, 0.84) 0%, rgba(11, 20, 38, 0.94) 100%),
-                    url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed !important;
-        background-size: cover !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    apply_page_theme(PAGE_BACKGROUNDS["auth"])
 
     col_c1, col_c2, col_c3 = st.columns([1, 1.8, 1])
     with col_c2:
@@ -802,9 +784,9 @@ if not st.session_state.logged_in:
                             st.success("Password Updated! Please Sign In."); time.sleep(1); st.rerun()
                         else: st.error("Invalid token.")
 
-# --- 14. MAIN APPLICATION WORKSPACE ---
+# --- 15. MAIN APPLICATION WORKSPACE ---
 else:
-    # 1. TOP GLOWING DNA BRAND HEADER
+    # Top Glowing DNA Brand Header
     st.markdown(f"""
     <div class="dna-hero" style="padding-top: 10px; padding-bottom: 10px;">
         <div class="dna-logo-container">
@@ -815,7 +797,7 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. TOP HORIZONTAL NAVIGATION BAR
+    # Top Horizontal Navigation Bar
     col_nav, col_usr = st.columns([4.2, 1.2])
     with col_nav:
         dept = st.radio(
@@ -830,6 +812,9 @@ else:
             <span class="navy-pill-badge">🟢 LIVE: {ACTIVE_GROQ_MODEL.split('-')[0].upper()}</span>
         </div>
         """, unsafe_allow_html=True)
+
+    # DYNAMIC BACKGROUND INJECTION PER ACTIVE PAGE
+    apply_page_theme(PAGE_BACKGROUNDS.get(dept, PAGE_BACKGROUNDS["📊 Executive Terminal"]))
 
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
@@ -846,9 +831,8 @@ else:
         realtime_adjusted_total = st.session_state.total_leakage * 0.36 if st.session_state.total_leakage > 0 else 0.0
         realtime_pct_saved = 73.5 if st.session_state.total_leakage > 0 else 0.0
 
-    # --- 14.1 EXECUTIVE DASHBOARD ---
+    # --- 15.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
-        # White Breakout Section
         st.markdown("""
         <div class="white-breakout-card">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
@@ -1022,7 +1006,7 @@ else:
             if st.button("🚪 Sign Out Workspace", use_container_width=True):
                 st.session_state.logged_in = False; st.rerun()
 
-    # --- 14.2 FRAUD RADAR ---
+    # --- 15.2 FRAUD RADAR ---
     elif dept == "🗺️ Fraud Radar":
         st.markdown("""
         <h1 class="hero-statement-main">National Healthcare Price Radar.</h1>
@@ -1030,7 +1014,7 @@ else:
         """, unsafe_allow_html=True)
         st.map(fraud_map_data, size='fraud_intensity', color='#00d2ff')
 
-    # --- 14.3 PHARMA FORENSIC ---
+    # --- 15.3 PHARMA FORENSIC ---
     elif dept == "💊 Pharma Forensic":
         st.markdown("""
         <h1 class="hero-statement-main">We Audit Pharmacy Markups for You.</h1>
@@ -1140,7 +1124,7 @@ else:
             st.divider()
             st.metric("Statutory Benchmark Discount", f"₹{st.session_state.total_leakage:,.2f}")
 
-    # --- 14.4 HOSPITAL AUDIT ---
+    # --- 15.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
         st.markdown("""
         <h1 class="hero-statement-main">We Negotiate Hospital Bills for You.</h1>
@@ -1250,7 +1234,7 @@ else:
             st.divider()
             st.metric("Statutory Benchmark Discount", f"₹{st.session_state.total_leakage:,.2f}")
 
-    # --- 14.5 INSURANCE ARMOR ---
+    # --- 15.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
         st.markdown("""
         <h1 class="hero-statement-main">Reconcile Claim Shortfalls Instantly.</h1>
@@ -1347,7 +1331,7 @@ else:
             st.divider()
             st.metric("Statutory Benchmark Discount", f"₹{st.session_state.total_leakage:,.2f}")
 
-    # --- 14.6 LEGAL DISPATCH ---
+    # --- 15.6 LEGAL DISPATCH ---
     elif dept == "⚖️ Legal Dispatch":
         st.markdown("""
         <h1 class="hero-statement-main">Negotiation & Legal Notice Dispatch.</h1>
@@ -1436,7 +1420,7 @@ else:
         else:
             st.warning("⚠️ Complete an invoice or pharma audit first to generate legal dispute documentation.")
 
-    # --- 14.7 REGULATORY AI COPILOT ---
+    # --- 15.7 REGULATORY AI COPILOT ---
     elif dept == "💬 AI Copilot":
         st.markdown("""
         <h1 class="hero-statement-main">Medi-Audit Regulatory Assistant.</h1>

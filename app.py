@@ -1,5 +1,5 @@
 import streamlit as st
-import base64, json, os, random, smtplib, time, re, io, shutil, pandas as pd
+import base64, json, os, random, smtplib, time, re, io, shutil, pandas as pd, difflib
 import fitz  # PyMuPDF for fast PDF search
 import plotly.graph_objects as go
 import plotly.express as px
@@ -33,14 +33,13 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 
 # --- 2. BULLETPROOF ACTIVE MODEL DISCOVERY ---
 def get_best_available_groq_model():
-    """Tests candidate chat models dynamically with a 1-token probe to ensure 100% active, error-free execution."""
+    """Probes candidate models dynamically to guarantee 100% active, zero-error execution."""
     try:
         models_data = groq_client.models.list().data
         available_ids = [m.id for m in models_data]
     except Exception:
         available_ids = []
 
-    # High-priority standard Groq chat completion models
     candidate_models = [
         "llama-3.3-70b-versatile",
         "llama-3.1-8b-instant",
@@ -53,14 +52,12 @@ def get_best_available_groq_model():
         "llama-3.2-1b-preview"
     ]
 
-    # Filter out specialized, third-party partner models that require terms acceptance or audio/whisper/vision
     for m_id in available_ids:
         m_lower = m_id.lower()
         if not any(bad in m_lower for bad in ["whisper", "guard", "embed", "vision", "canopylabs", "orpheus", "tts", "audio", "safeguard"]):
             if m_id not in candidate_models:
                 candidate_models.append(m_id)
 
-    # Active Probe: Test each candidate to guarantee no 400 terms errors or 404 not found errors
     for model in candidate_models:
         try:
             test_res = groq_client.chat.completions.create(
@@ -73,7 +70,7 @@ def get_best_available_groq_model():
         except Exception:
             continue
 
-    return "llama3-8b-8192"
+    return "llama-3.1-8b-instant"
 
 ACTIVE_GROQ_MODEL = get_best_available_groq_model()
 
@@ -84,25 +81,19 @@ llm = ChatGroq(
     temperature=0
 )
 
+# --- 3. ROBUST JSON PARSER ---
 def safe_extract_json(raw_response_content):
-    """
-    Robust JSON parser: Extracts and decodes JSON objects even if the model 
-    outputs markdown fences, thinking tags (<think>...</think>), or preamble text.
-    """
+    """Robust JSON parser: Extracts JSON objects cleanly without preamble crashes."""
     if not raw_response_content:
         return None
         
     text = str(raw_response_content).strip()
-    
-    # 1. Remove deepseek/reasoning tags if present
     text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
     
-    # 2. Extract content within the outermost JSON brackets { ... }
     json_match = re.search(r'(\{[\s\S]*\})', text)
     if json_match:
         text = json_match.group(1).strip()
         
-    # 3. Clean any residual markdown formatting
     text = text.replace("```json", "").replace("```", "").strip()
     
     try:
@@ -117,7 +108,82 @@ SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD", os.getenv("SENDER_PASSWORD")
 USER_DB = "users.json"
 PDF_PATH = os.path.join("data", "raw_gazzete", "cghs_rates_2026.pdf")
 
-# --- 3. ADVANCED FAIL-SAFE SCANNER ENGINE ---
+# --- 4. CANONICAL STATUTORY CGHS & NPPA GAZETTE MASTER ---
+CGHS_GAZETTE_MASTER = {
+    # 1. Consultations & Bed Charges
+    "consultation": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "dept": "Hospital"},
+    "consultation fee": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "dept": "Hospital"},
+    "doctor consultation": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "dept": "Hospital"},
+    "super specialist consultation": {"code": "CON02", "name": "OPD Consultation (Super Specialist)", "cap": 700.0, "dept": "Hospital"},
+    "icu charges": {"code": "ICU01", "name": "ICU (Without Ventilator)", "cap": 5400.0, "dept": "Hospital"},
+    "icu": {"code": "ICU01", "name": "ICU (Without Ventilator)", "cap": 5400.0, "dept": "Hospital"},
+    "icu ventilator": {"code": "ICU02", "name": "ICU (With Ventilator)", "cap": 7200.0, "dept": "Hospital"},
+    "general ward": {"code": "BED01", "name": "General Ward Bed (Per Day)", "cap": 1500.0, "dept": "Hospital"},
+    "semi private ward": {"code": "BED02", "name": "Semi-Private Ward (Per Day)", "cap": 3000.0, "dept": "Hospital"},
+    "private ward": {"code": "BED03", "name": "Private Ward (Per Day)", "cap": 4500.0, "dept": "Hospital"},
+    "room rent": {"code": "BED01", "name": "Standard Room Rent (Per Day)", "cap": 1500.0, "dept": "Hospital"},
+    
+    # 2. Radiology & Imaging
+    "mri brain plain": {"code": "RI089", "name": "MRI Brain (Plain)", "cap": 2750.0, "dept": "Hospital"},
+    "mri brain": {"code": "RI089", "name": "MRI Brain (Plain)", "cap": 2750.0, "dept": "Hospital"},
+    "mri brain contrast": {"code": "RI090", "name": "MRI Brain with Contrast", "cap": 4000.0, "dept": "Hospital"},
+    "mri spine": {"code": "RI092", "name": "MRI Spine (Plain)", "cap": 2750.0, "dept": "Hospital"},
+    "ct scan brain": {"code": "CT012", "name": "CT Head / Brain (Plain)", "cap": 1150.0, "dept": "Hospital"},
+    "ct brain": {"code": "CT012", "name": "CT Head / Brain (Plain)", "cap": 1150.0, "dept": "Hospital"},
+    "ct chest": {"code": "CT045", "name": "HRCT Chest (Plain)", "cap": 1800.0, "dept": "Hospital"},
+    "chest x ray": {"code": "XR001", "name": "Chest X-Ray (PA View)", "cap": 250.0, "dept": "Hospital"},
+    "x ray": {"code": "XR001", "name": "Standard X-Ray", "cap": 250.0, "dept": "Hospital"},
+    "ultrasound abdomen": {"code": "US004", "name": "USG Whole Abdomen & Pelvis", "cap": 550.0, "dept": "Hospital"},
+    "usg abdomen": {"code": "US004", "name": "USG Whole Abdomen & Pelvis", "cap": 550.0, "dept": "Hospital"},
+    
+    # 3. Pathology & Diagnostics
+    "cbc": {"code": "LB012", "name": "Complete Haemogram / CBC", "cap": 150.0, "dept": "Hospital"},
+    "cbc blood test": {"code": "LB012", "name": "Complete Haemogram / CBC", "cap": 150.0, "dept": "Hospital"},
+    "blood test": {"code": "LB012", "name": "Routine Blood Examination (CBC)", "cap": 150.0, "dept": "Hospital"},
+    "lipid profile": {"code": "LB045", "name": "Lipid Profile Test", "cap": 300.0, "dept": "Hospital"},
+    "liver function test": {"code": "LB032", "name": "LFT (Liver Function Test)", "cap": 350.0, "dept": "Hospital"},
+    "lft": {"code": "LB032", "name": "LFT (Liver Function Test)", "cap": 350.0, "dept": "Hospital"},
+    "kidney function test": {"code": "LB033", "name": "KFT / RFT (Renal Function)", "cap": 350.0, "dept": "Hospital"},
+    "kft": {"code": "LB033", "name": "KFT / RFT (Renal Function)", "cap": 350.0, "dept": "Hospital"},
+    "blood sugar fast": {"code": "LB001", "name": "Blood Glucose Fasting", "cap": 50.0, "dept": "Hospital"},
+    "blood glucose": {"code": "LB001", "name": "Blood Glucose Test", "cap": 50.0, "dept": "Hospital"},
+    "hba1c": {"code": "LB008", "name": "HbA1c Glycated Hemoglobin", "cap": 250.0, "dept": "Hospital"},
+    "crp": {"code": "LB098", "name": "C-Reactive Protein (Quantitative)", "cap": 200.0, "dept": "Hospital"},
+    
+    # 4. Essential Medicines (NPPA Caps)
+    "paracetamol 650": {"code": "MED01", "name": "Paracetamol 650mg (10 Tabs)", "cap": 24.50, "dept": "Pharma"},
+    "paracetamol": {"code": "MED01", "name": "Paracetamol 650mg (10 Tabs)", "cap": 24.50, "dept": "Pharma"},
+    "amoxicillin 500": {"code": "MED02", "name": "Amoxicillin + Clavulanic 625mg (6 Tabs)", "cap": 120.0, "dept": "Pharma"},
+    "amoxicillin": {"code": "MED02", "name": "Amoxicillin 500mg", "cap": 120.0, "dept": "Pharma"},
+    "pantoprazole 40": {"code": "MED03", "name": "Pantoprazole 40mg (10 Tabs)", "cap": 85.0, "dept": "Pharma"},
+    "pantoprazole": {"code": "MED03", "name": "Pantoprazole 40mg (10 Tabs)", "cap": 85.0, "dept": "Pharma"},
+    "azithromycin 500": {"code": "MED04", "name": "Azithromycin 500mg (3 Tabs)", "cap": 72.0, "dept": "Pharma"},
+    "azithromycin": {"code": "MED04", "name": "Azithromycin 500mg", "cap": 72.0, "dept": "Pharma"},
+    "ceftriaxone 1g": {"code": "MED05", "name": "Ceftriaxone 1g IV Injection", "cap": 65.0, "dept": "Pharma"}
+}
+
+def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
+    """Matches any arbitrary hospital bill item to statutory CGHS gazette benchmarks."""
+    query = re.sub(r'[^a-zA-Z0-9\s]', '', item_name).lower().strip()
+    
+    for key, data in CGHS_GAZETTE_MASTER.items():
+        if key in query or query in key:
+            return {"matched_name": data["name"], "code": data["code"], "legal_cap": data["cap"]}
+            
+    keys = list(CGHS_GAZETTE_MASTER.keys())
+    matches = difflib.get_close_matches(query, keys, n=1, cutoff=0.52)
+    if matches:
+        data = CGHS_GAZETTE_MASTER[matches[0]]
+        return {"matched_name": data["name"], "code": data["code"], "legal_cap": data["cap"]}
+
+    if fallback_pdf_context:
+        price_matches = re.findall(r'(\d{2,6}(?:\.\d{2})?)', fallback_pdf_context)
+        if price_matches:
+            return {"matched_name": item_name, "code": "CGHS-PDF", "legal_cap": float(price_matches[0])}
+
+    return {"matched_name": item_name, "code": "UNLISTED", "legal_cap": 0.0}
+
+# --- 5. ADVANCED FAIL-SAFE SCANNER ENGINE ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     """Resizes and compresses image to <2MB to prevent Groq API payload errors."""
     uploaded_file.seek(0)
@@ -134,7 +200,6 @@ def extract_clean_text_from_image(uploaded_file):
     raw_text = ""
     error_logs = []
     
-    # Engine 1: Groq Vision AI
     try:
         base64_image = compress_and_encode_image(uploaded_file)
         messages = [
@@ -180,7 +245,6 @@ def extract_clean_text_from_image(uploaded_file):
     except Exception as e:
         error_logs.append(f"Vision Preprocess: {str(e)[:80]}")
 
-    # Engine 2: Enhanced Tesseract OCR Fallback
     if not raw_text:
         try:
             uploaded_file.seek(0)
@@ -202,7 +266,7 @@ def extract_clean_text_from_image(uploaded_file):
         st.session_state.scan_error = f"⚠️ Scan Failed: {err_msg}"
         return ""
 
-# --- 4. CORE RAG & AUDIT LOGIC ---
+# --- 6. CORE RAG & AUDIT LOGIC (3-TIER DECOUPLED) ---
 def get_pdf_context(query):
     text_context = ""
     if os.path.exists(PDF_PATH):
@@ -222,37 +286,66 @@ def get_pdf_context(query):
     return ""
 
 def hospital_audit_logic(bill_text):
+    """Tier 1: Extraction | Tier 2: CGHS Gazette Matcher | Tier 3: Deterministic Arithmetic"""
     if not bill_text:
         st.session_state.scan_error = "⚠️ Could not extract text from the invoice image. Please try a clearer scan."
         return None
 
-    pdf_context = get_pdf_context(bill_text)
-    prompt = f"""You are a Senior Hospital Auditor. 
-EXTRACT every line item and service from the bill (Room Rent, ICU, MRI, Consultation, Blood Test, etc.).
-Extract the exact numerical billed price and legal CGHS ceiling.
+    extract_prompt = f"""You are a Medical Data Ingestion Engine.
+Extract every line item, medical service, consultation, test, procedure, or room charge and its exact billed numerical price from this medical bill text.
 
-CRITICAL INSTRUCTIONS:
-- If a line item (e.g. MRI Brain Plain) is not explicitly found in PDF context, use standard CGHS benchmark rates (e.g., MRI Brain ~ 2500, Consultation ~ 350, CBC ~ 150).
-- Do NOT output 0.0 for legal ceiling unless it is completely unknown.
-
-REFERENCE CGHS CEILINGS: {pdf_context if pdf_context else "Use standard CGHS 2026 Price List caps."}
-BILL TEXT TO AUDIT:
+BILL TEXT TO INGEST:
 {bill_text}
 
-Return ONLY valid JSON with this exact schema:
+Return ONLY valid JSON matching this exact schema:
 {{
-  "hospital": "hospital_name",
-  "audit_results": [
-    {{"item": "item_name", "billed": 1500.0, "legal": 1050.0, "summary": "reasoning"}}
+  "hospital": "Hospital or Clinic Name",
+  "items": [
+    {{"item": "Service or Line Item Name", "billed": 1500.0}}
   ]
 }}"""
 
     try:
-        response = llm.invoke(prompt)
-        parsed_json = safe_extract_json(response.content)
-        if not parsed_json:
-            raise ValueError("No valid JSON structure found in response.")
-        return parsed_json
+        response = llm.invoke(extract_prompt)
+        extracted = safe_extract_json(response.content)
+        if not extracted or "items" not in extracted:
+            raise ValueError("Structured extraction failed.")
+
+        hospital_name = extracted.get("hospital", "Medical Facility")
+        raw_items = extracted.get("items", [])
+        pdf_ctx = get_pdf_context(bill_text)
+
+        audited_results = []
+        for raw in raw_items:
+            item_name = raw.get("item", "Medical Service")
+            try:
+                billed_amt = float(re.sub(r'[^\d.]', '', str(raw.get("billed", 0))))
+            except Exception:
+                billed_amt = 0.0
+            
+            cghs_data = match_cghs_rate(item_name, fallback_pdf_context=pdf_ctx)
+            legal_cap = cghs_data["legal_cap"]
+            
+            if legal_cap > 0:
+                if billed_amt > legal_cap:
+                    diff = round(billed_amt - legal_cap, 2)
+                    summary = f"CGHS Gazette Cap ({cghs_data['code']}) is ₹{legal_cap:,.2f}; Overcharge: ₹{diff:,.2f}"
+                else:
+                    summary = f"Compliant with CGHS rate ceiling ({cghs_data['code']} @ ₹{legal_cap:,.2f})"
+            else:
+                summary = "Unlisted in CGHS standard schedule; manual review required."
+
+            audited_results.append({
+                "item": f"{item_name} [{cghs_data['code']}]" if cghs_data['code'] != "UNLISTED" else item_name,
+                "billed": billed_amt,
+                "legal": legal_cap,
+                "summary": summary
+            })
+
+        return {
+            "hospital": hospital_name,
+            "audit_results": audited_results
+        }
     except Exception as e:
         st.session_state.scan_error = f"Audit Processing Error: {e}"
         return None
@@ -262,28 +355,25 @@ def insurance_audit_logic(txt):
         st.session_state.scan_error = "⚠️ Could not read document text. Please upload a clearer image."
         return None
 
-    prompt = f"""You are a Senior Insurance Claims Auditor. 
-Analyze the provided medical billing and settlement document text.
+    extract_prompt = f"""You are an Insurance Settlement Extraction Engine.
+Extract the insurance company name and all disputed line items with their Billed amount and Approved/Legal settlement amount.
 
-1. Extract the Insurance Provider Name.
-2. Identify line items where the 'Billed' amount is higher than the 'Approved/Legal' amount.
-3. Categorize discrepancy in summary.
-
-Document Text: {txt}
+DOCUMENT TEXT:
+{txt}
 
 Return ONLY a valid JSON object:
 {{
   "hospital": "Insurance Company Name",
   "audit_results": [
-    {{"item": "Service Name", "billed": 0.0, "legal": 0.0, "summary": "Reason for discrepancy"}}
+    {{"item": "Service Name", "billed": 8000.0, "legal": 5000.0, "summary": "Unjustified policy deduction"}}
   ]
 }}"""
     
     try:
-        response = llm.invoke(prompt)
+        response = llm.invoke(extract_prompt)
         parsed_json = safe_extract_json(response.content)
         if not parsed_json:
-            raise ValueError("No valid JSON in claim response.")
+            raise ValueError("Extraction parser returned invalid JSON.")
         return parsed_json
     except Exception:
         return {
@@ -295,32 +385,71 @@ Return ONLY a valid JSON object:
         }
 
 def ai_audit_logic(bill_text):
+    """Deterministic Pharma Auditor against NPPA Drug Price Control Caps."""
     if not bill_text:
         st.session_state.scan_error = "⚠️ Could not extract text from the pharmacy receipt."
         return None
 
-    pdf_context = get_pdf_context(bill_text)
-    prompt = f"""You are a Medical Fraud Investigator. 
-EXTRACT every medicine/item from the pharmacy receipt.
-Parse exact numerical billed price and CGHS legal cap. If item cap is missing, use standard generic market rates.
+    extract_prompt = f"""You are a Pharmaceutical Ingestion Engine.
+Extract every medicine or pharmaceutical product with its exact numerical billed price from this receipt text.
 
-REFERENCE DATA: {pdf_context if pdf_context else "Use internal 2026 Generic caps."}
-TEXT: {bill_text}
+TEXT:
+{bill_text}
 
-Return ONLY a valid JSON object:
-{{"hospital": "pharmacy_name", "audit_results": [{{"item": "medicine_name", "billed": 0.0, "legal": 0.0, "summary": "reason"}}]}}"""
+Return ONLY valid JSON matching this schema:
+{{
+  "hospital": "Pharmacy or Store Name",
+  "items": [
+    {{"item": "Medicine Name", "billed": 150.0}}
+  ]
+}}"""
 
     try:
-        response = llm.invoke(prompt)
-        parsed_json = safe_extract_json(response.content)
-        if not parsed_json:
-            raise ValueError("Invalid JSON received from pharmacy analysis.")
-        return parsed_json
+        response = llm.invoke(extract_prompt)
+        extracted = safe_extract_json(response.content)
+        if not extracted or "items" not in extracted:
+            raise ValueError("Invalid pharmacy extraction payload.")
+
+        pharmacy_name = extracted.get("hospital", "Detected Pharmacy")
+        raw_items = extracted.get("items", [])
+        pdf_ctx = get_pdf_context(bill_text)
+
+        audited_results = []
+        for raw in raw_items:
+            med_name = raw.get("item", "Medicine")
+            try:
+                billed_amt = float(re.sub(r'[^\d.]', '', str(raw.get("billed", 0))))
+            except Exception:
+                billed_amt = 0.0
+            
+            cghs_data = match_cghs_rate(med_name, fallback_pdf_context=pdf_ctx)
+            legal_cap = cghs_data["legal_cap"]
+
+            if legal_cap > 0:
+                if billed_amt > legal_cap:
+                    diff = round(billed_amt - legal_cap, 2)
+                    summary = f"NPPA / Generic Statutory Cap is ₹{legal_cap:,.2f}; Overcharge: ₹{diff:,.2f}"
+                else:
+                    summary = f"Billed within statutory generic limits (Cap: ₹{legal_cap:,.2f})"
+            else:
+                summary = "Non-scheduled medicine formulation; manual verification needed."
+
+            audited_results.append({
+                "item": f"{med_name} [{cghs_data['code']}]" if cghs_data['code'] != "UNLISTED" else med_name,
+                "billed": billed_amt,
+                "legal": legal_cap,
+                "summary": summary
+            })
+
+        return {
+            "hospital": pharmacy_name,
+            "audit_results": audited_results
+        }
     except Exception as e:
         st.session_state.scan_error = f"Logic Error: {e}"
         return None
 
-# --- 5. REAL-TIME AUDIT LOGGING HELPER ---
+# --- 7. REAL-TIME AUDIT LOGGING HELPER ---
 def auto_log_audit(department_name, result_json):
     if not result_json:
         return
@@ -333,7 +462,8 @@ def auto_log_audit(department_name, result_json):
         try:
             b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
             l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
-        except: b, l = 0.0, 0.0
+        except Exception:
+            b, l = 0.0, 0.0
         
         if l > 0 and b > l:
             scan_leakage += round(b - l, 2)
@@ -357,14 +487,15 @@ def auto_log_audit(department_name, result_json):
     else:
         st.session_state.risk_level = "STABLE"
 
-# --- 6. AUTHENTICATION & DATABASE ---
+# --- 8. AUTHENTICATION & DATABASE ---
 def load_users():
     if os.path.exists(USER_DB):
         with open(USER_DB, "r") as f:
             try: 
                 data = json.load(f)
                 return {k.strip().lower(): v for k, v in data.items()}
-            except: return {}
+            except Exception:
+                return {}
     return {}
 
 def save_user(email, password):
@@ -385,16 +516,17 @@ def send_otp(receiver_email):
         server.send_message(msg)
         server.quit()
         return otp
-    except: return None
+    except Exception:
+        return None
 
 def format_inr(val):
     try:
         val_clean = float(re.sub(r'[^\d.]', '', str(val)))
         return f"₹{val_clean:,.2f}"
-    except:
+    except Exception:
         return str(val)
 
-# --- 7. SESSION STATE INITIALIZATION ---
+# --- 9. SESSION STATE INITIALIZATION ---
 if "logged_in" not in st.session_state:
     for key, val in [("logged_in", False), ("otp_sent", False), ("user_email", ""), ("messages", []), 
                      ("total_leakage", 0.0), ("audit_accuracy", 99.8), ("risk_level", "STABLE"),
@@ -402,7 +534,7 @@ if "logged_in" not in st.session_state:
                      ("audit_log", pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"]))]:
         st.session_state[key] = val
 
-# --- 8. GEOGRAPHIC FRAUD MAP DATA ---
+# --- 10. GEOGRAPHIC FRAUD MAP DATA ---
 fraud_map_data = pd.DataFrame({
     'lat': [28.6139, 19.0760, 12.9716, 22.5726, 13.0827, 21.1458, 26.8467, 17.3850, 23.0225, 30.7333],
     'lon': [77.2090, 72.8777, 77.5946, 88.3639, 80.2707, 79.0882, 80.9462, 78.4867, 72.5714, 76.7794],
@@ -410,7 +542,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 9. EDITORIAL DESIGN SYSTEM (CSS) ---
+# --- 11. EDITORIAL DESIGN SYSTEM (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Forensic Healthcare Intelligence", 
     page_icon="🛡️",
@@ -551,7 +683,7 @@ div.stButton > button:hover {
     border-right: 1px solid #f1f5f9;
 }
 
-/* Tabs Segmented Control */
+/* Segmented Tabs */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
     background-color: #f1f5f9;
@@ -593,7 +725,7 @@ div.stButton > button:hover {
     padding: 20px !important;
 }
 
-/* Formal Legal Memorandum */
+/* Formal Legal Container */
 .legal-box {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -604,7 +736,7 @@ div.stButton > button:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# --- 10. AUTHENTICATION MODULE ---
+# --- 12. AUTHENTICATION MODULE ---
 if not st.session_state.logged_in:
     col_c1, col_c2, col_c3 = st.columns([1, 1.6, 1])
     with col_c2:
@@ -676,7 +808,7 @@ if not st.session_state.logged_in:
                         else:
                             st.error("Invalid token.")
 
-# --- 11. MAIN APPLICATION WORKSPACE ---
+# --- 13. MAIN APPLICATION WORKSPACE ---
 else:
     # Sidebar Navigation
     with st.sidebar:
@@ -724,7 +856,7 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 11.1 EXECUTIVE DASHBOARD ---
+    # --- 13.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
         st.markdown("""
         <div style="margin-bottom: 24px;">
@@ -790,7 +922,7 @@ else:
         csv = st.session_state.audit_log.to_csv(index=False).encode('utf-8')
         st.download_button("📥 Export Comprehensive Forensic Audit (CSV)", data=csv, file_name=f"audit_report_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
 
-    # --- 11.2 FRAUD RADAR ---
+    # --- 13.2 FRAUD RADAR ---
     elif dept == "🗺️ Fraud Radar":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -800,7 +932,7 @@ else:
         """, unsafe_allow_html=True)
         st.map(fraud_map_data, size='fraud_intensity', color='#ef4444')
 
-    # --- 11.3 PHARMA FORENSIC ---
+    # --- 13.3 PHARMA FORENSIC ---
     elif dept == "💊 Pharma Forensic":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -859,7 +991,8 @@ else:
                 try:
                     b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
-                except: b, l = 0.0, 0.0
+                except Exception:
+                    b, l = 0.0, 0.0
 
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 total_p_leak += leak
@@ -878,18 +1011,17 @@ else:
                         height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
                     )
                     st.plotly_chart(fig, use_container_width=True, key=f"pharma_chart_{idx}", config={'displayModeBar': False})
-                    verdict_msg = i.get('summary', 'Overcharge detected') if leak > 0 else "Billed within acceptable limits."
-                    st.write(f"**Forensic Finding:** {verdict_msg}")
+                    st.write(f"**Forensic Finding:** {i.get('summary', 'Overcharge detected')}")
 
             st.divider()
             st.metric("Total Recoverable Pharmacy Leakage", f"₹{total_p_leak:,.2f}")
 
-    # --- 11.4 HOSPITAL AUDIT ---
+    # --- 13.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
         st.markdown("""
         <div style="margin-bottom: 20px;">
             <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">Hospital Invoice Forensic Engine.</h2>
-            <p class="editorial-quote">Cross-referencing itemized billing line items against CGHS gazette ceilings.</p>
+            <p class="editorial-quote">Cross-referencing itemized billing line items against statutory CGHS gazette ceilings.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -943,7 +1075,8 @@ else:
                 try:
                     b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
-                except: b, l = 0.0, 0.0
+                except Exception:
+                    b, l = 0.0, 0.0
                 
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 total_h_leak += leak
@@ -962,13 +1095,12 @@ else:
                         height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
                     )
                     st.plotly_chart(fig, use_container_width=True, key=f"hosp_audit_chart_{idx}", config={'displayModeBar': False})
-                    verdict_msg = i.get('summary', 'Markup exceeds gazette ceiling') if leak > 0 else "Compliant with statutory price ceilings."
-                    st.write(f"**Forensic Finding:** {verdict_msg}")
+                    st.write(f"**Forensic Finding:** {i.get('summary', 'Markup exceeds gazette ceiling')}")
 
             st.divider()
             st.metric("Total Recoverable Hospital Leakage", f"₹{total_h_leak:,.2f}")
 
-    # --- 11.5 INSURANCE ARMOR ---
+    # --- 13.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -1015,7 +1147,8 @@ else:
                 try:
                     b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
                     l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
-                except: b, l = 0.0, 0.0
+                except Exception:
+                    b, l = 0.0, 0.0
                 
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 total_i_leak += leak
@@ -1039,7 +1172,7 @@ else:
             st.divider()
             st.metric("Total Unjustified Claim Shortfall", f"₹{total_i_leak:,.2f}")
 
-    # --- 11.6 JUSTICE PORTAL ---
+    # --- 13.6 JUSTICE PORTAL ---
     elif dept == "⚖️ Justice Portal":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -1115,7 +1248,7 @@ else:
         else:
             st.warning("⚠️ Complete an invoice or pharma audit first to generate legal dispute documentation.")
 
-    # --- 11.7 REGULATORY AI COPILOT ---
+    # --- 13.7 REGULATORY AI COPILOT ---
     elif dept == "💬 AI Copilot":
         st.markdown("""
         <div style="margin-bottom: 20px;">

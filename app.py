@@ -21,11 +21,10 @@ else:
 
 load_dotenv()
 
-# Safely fetch API keys
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
 
 if not GROQ_API_KEY:
-    st.error("⚠️ GROQ_API_KEY is missing! Please configure it in Streamlit Secrets or your .env file.")
+    st.error("⚠️ GROQ_API_KEY is missing! Configure it in Streamlit Secrets or your .env file.")
     st.stop()
 
 groq_client = Groq(api_key=GROQ_API_KEY)
@@ -365,350 +364,6 @@ if "logged_in" not in st.session_state:
                      ("audit_log", pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"]))]:
         st.session_state[key] = val
 
-# --- 11. GEOGRAPHIC FRAUD MAP DATA ---
-fraud_map_data = pd.DataFrame({
-    'lat': [28.6139, 19.0760, 12.9716, 22.5726, 13.0827, 21.1458, 26.8467, 17.3850, 23.0225, 30.7333],
-    'lon': [77.2090, 72.8777, 77.5946, 88.3639, 80.2707, 79.0882, 80.9462, 78.4867, 72.5714, 76.7794],
-    'fraud_intensity': [95, 88, 76, 92, 65, 80, 85, 70, 60, 55],
-    'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
-})
-
-# --- 12. ENHANCED DESIGN SYSTEM (CSS) ---
-st.set_page_config(
-    page_title="Medi-Audit — Automated Healthcare Forensic Defense", 
-    page_icon="🛡️", layout="wide", initial_sidebar_state="expanded"
-)
-
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
-
-html, body, [class*="css"], .stMarkdown {
-    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif !important;
-}
-
-.stApp {
-    background: radial-gradient(circle at 10% 20%, rgba(238, 242, 255, 0.7) 0%, rgba(248, 250, 255, 1) 90%);
-    color: #0f172a;
-}
-
-#MainMenu, header, footer {visibility: hidden; height: 0;}
-.block-container {
-    padding-top: 1.2rem !important;
-    padding-bottom: 4rem !important;
-    max-width: 1260px !important;
-}
-
-/* Animations */
-@keyframes floatSlow {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-8px); }
-    100% { transform: translateY(0px); }
-}
-
-@keyframes pulseGlow {
-    0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
-    70% { box-shadow: 0 0 0 12px rgba(79, 70, 229, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
-}
-
-@keyframes shimmerEffect {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
-
-/* Live Ticker */
-.ma-ticker-bar {
-    background: linear-gradient(90deg, #4f46e5, #7c3aed, #4f46e5);
-    background-size: 200% auto;
-    animation: shimmerEffect 6s linear infinite;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 7px 20px;
-    border-radius: 9999px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 18px;
-    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25);
-}
-
-/* Navbar */
-.ma-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid #e0e7ff;
-    border-radius: 9999px;
-    padding: 12px 28px;
-    margin-bottom: 24px;
-    box-shadow: 0 10px 30px -5px rgba(79, 70, 229, 0.06);
-}
-
-.ma-logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 800;
-    font-size: 22px;
-    color: #4f46e5;
-    letter-spacing: -0.04em;
-}
-
-.ma-pill {
-    background: #eef2ff;
-    color: #4338ca;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 6px 14px;
-    border-radius: 9999px;
-    border: 1px solid #c7d2fe;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    animation: pulseGlow 2.5s infinite;
-}
-
-/* Typography */
-.ma-hero-title {
-    font-size: 46px !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.04em !important;
-    color: #1e1b4b !important;
-    line-height: 1.15 !important;
-    margin-bottom: 12px !important;
-}
-
-.ma-hero-sub {
-    font-size: 17px !important;
-    color: #475569 !important;
-    line-height: 1.5 !important;
-    margin-bottom: 24px !important;
-}
-
-/* Floating Card */
-.ma-bill-card {
-    background: #ffffff;
-    border: 1px solid #e0e7ff;
-    border-radius: 24px;
-    padding: 28px;
-    box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.15);
-    position: relative;
-    overflow: hidden;
-    animation: floatSlow 5s ease-in-out infinite;
-    transition: transform 0.3s ease;
-}
-.ma-bill-card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 6px;
-    background: linear-gradient(90deg, #4f46e5, #818cf8, #c084fc);
-}
-
-.ma-bill-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 18px;
-    border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 14px;
-}
-
-.ma-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    font-size: 14px;
-}
-.ma-row-label { color: #64748b; font-weight: 500; }
-.ma-row-val { font-weight: 700; color: #0f172a; }
-.ma-discount { color: #e11d48; font-weight: 700; }
-
-.ma-total-box {
-    margin-top: 18px;
-    padding: 16px;
-    background: #f8faff;
-    border: 1px solid #e0e7ff;
-    border-radius: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.ma-badge-savings {
-    background: #4f46e5;
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 800;
-    padding: 8px 18px;
-    border-radius: 9999px;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-}
-
-/* How It Works Card */
-.step-card {
-    background: #ffffff;
-    border: 1px solid #e0e7ff;
-    border-radius: 20px;
-    padding: 22px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%;
-}
-.step-card:hover {
-    transform: translateY(-5px);
-    border-color: #818cf8;
-    box-shadow: 0 20px 35px -10px rgba(79, 70, 229, 0.12);
-}
-.step-number {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 12px;
-    background: #eef2ff;
-    color: #4f46e5;
-    font-weight: 800;
-    font-size: 15px;
-    margin-bottom: 12px;
-}
-
-/* Live Terminal Log Box */
-.terminal-box {
-    background: #0f172a;
-    color: #38bdf8;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    border-radius: 16px;
-    padding: 20px;
-    line-height: 1.7;
-    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-    border: 1px solid #1e293b;
-    margin: 16px 0;
-}
-
-/* Buttons */
-div.stButton > button {
-    background: #4f46e5 !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 9999px !important;
-    padding: 0.8rem 1.8rem !important;
-    font-weight: 700 !important;
-    font-size: 0.95rem !important;
-    letter-spacing: -0.01em !important;
-    box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4) !important;
-    transition: all 0.2s ease !important;
-    width: 100% !important;
-}
-div.stButton > button:hover {
-    background: #4338ca !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.5) !important;
-    color: #ffffff !important;
-}
-
-[data-testid="stSidebar"] {
-    background-color: #ffffff !important;
-    border-right: 1px solid #e0e7ff;
-}
-
-.stTabs [data-baseweb="tab-list"] {
-    gap: 8px;
-    background-color: #eef2ff;
-    padding: 6px;
-    border-radius: 9999px;
-    border: 1px solid #e0e7ff;
-}
-.stTabs [data-baseweb="tab"] {
-    height: 40px;
-    border-radius: 9999px;
-    color: #4338ca;
-    font-weight: 700;
-    font-size: 13px;
-    border: none;
-    background-color: transparent;
-    padding: 0 18px;
-}
-.stTabs [aria-selected="true"] {
-    background-color: #4f46e5 !important;
-    color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
-}
-</style>
-""", unsafe_allow_html=True)
-
-# --- 13. AUTHENTICATION MODULE ---
-if not st.session_state.logged_in:
-    col_c1, col_c2, col_c3 = st.columns([1, 1.6, 1])
-    with col_c2:
-        st.markdown("""
-        <div style='text-align: center; padding: 40px 0 20px 0;'>
-            <div class="ma-ticker-bar">
-                ⚡ SECTION 2(47) CPA & CGHS 2026 STATUTORY ENGINE ACTIVE
-            </div>
-            <div class="ma-logo" style="justify-content: center; font-size: 34px; margin-bottom: 6px;">
-                <span>Medi-Audit</span><span style="color:#0f172a; font-weight:400;">Pro</span>
-            </div>
-            <p class="ma-hero-title" style="font-size: 28px !important; margin-bottom: 6px;">Never overpay for medical care again.</p>
-            <p class="ma-hero-sub" style="font-size: 15px !important;">Automated statutory verification against CGHS 2026 Gazettes and NPPA DPCO Ceilings.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        with st.container(border=True):
-            t1, t2, t3 = st.tabs(["Sign In", "Get Started Free", "Recovery"])
-            
-            with t1:
-                l_email = st.text_input("Work Email Address", key="login_email", placeholder="auditor@healthcare.in")
-                l_pass = st.text_input("Access Password", type="password", key="login_pass", placeholder="••••••••")
-                st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-                if st.button("Enter Medi-Audit Workspace →", use_container_width=True, type="primary"):
-                    ud = load_users()
-                    if l_email.strip().lower() in ud and ud[l_email.strip().lower()] == l_pass:
-                        st.session_state.logged_in, st.session_state.user_email = True, l_email
-                        st.rerun()
-                    else: st.error("Invalid credentials provided.")
-
-            with t2:
-                r_email = st.text_input("Enter Email for Security Code", key="reg_email", placeholder="name@domain.com")
-                if not st.session_state.otp_sent:
-                    if st.button("Send Security Code →", use_container_width=True):
-                        st.session_state.generated_otp = send_otp(r_email)
-                        if st.session_state.generated_otp:
-                            st.session_state.otp_sent = True; st.rerun()
-                        else: st.error("Email service error. Check SMTP settings.")
-                else:
-                    i_otp = st.text_input("6-Digit Verification Token", key="reg_otp")
-                    r_pass = st.text_input("Create Master Password", type="password", key="reg_pass")
-                    if st.button("Activate Free Account →", use_container_width=True):
-                        if i_otp == st.session_state.generated_otp:
-                            save_user(r_email, r_pass); st.session_state.otp_sent = False; st.rerun()
-                        else: st.error("Incorrect verification token.")
-
-            with t3:
-                f_email = st.text_input("Registered Email", key="forgot_email")
-                if "forgot_otp_sent" not in st.session_state: st.session_state.forgot_otp_sent = False
-                if not st.session_state.forgot_otp_sent:
-                    if st.button("Send Password Reset Link →", use_container_width=True):
-                        ud = load_users()
-                        if f_email.strip().lower() in ud:
-                            st.session_state.generated_otp = send_otp(f_email)
-                            st.session_state.forgot_otp_sent = True; st.rerun()
-                        else: st.error("Email address not found.")
-                else:
-                    f_otp = st.text_input("Verification Code", key="f_otp")
-                    new_pass = st.text_input("Enter New Password", type="password", key="f_new_pass")
-                    if st.button("Update & Sign In →", use_container_width=True, type="primary"):
-                        if f_otp == st.session_state.generated_otp:
-                            save_user(f_email, new_pass); st.session_state.forgot_otp_sent = False
-                            st.success("Password Updated! Please Sign In."); time.sleep(1); st.rerun()
-                        else: st.error("Invalid token.")
-
 # --- 14. MAIN APPLICATION WORKSPACE ---
 else:
     with st.sidebar:
@@ -742,7 +397,6 @@ else:
         if st.button("🚪 Sign Out", use_container_width=True):
             st.session_state.logged_in = False; st.rerun()
 
-    # Top Navbar
     st.markdown(f"""
     <div class="ma-nav">
         <div class="ma-logo">
@@ -757,7 +411,6 @@ else:
 
     # --- 14.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
-        # 1-CLICK INSTANT DEMO BAR (ZERO FRICTION FOR JUDGES/USERS)
         st.markdown("##### ⚡ Quick Load Verified Demo Bills:")
         col_demo1, col_demo2, col_demo3 = st.columns(3)
         with col_demo1:
@@ -847,7 +500,6 @@ else:
 
         st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         
-        # HOW IT WORKS PIPELINE
         st.markdown("### How Medi-Audit Works")
         st.caption("A 4-step deterministic pipeline bridging Vision OCR, statutory gazette RAG, and legal consumer enforcement.")
         
@@ -947,7 +599,6 @@ else:
             adjusted_total = orig_total - st.session_state.total_leakage
             pct_saved = (st.session_state.total_leakage / orig_total * 100) if orig_total > 0 else 0
             
-            # LIVE FORENSIC TERMINAL LOG
             st.markdown(f"""
             <div class="terminal-box">
                 > [FORENSIC INGESTION COMPLETE] Detected Entity: {pharmacy}<br>

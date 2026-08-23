@@ -31,7 +31,7 @@ if not GROQ_API_KEY:
 # Initialize LangChain ChatGroq and Native Groq Client for Vision
 llm = ChatGroq(
     groq_api_key=GROQ_API_KEY,
-    model_name="llama-3.3-70b-versatile",
+    model_name="llama-3.1-70b-versatile"
     temperature=0
 )
 

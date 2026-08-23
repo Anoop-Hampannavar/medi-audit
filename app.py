@@ -1,4 +1,3 @@
-
 import streamlit as st
 import base64, json, os, random, smtplib, time, re, io, shutil, pandas as pd, difflib
 import fitz  # PyMuPDF for fast multi-PDF search
@@ -373,10 +372,10 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 12. MEDICALMAGIC OBSIDIAN CYBER-HEALTH THEME (CSS) ---
+# --- 12. PURE OBSIDIAN CYBER-HEALTH UI/UX (CSS) ---
 st.set_page_config(
-    page_title="MedicalMagic Medi-Audit — Intelligent Healthcare Defense", 
-    page_icon="💙", layout="wide", initial_sidebar_state="expanded"
+    page_title="Medi-Audit — Automated Healthcare Forensic Defense", 
+    page_icon="🛡️", layout="wide", initial_sidebar_state="expanded"
 )
 
 st.markdown("""
@@ -387,7 +386,7 @@ html, body, [class*="css"], .stMarkdown {
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif !important;
 }
 
-/* Deep Obsidian Jet Black Background */
+/* Deep Pure Obsidian Black Background */
 .stApp {
     background: #080a0f !important;
     background-image: 
@@ -404,8 +403,8 @@ html, body, [class*="css"], .stMarkdown {
     max-width: 1280px !important;
 }
 
-/* MedicalMagic Top Bar */
-.mm-top-bar {
+/* Top Status Bar */
+.dark-top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -417,7 +416,7 @@ html, body, [class*="css"], .stMarkdown {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
-.mm-logo {
+.brand-badge {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -427,9 +426,9 @@ html, body, [class*="css"], .stMarkdown {
     letter-spacing: -0.03em;
 }
 
-.mm-sun-icon {
-    width: 28px;
-    height: 28px;
+.status-dot {
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     background: radial-gradient(circle, #00d2ff 0%, #0066ff 100%);
     display: inline-flex;
@@ -438,111 +437,39 @@ html, body, [class*="css"], .stMarkdown {
     box-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
 }
 
-/* Pill Organ Selectors */
-.organ-pill-bar {
-    display: flex;
-    gap: 8px;
+/* Dark Minimal Hero Glass Container */
+.cyber-panel {
     background: #11141d;
-    padding: 6px 10px;
-    border-radius: 9999px;
     border: 1px solid #1f2633;
-    overflow-x: auto;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     margin-bottom: 20px;
 }
 
-.organ-pill {
-    background: #181d28;
-    color: #94a3b8;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 6px 16px;
-    border-radius: 9999px;
-    border: 1px solid #232a3b;
-    white-space: nowrap;
-}
-.organ-pill.active {
-    background: #0066ff;
-    color: #ffffff;
-    box-shadow: 0 0 14px rgba(0, 102, 255, 0.6);
-    border-color: #3b82f6;
-}
-
-/* 3D Medical Holographic Hero Container */
-.mm-hero-card {
-    background: #11141d;
-    border: 1px solid #1f2633;
-    border-radius: 28px;
-    padding: 28px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-    height: 100%;
-}
-
-.mm-hero-card::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, #00d2ff, transparent);
-}
-
-/* Vibrant Blue Health Record Cards */
-.blue-action-card {
+/* Vibrant Solid Action Cards */
+.blue-card {
     background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
-    border-radius: 24px;
-    padding: 22px 24px;
+    border-radius: 20px;
+    padding: 20px 22px;
     color: #ffffff;
     box-shadow: 0 15px 35px rgba(0, 102, 255, 0.35);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 14px;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.blue-action-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 20px 40px rgba(0, 102, 255, 0.5);
-}
-
-.card-avatar-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
     margin-bottom: 14px;
 }
-.card-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 2px solid #ffffff;
-    object-fit: cover;
-}
 
-/* Dark Vital Metric Pod */
-.vital-pod {
+/* Clean Dark Pods */
+.metric-pod {
     background: #151924;
     border: 1px solid #1f2633;
-    border-radius: 20px;
+    border-radius: 18px;
     padding: 16px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
 }
-.vital-icon-circle {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: #1e2433;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #00d2ff;
-}
 
-/* Buttons */
+/* Primary Electric Blue Buttons */
 div.stButton > button {
     background: #0066ff !important;
     color: #ffffff !important;
@@ -595,7 +522,7 @@ div.stButton > button:hover {
 .streamlit-expanderHeader {
     background-color: #11141d !important;
     border: 1px solid #1f2633 !important;
-    border-radius: 18px !important;
+    border-radius: 16px !important;
     color: #ffffff !important;
     font-weight: 700 !important;
 }
@@ -603,8 +530,8 @@ div.stButton > button:hover {
     background-color: #0c0e15 !important;
     border: 1px solid #1f2633 !important;
     border-top: none !important;
-    border-bottom-left-radius: 18px;
-    border-bottom-right-radius: 18px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -616,11 +543,11 @@ if not st.session_state.logged_in:
         st.markdown("""
         <div style='text-align: center; padding: 40px 0 20px 0;'>
             <div style="display: inline-flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                <div class="mm-sun-icon">💙</div>
-                <span style="font-size: 26px; font-weight: 800; color: #ffffff;">MedicalMagic</span>
-                <span style="background: #0066ff; color: #fff; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 9999px;">AUDIT</span>
+                <div class="status-dot">🛡️</div>
+                <span style="font-size: 26px; font-weight: 800; color: #ffffff;">Medi-Audit</span>
+                <span style="background: #0066ff; color: #fff; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 9999px;">PRO</span>
             </div>
-            <h1 style="font-size: 38px; font-weight: 800; letter-spacing: -0.04em; color: #ffffff; margin-bottom: 6px;">Check your Overall Health Bill</h1>
+            <h1 style="font-size: 38px; font-weight: 800; letter-spacing: -0.04em; color: #ffffff; margin-bottom: 6px;">Check your Healthcare Financial Health</h1>
             <p style="font-size: 15px; color: #94a3b8; margin-bottom: 24px;">Automated statutory verification against CGHS 2026 Gazettes and NPPA DPCO Ceilings.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -632,7 +559,7 @@ if not st.session_state.logged_in:
                 l_email = st.text_input("Work Email Address", key="login_email", placeholder="patient@healthcare.in")
                 l_pass = st.text_input("Access Password", type="password", key="login_pass", placeholder="••••••••")
                 st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-                if st.button("Enter MedicalMagic Workspace →", use_container_width=True, type="primary"):
+                if st.button("Enter Medi-Audit Workspace →", use_container_width=True, type="primary"):
                     ud = load_users()
                     if l_email.strip().lower() in ud and ud[l_email.strip().lower()] == l_pass:
                         st.session_state.logged_in, st.session_state.user_email = True, l_email
@@ -680,17 +607,17 @@ else:
         st.markdown(f"""
         <div style='padding: 10px 0 20px 0;'>
             <div style='display: flex; align-items: center; gap: 8px;'>
-                <div class="mm-sun-icon" style="width: 22px; height: 22px; font-size: 12px;">💙</div>
-                <span style='font-size: 19px; font-weight: 800; color: #ffffff;'>MedicalMagic</span>
+                <div class="status-dot" style="width: 22px; height: 22px; font-size: 12px;">🛡️</div>
+                <span style='font-size: 19px; font-weight: 800; color: #ffffff;'>Medi-Audit</span>
             </div>
-            <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>Core: <span style='font-family: monospace; color: #00d2ff;'>{ACTIVE_GROQ_MODEL}</span></p>
+            <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>Engine: <span style='font-family: monospace; color: #00d2ff;'>{ACTIVE_GROQ_MODEL}</span></p>
         </div>
         """, unsafe_allow_html=True)
         st.caption(f"Authenticated: **{st.session_state.user_email}**")
         st.divider()
         
         dept = st.radio(
-            "WORKSPACE SECTIONS", 
+            "FORENSIC DEPARTMENTS", 
             ["📊 Executive Terminal", "🗺️ Fraud Radar", "💊 Pharma Forensic", "🛡️ Insurance Armor", "🏥 Hospital Audit", "⚖️ Justice Portal", "💬 AI Copilot"],
             label_visibility="collapsed"
         )
@@ -708,13 +635,13 @@ else:
         if st.button("🚪 Sign Out", use_container_width=True):
             st.session_state.logged_in = False; st.rerun()
 
-    # MedicalMagic Top Bar
+    # Dark Top Bar
     st.markdown(f"""
-    <div class="mm-top-bar">
-        <div class="mm-logo">
-            <div class="mm-sun-icon">💙</div>
-            <span>MedicalMagic</span>
-            <span style="color: #00d2ff; font-size: 14px; font-weight: 600;">| Medi-Audit AI</span>
+    <div class="dark-top-bar">
+        <div class="brand-badge">
+            <div class="status-dot">🛡️</div>
+            <span>Medi-Audit</span>
+            <span style="color: #00d2ff; font-size: 14px; font-weight: 600;">| Forensics Hub</span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="background:#1e2433; color:#00d2ff; font-size:11px; font-weight:700; padding:6px 14px; border-radius:9999px; border:1px solid #232a3b;">
@@ -727,18 +654,7 @@ else:
 
     # --- 14.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
-        # Organ Pill Buttons mapped to instant 1-click loaders
-        st.markdown("""
-        <div class="organ-pill-bar">
-            <span class="organ-pill active">💙 Cardiology (ICU)</span>
-            <span class="organ-pill">🫁 Pulmonary / Chest</span>
-            <span class="organ-pill">🧠 Neuro MRI</span>
-            <span class="organ-pill">💊 NPPA DPCO Pharma</span>
-            <span class="organ-pill">🛡️ TPA Claims</span>
-            <span class="organ-pill">🔬 Diagnostics</span>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown("##### ⚡ Quick Load Verified Demo Bills:")
         col_demo1, col_demo2, col_demo3 = st.columns(3)
         with col_demo1:
             if st.button("🏥 Load Apollo Hospital ₹35.7k Bill"):
@@ -782,105 +698,68 @@ else:
 
         st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
-        # 3-COLUMN MEDICALMAGIC DASHBOARD LAYOUT
-        col_left, col_mid, col_right = st.columns([1.5, 1.1, 1.4])
+        col_left, col_right = st.columns([1.6, 1.2])
 
         with col_left:
-            # 3D Medical Holographic Container
-            st.markdown("""
-            <div class="mm-hero-card" style="text-align: center;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <span style="color: #94a3b8; font-size: 13px; font-weight: 700;">ANATOMICAL FORENSIC SCAN</span>
-                    <span style="color: #00d2ff; font-size: 12px; font-weight: 700;">● LIVE ECG 120 bpm</span>
-                </div>
-                <img src="https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=600&q=80" 
-                     style="width: 85%; border-radius: 20px; box-shadow: 0 0 35px rgba(0, 210, 255, 0.25); margin: 12px 0;" />
-                <div style="display: flex; justify-content: space-around; margin-top: 14px;">
-                    <div><span style="color:#94a3b8; font-size:11px;">ORGAN PULSE</span><br><strong style="color:#00d2ff; font-size:16px;">NORMAL</strong></div>
-                    <div><span style="color:#94a3b8; font-size:11px;">GAZETTE MATCH</span><br><strong style="color:#ffffff; font-size:16px;">100%</strong></div>
-                    <div><span style="color:#94a3b8; font-size:11px;">FINANCIAL DEFENSE</span><br><strong style="color:#22c55e; font-size:16px;">ACTIVE</strong></div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col_mid:
-            # Center Vitals Pods
             st.markdown(f"""
-            <div class="vital-pod">
-                <div>
-                    <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">STATUTORY VARIANCE</span><br>
-                    <strong style="color: #ffffff; font-size: 20px;">₹{st.session_state.total_leakage:,.2f}</strong>
+            <div class="cyber-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div>
+                        <strong style="font-size: 22px; color: #ffffff;">🏥 Active Forensic Audit Ledger</strong><br>
+                        <span style="font-size: 12px; color: #00d2ff;">CGHS 2026 Gazette & NPPA DPCO Linked</span>
+                    </div>
+                    <span style="background: #1e2433; color: #00d2ff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 9999px;">
+                        {datetime.now().strftime('%B %d, %Y')}
+                    </span>
                 </div>
-                <div class="vital-icon-circle">💧</div>
-            </div>
-            <div class="vital-pod">
-                <div>
-                    <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">AUDIT ACCURACY</span><br>
-                    <strong style="color: #00d2ff; font-size: 20px;">{st.session_state.audit_accuracy}%</strong>
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; border-bottom: 1px solid #1f2633;">
+                    <span style="color: #94a3b8;">Invoiced Provider Rate:</span>
+                    <strong style="color: #ffffff;">₹{st.session_state.total_leakage * 1.36:,.2f}</strong>
                 </div>
-                <div class="vital-icon-circle">💙</div>
-            </div>
-            <div class="vital-pod">
-                <div>
-                    <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">GOUGING PROFILE</span><br>
-                    <strong style="color: #f43f5e; font-size: 15px;">{st.session_state.risk_level}</strong>
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; border-bottom: 1px solid #1f2633;">
+                    <span style="color: #94a3b8;">Statutory Gazette Ceiling Discount:</span>
+                    <strong style="color: #f43f5e;">-₹{st.session_state.total_leakage:,.2f}</strong>
                 </div>
-                <div class="vital-icon-circle">📊</div>
-            </div>
-            <div class="vital-pod">
-                <div>
-                    <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">RECOVERABLE %</span><br>
-                    <strong style="color: #22c55e; font-size: 20px;">~73.5%</strong>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding: 16px; background: #151924; border-radius: 16px;">
+                    <div>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
+                        <strong style="font-size: 26px; color: #00d2ff;">₹{st.session_state.total_leakage * 0.36:,.2f}</strong>
+                    </div>
+                    <span style="background: #0066ff; color: #fff; font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 9999px;">
+                        Save ~73.5%
+                    </span>
                 </div>
-                <div class="vital-icon-circle">🛡️</div>
             </div>
             """, unsafe_allow_html=True)
 
         with col_right:
-            # Right Stacked Vibrant Blue Action Cards with Doctor Avatars
             st.markdown(f"""
-            <div class="blue-action-card">
-                <div class="card-avatar-row">
-                    <img class="card-avatar" src="https://images.unsplash.com/photo-1594824813593-559380df1408?auto=format&fit=crop&w=150&q=80" />
-                    <div>
-                        <strong style="font-size: 15px; color: #ffffff;">Dr. Samantha Martin</strong><br>
-                        <span style="font-size: 11px; opacity: 0.85;">Hospital Clinical Tariff Audit</span>
-                    </div>
+            <div class="metric-pod">
+                <div>
+                    <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">ACTIVE BILL SAVINGS</span><br>
+                    <strong style="color: #ffffff; font-size: 20px;">₹{st.session_state.total_leakage:,.2f}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                    <div>
-                        <span style="font-size: 11px; opacity: 0.85;">Overcharge Identified</span><br>
-                        <strong style="font-size: 22px;">₹{st.session_state.total_leakage:,.2f}</strong>
-                    </div>
-                    <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700;">
-                        CGHS 2026 ↗
-                    </span>
-                </div>
+                <span style="background: rgba(0, 102, 255, 0.2); color: #00d2ff; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;">Instant</span>
             </div>
-
-            <div class="blue-action-card" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
-                <div class="card-avatar-row">
-                    <img class="card-avatar" src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=150&q=80" />
-                    <div>
-                        <strong style="font-size: 15px; color: #ffffff;">Michel Corrins</strong><br>
-                        <span style="font-size: 11px; opacity: 0.85;">NPPA / DPCO Medicine Reconciler</span>
-                    </div>
+            <div class="metric-pod">
+                <div>
+                    <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">AUDIT ACCURACY</span><br>
+                    <strong style="color: #00d2ff; font-size: 20px;">{st.session_state.audit_accuracy}%</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                    <div>
-                        <span style="font-size: 11px; opacity: 0.85;">DPCO Schedule-I Status</span><br>
-                        <strong style="font-size: 18px;">Active Cap Enforcement</strong>
-                    </div>
-                    <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700;">
-                        NPPA Order ↗
-                    </span>
+                <span style="background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;">Verified</span>
+            </div>
+            <div class="metric-pod">
+                <div>
+                    <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">GOUGING INDEX (PGI)</span><br>
+                    <strong style="color: #f43f5e; font-size: 14px;">{st.session_state.risk_level}</strong>
                 </div>
+                <span style="background: rgba(244, 63, 94, 0.2); color: #f43f5e; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;">Status</span>
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
         
-        # PLOTLY CHARTS (DARK MEDICAL CYBER THEME)
+        # Plotly Graphs (Dark Cyber Theme)
         col_g1, col_g2 = st.columns([1.6, 1])
         with col_g1:
             st.markdown("##### Real-Time Leakage Trajectory")
@@ -926,7 +805,7 @@ else:
         st.plotly_chart(fig_rank, use_container_width=True, config={'displayModeBar': False})
         
         csv_data = st.session_state.audit_log.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Export Comprehensive Forensic Ledger (CSV)", data=csv_data, file_name=f"MedicalMagic_Ledger_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
+        st.download_button("📥 Export Comprehensive Forensic Ledger (CSV)", data=csv_data, file_name=f"MediAudit_Ledger_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
 
     # --- 14.2 FRAUD RADAR ---
     elif dept == "🗺️ Fraud Radar":
@@ -947,7 +826,7 @@ else:
         
         with tab_upload:
             u_p = st.file_uploader("Upload Medical Receipt (JPEG, PNG)", type=["jpg", "png", "jpeg"], key="pharma_upload")
-            if u_p and st.button("Run MedicalMagic Pharma Scan →", use_container_width=True, key="btn_p_file"):
+            if u_p and st.button("Run Medi-Audit Pharma Scan →", use_container_width=True, key="btn_p_file"):
                 st.session_state.scan_error = None
                 with st.spinner("Reconciling line items against statutory NPPA and CGHS gazettes..."):
                     txt_to_audit = extract_clean_text_from_image(u_p)
@@ -991,7 +870,7 @@ else:
             pct_saved = (st.session_state.total_leakage / orig_total * 100) if orig_total > 0 else 0
             
             st.markdown(f"""
-            <div class="mm-hero-card" style="margin-bottom: 20px;">
+            <div class="cyber-panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🧪 {pharmacy}</strong><br>
@@ -1011,7 +890,7 @@ else:
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 14px; background: #151924; border-radius: 16px;">
                     <div>
-                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDICALMAGIC ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{adjusted_total:,.2f}</strong>
                     </div>
                     <span style="background: #0066ff; color: #fff; font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 9999px;">
@@ -1101,7 +980,7 @@ else:
             pct_saved_h = (st.session_state.total_leakage / orig_total_h * 100) if orig_total_h > 0 else 0
             
             st.markdown(f"""
-            <div class="mm-hero-card" style="margin-bottom: 20px;">
+            <div class="cyber-panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🏥 {hosp}</strong><br>
@@ -1121,7 +1000,7 @@ else:
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 14px; background: #151924; border-radius: 16px;">
                     <div>
-                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDICALMAGIC ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{adjusted_total_h:,.2f}</strong>
                     </div>
                     <span style="background: #0066ff; color: #fff; font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 9999px;">
@@ -1199,7 +1078,7 @@ else:
             pct_saved_i = (st.session_state.total_leakage / orig_total_i * 100) if orig_total_i > 0 else 0
             
             st.markdown(f"""
-            <div class="mm-hero-card" style="margin-bottom: 20px;">
+            <div class="cyber-panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🛡️ {company}</strong><br>
@@ -1288,7 +1167,7 @@ else:
                 st.markdown(f"""
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0066ff; padding-bottom: 12px; margin-bottom: 16px;">
                     <div>
-                        <span style="font-size: 20px; font-weight: 800; color: #00d2ff;">🛡️ MEDICALMAGIC STATUTORY NOTICE</span><br>
+                        <span style="font-size: 20px; font-weight: 800; color: #00d2ff;">🛡️ MEDI-AUDIT STATUTORY NOTICE</span><br>
                         <span style="font-size: 11px; color: #94a3b8;">CERTIFIED UNDER SECTION 2(47) OF CONSUMER PROTECTION ACT, 2019</span>
                     </div>
                     <div style="text-align: right; font-family: monospace; font-size: 11px; color: #94a3b8;">
@@ -1320,7 +1199,7 @@ else:
                 st.button("Dispatch Electronic Notice →", type="primary", use_container_width=True)
             with col_btn2:
                 legal_brief_text = (
-                    f"MEDICALMAGIC LEGAL DISPUTE NOTICE (SEC 2(47) CPA)\n"
+                    f"MEDI-AUDIT LEGAL DISPUTE NOTICE (SEC 2(47) CPA)\n"
                     f"REF: {ref_no}\n"
                     f"DATE: {datetime.now().strftime('%B %d, %Y')}\n"
                     f"TO: Medical Superintendent, {hosp_name}\n"
@@ -1334,7 +1213,7 @@ else:
                 st.download_button(
                     label="📥 Download Legal Notice PDF / Brief",
                     data=legal_brief_text,
-                    file_name=f"MedicalMagic_Legal_Notice_{ref_no.replace('/', '_')}.txt",
+                    file_name=f"MediAudit_Legal_Notice_{ref_no.replace('/', '_')}.txt",
                     mime="text/plain",
                     use_container_width=True
                 )
@@ -1344,7 +1223,7 @@ else:
     # --- 14.7 REGULATORY AI COPILOT ---
     elif dept == "💬 AI Copilot":
         st.markdown("""
-        <h1 style="font-size: 38px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">MedicalMagic Regulatory Assistant.</h1>
+        <h1 style="font-size: 38px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">Medi-Audit Regulatory Assistant.</h1>
         <p style="font-size: 15px; color: #94a3b8; margin-bottom: 24px;">Real-time Socratic lookup of procedure rate ceilings and DPCO statutory dispute precedents.</p>
         """, unsafe_allow_html=True)
         
@@ -1357,5 +1236,3 @@ else:
             st.session_state.messages.append({"role": "assistant", "content": response.content})
         for m in st.session_state.messages[-4:]: 
             st.chat_message(m["role"]).write(m["content"])
-
-

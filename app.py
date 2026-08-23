@@ -31,9 +31,9 @@ if not GROQ_API_KEY:
 # Initialize Native Groq Client
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# --- 2. BULLETPROOF ACTIVE MODEL DISCOVERY ---
+# --- 2. ACTIVE MODEL DISCOVERY & PROBING ---
 def get_best_available_groq_model():
-    """Probes candidate models dynamically to guarantee 100% active, zero-error execution."""
+    """Probes candidate models dynamically to guarantee 100% active, error-free execution."""
     try:
         models_data = groq_client.models.list().data
         available_ids = [m.id for m in models_data]
@@ -101,7 +101,10 @@ def safe_extract_json(raw_response_content):
     except Exception:
         clean_text = re.sub(r'^[^{]*', '', text)
         clean_text = re.sub(r'[^}]*$', '', clean_text)
-        return json.loads(clean_text)
+        try:
+            return json.loads(clean_text)
+        except Exception:
+            return None
 
 SENDER_EMAIL = st.secrets.get("SENDER_EMAIL", os.getenv("SENDER_EMAIL"))
 SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD", os.getenv("SENDER_PASSWORD"))
@@ -110,82 +113,108 @@ PDF_PATH = os.path.join("data", "raw_gazzete", "cghs_rates_2026.pdf")
 
 # --- 4. CANONICAL STATUTORY CGHS & NPPA GAZETTE MASTER ---
 CGHS_GAZETTE_MASTER = {
-    # 1. Consultations & Bed Charges
-    "consultation": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "dept": "Hospital"},
-    "consultation fee": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "dept": "Hospital"},
-    "doctor consultation": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "dept": "Hospital"},
-    "super specialist consultation": {"code": "CON02", "name": "OPD Consultation (Super Specialist)", "cap": 700.0, "dept": "Hospital"},
-    "icu charges": {"code": "ICU01", "name": "ICU (Without Ventilator)", "cap": 5400.0, "dept": "Hospital"},
-    "icu": {"code": "ICU01", "name": "ICU (Without Ventilator)", "cap": 5400.0, "dept": "Hospital"},
-    "icu ventilator": {"code": "ICU02", "name": "ICU (With Ventilator)", "cap": 7200.0, "dept": "Hospital"},
-    "general ward": {"code": "BED01", "name": "General Ward Bed (Per Day)", "cap": 1500.0, "dept": "Hospital"},
-    "semi private ward": {"code": "BED02", "name": "Semi-Private Ward (Per Day)", "cap": 3000.0, "dept": "Hospital"},
-    "private ward": {"code": "BED03", "name": "Private Ward (Per Day)", "cap": 4500.0, "dept": "Hospital"},
-    "room rent": {"code": "BED01", "name": "Standard Room Rent (Per Day)", "cap": 1500.0, "dept": "Hospital"},
+    # 1. Professional Consultations & Bed Charges (CGHS / MoHFW Authority)
+    "consultation": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "category": "Consultation", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "consultation fee": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "category": "Consultation", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "doctor consultation": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "category": "Consultation", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "super specialist consultation": {"code": "CON02", "name": "OPD Consultation (Super Specialist)", "cap": 700.0, "category": "Consultation", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "icu charges": {"code": "ICU01", "name": "ICU (Without Ventilator)", "cap": 5400.0, "category": "Inpatient / ICU", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "icu": {"code": "ICU01", "name": "ICU (Without Ventilator)", "cap": 5400.0, "category": "Inpatient / ICU", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "icu ventilator": {"code": "ICU02", "name": "ICU (With Ventilator)", "cap": 7200.0, "category": "Inpatient / ICU", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "general ward": {"code": "BED01", "name": "General Ward Bed (Per Day)", "cap": 1500.0, "category": "Inpatient / Bed", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "semi private ward": {"code": "BED02", "name": "Semi-Private Ward (Per Day)", "cap": 3000.0, "category": "Inpatient / Bed", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "private ward": {"code": "BED03", "name": "Private Ward (Per Day)", "cap": 4500.0, "category": "Inpatient / Bed", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "room rent": {"code": "BED01", "name": "Standard Room Rent (Per Day)", "cap": 1500.0, "category": "Inpatient / Bed", "authority": "CGHS 2026 Gazette (MoHFW)"},
     
-    # 2. Radiology & Imaging
-    "mri brain plain": {"code": "RI089", "name": "MRI Brain (Plain)", "cap": 2750.0, "dept": "Hospital"},
-    "mri brain": {"code": "RI089", "name": "MRI Brain (Plain)", "cap": 2750.0, "dept": "Hospital"},
-    "mri brain contrast": {"code": "RI090", "name": "MRI Brain with Contrast", "cap": 4000.0, "dept": "Hospital"},
-    "mri spine": {"code": "RI092", "name": "MRI Spine (Plain)", "cap": 2750.0, "dept": "Hospital"},
-    "ct scan brain": {"code": "CT012", "name": "CT Head / Brain (Plain)", "cap": 1150.0, "dept": "Hospital"},
-    "ct brain": {"code": "CT012", "name": "CT Head / Brain (Plain)", "cap": 1150.0, "dept": "Hospital"},
-    "ct chest": {"code": "CT045", "name": "HRCT Chest (Plain)", "cap": 1800.0, "dept": "Hospital"},
-    "chest x ray": {"code": "XR001", "name": "Chest X-Ray (PA View)", "cap": 250.0, "dept": "Hospital"},
-    "x ray": {"code": "XR001", "name": "Standard X-Ray", "cap": 250.0, "dept": "Hospital"},
-    "ultrasound abdomen": {"code": "US004", "name": "USG Whole Abdomen & Pelvis", "cap": 550.0, "dept": "Hospital"},
-    "usg abdomen": {"code": "US004", "name": "USG Whole Abdomen & Pelvis", "cap": 550.0, "dept": "Hospital"},
+    # 2. Radiology & Imaging (CGHS / MoHFW Authority)
+    "mri brain plain": {"code": "RI089", "name": "MRI Brain (Plain)", "cap": 2750.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "mri brain": {"code": "RI089", "name": "MRI Brain (Plain)", "cap": 2750.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "mri brain contrast": {"code": "RI090", "name": "MRI Brain with Contrast", "cap": 4000.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "mri spine": {"code": "RI092", "name": "MRI Spine (Plain)", "cap": 2750.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "ct scan brain": {"code": "CT012", "name": "CT Head / Brain (Plain)", "cap": 1150.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "ct brain": {"code": "CT012", "name": "CT Head / Brain (Plain)", "cap": 1150.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "ct chest": {"code": "CT045", "name": "HRCT Chest (Plain)", "cap": 1800.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "chest x ray": {"code": "XR001", "name": "Chest X-Ray (PA View)", "cap": 250.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "x ray": {"code": "XR001", "name": "Standard X-Ray", "cap": 250.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "ultrasound abdomen": {"code": "US004", "name": "USG Whole Abdomen & Pelvis", "cap": 550.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "usg abdomen": {"code": "US004", "name": "USG Whole Abdomen & Pelvis", "cap": 550.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
     
-    # 3. Pathology & Diagnostics
-    "cbc": {"code": "LB012", "name": "Complete Haemogram / CBC", "cap": 150.0, "dept": "Hospital"},
-    "cbc blood test": {"code": "LB012", "name": "Complete Haemogram / CBC", "cap": 150.0, "dept": "Hospital"},
-    "blood test": {"code": "LB012", "name": "Routine Blood Examination (CBC)", "cap": 150.0, "dept": "Hospital"},
-    "lipid profile": {"code": "LB045", "name": "Lipid Profile Test", "cap": 300.0, "dept": "Hospital"},
-    "liver function test": {"code": "LB032", "name": "LFT (Liver Function Test)", "cap": 350.0, "dept": "Hospital"},
-    "lft": {"code": "LB032", "name": "LFT (Liver Function Test)", "cap": 350.0, "dept": "Hospital"},
-    "kidney function test": {"code": "LB033", "name": "KFT / RFT (Renal Function)", "cap": 350.0, "dept": "Hospital"},
-    "kft": {"code": "LB033", "name": "KFT / RFT (Renal Function)", "cap": 350.0, "dept": "Hospital"},
-    "blood sugar fast": {"code": "LB001", "name": "Blood Glucose Fasting", "cap": 50.0, "dept": "Hospital"},
-    "blood glucose": {"code": "LB001", "name": "Blood Glucose Test", "cap": 50.0, "dept": "Hospital"},
-    "hba1c": {"code": "LB008", "name": "HbA1c Glycated Hemoglobin", "cap": 250.0, "dept": "Hospital"},
-    "crp": {"code": "LB098", "name": "C-Reactive Protein (Quantitative)", "cap": 200.0, "dept": "Hospital"},
+    # 3. Pathology & Diagnostics (CGHS / MoHFW Authority)
+    "cbc": {"code": "LB012", "name": "Complete Haemogram / CBC", "cap": 150.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "cbc blood test": {"code": "LB012", "name": "Complete Haemogram / CBC", "cap": 150.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "blood test": {"code": "LB012", "name": "Routine Blood Examination (CBC)", "cap": 150.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "lipid profile": {"code": "LB045", "name": "Lipid Profile Test", "cap": 300.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "liver function test": {"code": "LB032", "name": "LFT (Liver Function Test)", "cap": 350.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "lft": {"code": "LB032", "name": "LFT (Liver Function Test)", "cap": 350.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "kidney function test": {"code": "LB033", "name": "KFT / RFT (Renal Function)", "cap": 350.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "kft": {"code": "LB033", "name": "KFT / RFT (Renal Function)", "cap": 350.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "blood sugar fast": {"code": "LB001", "name": "Blood Glucose Fasting", "cap": 50.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "blood glucose": {"code": "LB001", "name": "Blood Glucose Test", "cap": 50.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "hba1c": {"code": "LB008", "name": "HbA1c Glycated Hemoglobin", "cap": 250.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
+    "crp": {"code": "LB098", "name": "C-Reactive Protein (Quantitative)", "cap": 200.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
     
-    # 4. Essential Medicines (NPPA Caps)
-    "paracetamol 650": {"code": "MED01", "name": "Paracetamol 650mg (10 Tabs)", "cap": 24.50, "dept": "Pharma"},
-    "paracetamol": {"code": "MED01", "name": "Paracetamol 650mg (10 Tabs)", "cap": 24.50, "dept": "Pharma"},
-    "amoxicillin 500": {"code": "MED02", "name": "Amoxicillin + Clavulanic 625mg (6 Tabs)", "cap": 120.0, "dept": "Pharma"},
-    "amoxicillin": {"code": "MED02", "name": "Amoxicillin 500mg", "cap": 120.0, "dept": "Pharma"},
-    "pantoprazole 40": {"code": "MED03", "name": "Pantoprazole 40mg (10 Tabs)", "cap": 85.0, "dept": "Pharma"},
-    "pantoprazole": {"code": "MED03", "name": "Pantoprazole 40mg (10 Tabs)", "cap": 85.0, "dept": "Pharma"},
-    "azithromycin 500": {"code": "MED04", "name": "Azithromycin 500mg (3 Tabs)", "cap": 72.0, "dept": "Pharma"},
-    "azithromycin": {"code": "MED04", "name": "Azithromycin 500mg", "cap": 72.0, "dept": "Pharma"},
-    "ceftriaxone 1g": {"code": "MED05", "name": "Ceftriaxone 1g IV Injection", "cap": 65.0, "dept": "Pharma"}
+    # 4. Essential Medicines & Pharmaceuticals (NPPA / DPCO Authority)
+    "paracetamol 650": {"code": "MED01", "name": "Paracetamol 650mg (10 Tabs)", "cap": 24.50, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
+    "paracetamol": {"code": "MED01", "name": "Paracetamol 650mg (10 Tabs)", "cap": 24.50, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
+    "amoxicillin 500": {"code": "MED02", "name": "Amoxicillin + Clavulanic 625mg (6 Tabs)", "cap": 120.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
+    "amoxicillin": {"code": "MED02", "name": "Amoxicillin 500mg", "cap": 120.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
+    "pantoprazole 40": {"code": "MED03", "name": "Pantoprazole 40mg (10 Tabs)", "cap": 85.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
+    "pantoprazole": {"code": "MED03", "name": "Pantoprazole 40mg (10 Tabs)", "cap": 85.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
+    "azithromycin 500": {"code": "MED04", "name": "Azithromycin 500mg (3 Tabs)", "cap": 72.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
+    "azithromycin": {"code": "MED04", "name": "Azithromycin 500mg", "cap": 72.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
+    "ceftriaxone 1g": {"code": "MED05", "name": "Ceftriaxone 1g IV Injection", "cap": 65.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"}
 }
 
 def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
-    """Matches any arbitrary hospital bill item to statutory CGHS gazette benchmarks."""
+    """Matches any medical line item with canonical codes, categories, and exact statutory authorities."""
     query = re.sub(r'[^a-zA-Z0-9\s]', '', item_name).lower().strip()
     
+    # Direct & Substring Match
     for key, data in CGHS_GAZETTE_MASTER.items():
-        if key in query or query in key:
-            return {"matched_name": data["name"], "code": data["code"], "legal_cap": data["cap"]}
+        if key == query or key in query or query in key:
+            return {
+                "matched_name": data["name"],
+                "code": data["code"],
+                "legal_cap": data["cap"],
+                "category": data["category"],
+                "authority": data["authority"]
+            }
             
+    # Fuzzy Matching (>45% similarity)
     keys = list(CGHS_GAZETTE_MASTER.keys())
-    matches = difflib.get_close_matches(query, keys, n=1, cutoff=0.52)
+    matches = difflib.get_close_matches(query, keys, n=1, cutoff=0.45)
     if matches:
         data = CGHS_GAZETTE_MASTER[matches[0]]
-        return {"matched_name": data["name"], "code": data["code"], "legal_cap": data["cap"]}
+        return {
+            "matched_name": data["name"],
+            "code": data["code"],
+            "legal_cap": data["cap"],
+            "category": data["category"],
+            "authority": data["authority"]
+        }
 
+    # Dynamic fallback to local PDF context
     if fallback_pdf_context:
         price_matches = re.findall(r'(\d{2,6}(?:\.\d{2})?)', fallback_pdf_context)
         if price_matches:
-            return {"matched_name": item_name, "code": "CGHS-PDF", "legal_cap": float(price_matches[0])}
+            return {
+                "matched_name": item_name,
+                "code": "CGHS-PDF",
+                "legal_cap": float(price_matches[0]),
+                "category": "Hospital Procedure / Service",
+                "authority": "CGHS 2026 Gazette (MoHFW)"
+            }
 
-    return {"matched_name": item_name, "code": "UNLISTED", "legal_cap": 0.0}
+    return {
+        "matched_name": item_name,
+        "code": "UNLISTED",
+        "legal_cap": 0.0,
+        "category": "Unlisted Hospital Item",
+        "authority": "Hospital Tariff Schedule"
+    }
 
-# --- 5. ADVANCED FAIL-SAFE SCANNER ENGINE ---
+# --- 5. ADVANCED SCANNER ENGINE ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
-    """Resizes and compresses image to <2MB to prevent Groq API payload errors."""
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
     if img.mode != 'RGB':
@@ -196,7 +225,6 @@ def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
 def extract_clean_text_from_image(uploaded_file):
-    """Dual-Engine Scanner: Groq Vision AI with Tesseract OCR fallback."""
     raw_text = ""
     error_logs = []
     
@@ -266,7 +294,7 @@ def extract_clean_text_from_image(uploaded_file):
         st.session_state.scan_error = f"⚠️ Scan Failed: {err_msg}"
         return ""
 
-# --- 6. CORE RAG & AUDIT LOGIC (3-TIER DECOUPLED) ---
+# --- 6. UNIVERSAL 3-TIER AUDIT ENGINE ---
 def get_pdf_context(query):
     text_context = ""
     if os.path.exists(PDF_PATH):
@@ -285,61 +313,76 @@ def get_pdf_context(query):
             return ""
     return ""
 
-def hospital_audit_logic(bill_text):
-    """Tier 1: Extraction | Tier 2: CGHS Gazette Matcher | Tier 3: Deterministic Arithmetic"""
+def universal_medical_audit(bill_text):
+    """Tier 1: LLM Line Extraction | Tier 2: Statutory Gazette Matching | Tier 3: Deterministic Arithmetic"""
     if not bill_text:
-        st.session_state.scan_error = "⚠️ Could not extract text from the invoice image. Please try a clearer scan."
+        st.session_state.scan_error = "⚠️ Could not extract text from document."
         return None
 
-    extract_prompt = f"""You are a Medical Data Ingestion Engine.
-Extract every line item, medical service, consultation, test, procedure, or room charge and its exact billed numerical price from this medical bill text.
+    extract_prompt = f"""You are a Healthcare Financial Data Ingestion Engine.
+Extract the facility/hospital/pharmacy name, and every single invoiced line item (consultation, test, scan, bed charge, medicine, or procedure) and its exact numerical billed price.
 
-BILL TEXT TO INGEST:
+TEXT TO INGEST:
 {bill_text}
 
 Return ONLY valid JSON matching this exact schema:
 {{
-  "hospital": "Hospital or Clinic Name",
-  "items": [
-    {{"item": "Service or Line Item Name", "billed": 1500.0}}
+  "hospital": "Detected Facility Name",
+  "audit_results": [
+    {{"item": "Exact Line Item Name", "billed": 1500.0}}
   ]
 }}"""
 
     try:
         response = llm.invoke(extract_prompt)
-        extracted = safe_extract_json(response.content)
-        if not extracted or "items" not in extracted:
-            raise ValueError("Structured extraction failed.")
+        parsed = safe_extract_json(response.content)
+        
+        if not parsed:
+            lines = bill_text.split('\n')
+            extracted_items = []
+            for line in lines:
+                price_match = re.search(r'(\d+(?:\.\d{1,2})?)', line)
+                name_match = re.search(r'([a-zA-Z\s\(\)\-\/]+)', line)
+                if price_match and name_match and len(name_match.group(1).strip()) > 3:
+                    extracted_items.append({
+                        "item": name_match.group(1).strip(),
+                        "billed": float(price_match.group(1))
+                    })
+            parsed = {"hospital": "Medical Provider", "audit_results": extracted_items}
 
-        hospital_name = extracted.get("hospital", "Medical Facility")
-        raw_items = extracted.get("items", [])
+        hospital_name = parsed.get("hospital") or parsed.get("facility") or "Medical Provider"
+        raw_items = parsed.get("audit_results") or parsed.get("items") or []
         pdf_ctx = get_pdf_context(bill_text)
 
         audited_results = []
         for raw in raw_items:
-            item_name = raw.get("item", "Medical Service")
+            item_name = raw.get("item") or raw.get("name") or "Medical Service"
             try:
                 billed_amt = float(re.sub(r'[^\d.]', '', str(raw.get("billed", 0))))
             except Exception:
                 billed_amt = 0.0
-            
+
+            # Deterministic statutory match
             cghs_data = match_cghs_rate(item_name, fallback_pdf_context=pdf_ctx)
             legal_cap = cghs_data["legal_cap"]
-            
+            authority = cghs_data["authority"]
+
             if legal_cap > 0:
                 if billed_amt > legal_cap:
                     diff = round(billed_amt - legal_cap, 2)
-                    summary = f"CGHS Gazette Cap ({cghs_data['code']}) is ₹{legal_cap:,.2f}; Overcharge: ₹{diff:,.2f}"
+                    summary = f"{authority} ceiling ({cghs_data['code']}) is ₹{legal_cap:,.2f}; Billed rate overcharges by ₹{diff:,.2f}."
                 else:
-                    summary = f"Compliant with CGHS rate ceiling ({cghs_data['code']} @ ₹{legal_cap:,.2f})"
+                    summary = f"Compliant with statutory ceiling under {authority} (Cap: ₹{legal_cap:,.2f})."
             else:
-                summary = "Unlisted in CGHS standard schedule; manual review required."
+                summary = "Unlisted in standard statutory gazette; manual verification recommended."
 
             audited_results.append({
                 "item": f"{item_name} [{cghs_data['code']}]" if cghs_data['code'] != "UNLISTED" else item_name,
                 "billed": billed_amt,
                 "legal": legal_cap,
-                "summary": summary
+                "summary": summary,
+                "category": cghs_data["category"],
+                "authority": authority
             })
 
         return {
@@ -350,18 +393,24 @@ Return ONLY valid JSON matching this exact schema:
         st.session_state.scan_error = f"Audit Processing Error: {e}"
         return None
 
+def hospital_audit_logic(bill_text):
+    return universal_medical_audit(bill_text)
+
+def ai_audit_logic(bill_text):
+    return universal_medical_audit(bill_text)
+
 def insurance_audit_logic(txt):
     if not txt:
-        st.session_state.scan_error = "⚠️ Could not read document text. Please upload a clearer image."
+        st.session_state.scan_error = "⚠️ Could not read document text."
         return None
 
-    extract_prompt = f"""You are an Insurance Settlement Extraction Engine.
-Extract the insurance company name and all disputed line items with their Billed amount and Approved/Legal settlement amount.
+    extract_prompt = f"""You are an Insurance Claims Auditor.
+Extract the insurance provider name and all line items where the billed amount differs from the approved/settled amount.
 
 DOCUMENT TEXT:
 {txt}
 
-Return ONLY a valid JSON object:
+Return ONLY valid JSON:
 {{
   "hospital": "Insurance Company Name",
   "audit_results": [
@@ -373,7 +422,7 @@ Return ONLY a valid JSON object:
         response = llm.invoke(extract_prompt)
         parsed_json = safe_extract_json(response.content)
         if not parsed_json:
-            raise ValueError("Extraction parser returned invalid JSON.")
+            raise ValueError("No valid JSON found.")
         return parsed_json
     except Exception:
         return {
@@ -383,71 +432,6 @@ Return ONLY a valid JSON object:
                 {"item": "ICU Charges", "billed": 15000.0, "legal": 12000.0, "summary": "Unjustified Underpayment by Insurer."}
             ]
         }
-
-def ai_audit_logic(bill_text):
-    """Deterministic Pharma Auditor against NPPA Drug Price Control Caps."""
-    if not bill_text:
-        st.session_state.scan_error = "⚠️ Could not extract text from the pharmacy receipt."
-        return None
-
-    extract_prompt = f"""You are a Pharmaceutical Ingestion Engine.
-Extract every medicine or pharmaceutical product with its exact numerical billed price from this receipt text.
-
-TEXT:
-{bill_text}
-
-Return ONLY valid JSON matching this schema:
-{{
-  "hospital": "Pharmacy or Store Name",
-  "items": [
-    {{"item": "Medicine Name", "billed": 150.0}}
-  ]
-}}"""
-
-    try:
-        response = llm.invoke(extract_prompt)
-        extracted = safe_extract_json(response.content)
-        if not extracted or "items" not in extracted:
-            raise ValueError("Invalid pharmacy extraction payload.")
-
-        pharmacy_name = extracted.get("hospital", "Detected Pharmacy")
-        raw_items = extracted.get("items", [])
-        pdf_ctx = get_pdf_context(bill_text)
-
-        audited_results = []
-        for raw in raw_items:
-            med_name = raw.get("item", "Medicine")
-            try:
-                billed_amt = float(re.sub(r'[^\d.]', '', str(raw.get("billed", 0))))
-            except Exception:
-                billed_amt = 0.0
-            
-            cghs_data = match_cghs_rate(med_name, fallback_pdf_context=pdf_ctx)
-            legal_cap = cghs_data["legal_cap"]
-
-            if legal_cap > 0:
-                if billed_amt > legal_cap:
-                    diff = round(billed_amt - legal_cap, 2)
-                    summary = f"NPPA / Generic Statutory Cap is ₹{legal_cap:,.2f}; Overcharge: ₹{diff:,.2f}"
-                else:
-                    summary = f"Billed within statutory generic limits (Cap: ₹{legal_cap:,.2f})"
-            else:
-                summary = "Non-scheduled medicine formulation; manual verification needed."
-
-            audited_results.append({
-                "item": f"{med_name} [{cghs_data['code']}]" if cghs_data['code'] != "UNLISTED" else med_name,
-                "billed": billed_amt,
-                "legal": legal_cap,
-                "summary": summary
-            })
-
-        return {
-            "hospital": pharmacy_name,
-            "audit_results": audited_results
-        }
-    except Exception as e:
-        st.session_state.scan_error = f"Logic Error: {e}"
-        return None
 
 # --- 7. REAL-TIME AUDIT LOGGING HELPER ---
 def auto_log_audit(department_name, result_json):
@@ -542,7 +526,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 11. EDITORIAL DESIGN SYSTEM (CSS) ---
+# --- 11. EDITORIAL LUXURY DESIGN SYSTEM (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Forensic Healthcare Intelligence", 
     page_icon="🛡️",
@@ -563,7 +547,6 @@ html, body, [class*="css"], .stMarkdown {
     color: #0f172a;
 }
 
-/* Hide Default Headers & Toolbars */
 #MainMenu, header, footer {visibility: hidden; height: 0;}
 .block-container {
     padding-top: 2rem !important;
@@ -633,7 +616,7 @@ html, body, [class*="css"], .stMarkdown {
     border-radius: 20px;
     padding: 26px;
     box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.03);
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 .editorial-card:hover {
     transform: translateY(-3px);
@@ -667,7 +650,7 @@ div.stButton > button {
     font-size: 0.92rem !important;
     letter-spacing: -0.01em !important;
     box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.15) !important;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition: all 0.2s ease !important;
     width: 100% !important;
 }
 div.stButton > button:hover {
@@ -677,13 +660,11 @@ div.stButton > button:hover {
     color: #ffffff !important;
 }
 
-/* Sidebar Custom Styling */
 [data-testid="stSidebar"] {
     background-color: #ffffff !important;
     border-right: 1px solid #f1f5f9;
 }
 
-/* Segmented Tabs */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
     background-color: #f1f5f9;
@@ -707,7 +688,6 @@ div.stButton > button:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* Expander styling */
 .streamlit-expanderHeader {
     background-color: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
@@ -725,7 +705,6 @@ div.stButton > button:hover {
     padding: 20px !important;
 }
 
-/* Formal Legal Container */
 .legal-box {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -936,18 +915,18 @@ else:
     elif dept == "💊 Pharma Forensic":
         st.markdown("""
         <div style="margin-bottom: 20px;">
-            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">Pharma Price Forensic Engine.</h2>
-            <p class="editorial-quote">Automated verification of branded medicine invoices against NPPA ceilings.</p>
+            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">Pharmacy & Medical Forensic Engine.</h2>
+            <p class="editorial-quote">Automated verification of medical invoices against NPPA generic caps and CGHS gazettes.</p>
         </div>
         """, unsafe_allow_html=True)
         
         tab_upload, tab_cam, tab_text = st.tabs(["Upload Document", "Live Camera", "Paste Text"])
         
         with tab_upload:
-            u_p = st.file_uploader("Upload Pharmacy Invoice (JPEG, PNG, PDF)", type=["jpg", "png", "jpeg"], key="pharma_upload")
+            u_p = st.file_uploader("Upload Medical / Pharmacy Invoice (JPEG, PNG, PDF)", type=["jpg", "png", "jpeg"], key="pharma_upload")
             if u_p and st.button("Run Forensic AI Scan →", use_container_width=True, key="btn_p_file"):
                 st.session_state.scan_error = None
-                with st.spinner("Reconciling Pharmacy Invoices against NPPA & CGHS Price Lists..."):
+                with st.spinner("Reconciling line items against statutory CGHS/NPPA rates..."):
                     txt_to_audit = extract_clean_text_from_image(u_p)
                     st.session_state.raw_extracted_text = txt_to_audit
                     if txt_to_audit:
@@ -956,7 +935,7 @@ else:
                         auto_log_audit("Pharma", res)
 
         with tab_cam:
-            cam_p = st.camera_input("Capture pharmacy receipt with camera", key="cam_pharma")
+            cam_p = st.camera_input("Capture receipt with camera", key="cam_pharma")
             if cam_p and st.button("Audit Camera Scan →", use_container_width=True, key="btn_p_cam"):
                 st.session_state.scan_error = None
                 with st.spinner("Processing Camera Document..."):
@@ -968,7 +947,7 @@ else:
                         auto_log_audit("Pharma", res)
 
         with tab_text:
-            manual_txt_p = st.text_area("Paste receipt line items (e.g., Paracetamol: 150, Amoxicillin: 450)", height=120, key="manual_pharma_txt")
+            manual_txt_p = st.text_area("Paste bill line items (e.g., Consultation Fee: 1500, CBC Blood Test: 800, MRI Brain: 12000)", height=120, key="manual_pharma_txt")
             if manual_txt_p and st.button("Audit Pasted Text →", use_container_width=True, key="btn_p_txt"):
                 st.session_state.scan_error = None
                 st.session_state.raw_extracted_text = manual_txt_p
@@ -982,7 +961,7 @@ else:
         if st.session_state.ai_result_data:
             res = st.session_state.ai_result_data
             items = res.get('audit_results', [])
-            pharmacy = res.get('hospital', 'Detected Pharmacy')
+            pharmacy = res.get('hospital', 'Detected Provider')
             
             st.markdown(f"#### 🧪 Audited Entity: **{pharmacy}**")
             total_p_leak = 0.0
@@ -999,7 +978,7 @@ else:
                 
                 with st.expander(f"📦 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
                     fig = go.Figure(go.Bar(
-                        x=['Statutory Cap', 'Hospital Billed'], 
+                        x=['Statutory Cap', 'Hospital Invoiced'], 
                         y=[l, b], 
                         marker_color=['#10b981', '#ef4444'],
                         text=[f"₹{l:,.2f}", f"₹{b:,.2f}"],
@@ -1014,7 +993,7 @@ else:
                     st.write(f"**Forensic Finding:** {i.get('summary', 'Overcharge detected')}")
 
             st.divider()
-            st.metric("Total Recoverable Pharmacy Leakage", f"₹{total_p_leak:,.2f}")
+            st.metric("Total Recoverable Leakage", f"₹{total_p_leak:,.2f}")
 
     # --- 13.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
@@ -1205,7 +1184,7 @@ else:
                     <p><strong>SUBJECT: FORMAL DISPUTE NOTICE PURSUANT TO SECTION 2(47) OF CONSUMER PROTECTION ACT (UNFAIR TRADE PRACTICE)</strong></p>
                     
                     <p style="color: #475569; font-size: 13px; line-height: 1.6;">
-                    This notice confirms verified discrepancies and unauthorized price inflation identified in patient invoices in direct violation of <strong>Central Government Health Scheme (CGHS) 2026 Gazette Price Ceilings</strong> and statutory NPPA caps.
+                    This notice serves as formal communication of verified discrepancies and pricing markups identified in medical invoices, in direct violation of statutory price regulations including the <strong>Central Government Health Scheme (CGHS) 2026 Gazette Ceilings (MoHFW)</strong> and the <strong>Drugs (Prices Control) Order / NPPA Caps</strong> under the Essential Commodities Act.
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1217,7 +1196,8 @@ else:
                         "Line Item Description": item.get('item', 'Medical Service'),
                         "Billed Amount": format_inr(item.get('billed', 0)),
                         "Statutory Legal Cap": format_inr(item.get('legal', 0)),
-                        "Forensic Finding": item.get('summary', 'Markup exceeds gazette ceiling')
+                        "Statutory Authority": item.get('authority', 'CGHS / NPPA Gazette'),
+                        "Forensic Finding": item.get('summary', 'Markup exceeds statutory ceiling')
                     })
                 
                 df_audit_display = pd.DataFrame(formatted_items)

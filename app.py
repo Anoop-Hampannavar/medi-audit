@@ -512,6 +512,27 @@ div[data-testid="stFileUploaderDropzone"] button {
     color: #ffffff !important;
 }
 
+/* 4. TEXT AREA PASTE TEXT: CRISP BLACK TYPED LETTERS ON CLEAN SOLID WHITE BACKGROUND */
+textarea, 
+[data-baseweb="textarea"] textarea,
+[data-baseweb="base-input"] textarea,
+.stTextArea textarea {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    background-color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+}
+
+textarea::placeholder, 
+[data-baseweb="textarea"] textarea::placeholder,
+.stTextArea textarea::placeholder {
+    color: #64748b !important;
+    -webkit-text-fill-color: #64748b !important;
+}
+
 /* Navbar */
 .dc-nav {
     display: flex;
@@ -1030,8 +1051,8 @@ else:
                     fig_p = go.Figure(go.Bar(
                         x=['Statutory NPPA Cap', 'Original Billed'], 
                         y=[l, b], 
-                        marker_color=['#10b981', '#ef4444'],
-                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"],
+                        marker_color=['#10b981', '#ef4444'], 
+                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
                         textposition='auto',
                         width=0.35
                     ))

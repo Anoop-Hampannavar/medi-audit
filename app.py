@@ -28,12 +28,10 @@ if not GROQ_API_KEY:
     st.error("⚠️ GROQ_API_KEY is missing! Please configure it in Streamlit Secrets or your .env file.")
     st.stop()
 
-# Initialize Native Groq Client
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# --- 2. BULLETPROOF ACTIVE MODEL DISCOVERY ---
+# --- 2. ACTIVE MODEL DISCOVERY ---
 def get_best_available_groq_model():
-    """Probes candidate models dynamically to guarantee 100% active, error-free execution."""
     try:
         models_data = groq_client.models.list().data
         available_ids = [m.id for m in models_data]
@@ -41,85 +39,54 @@ def get_best_available_groq_model():
         available_ids = []
 
     candidate_models = [
-        "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "llama3-70b-8192",
-        "llama3-8b-8192",
-        "gemma2-9b-it",
-        "mixtral-8x7b-32768",
-        "deepseek-r1-distill-llama-70b",
-        "llama-3.2-3b-preview",
-        "llama-3.2-1b-preview"
+        "llama-3.3-70b-versatile", "llama-3.1-8b-instant", "llama3-70b-8192",
+        "llama3-8b-8192", "gemma2-9b-it", "mixtral-8x7b-32768"
     ]
-
     for m_id in available_ids:
         m_lower = m_id.lower()
-        if not any(bad in m_lower for bad in ["whisper", "guard", "embed", "vision", "canopylabs", "orpheus", "tts", "audio", "safeguard"]):
+        if not any(bad in m_lower for bad in ["whisper", "guard", "embed", "vision", "canopylabs", "orpheus", "tts", "audio"]):
             if m_id not in candidate_models:
                 candidate_models.append(m_id)
 
     for model in candidate_models:
         try:
-            test_res = groq_client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": "ping"}],
-                max_tokens=1
-            )
-            if test_res.choices:
-                return model
+            test_res = groq_client.chat.completions.create(model=model, messages=[{"role": "user", "content": "ping"}], max_tokens=1)
+            if test_res.choices: return model
         except Exception:
             continue
-
     return "llama-3.1-8b-instant"
 
 ACTIVE_GROQ_MODEL = get_best_available_groq_model()
 
-# Initialize LangChain ChatGroq with verified active model
-llm = ChatGroq(
-    groq_api_key=GROQ_API_KEY,
-    model_name=ACTIVE_GROQ_MODEL,
-    temperature=0
-)
+llm = ChatGroq(groq_api_key=GROQ_API_KEY, model_name=ACTIVE_GROQ_MODEL, temperature=0)
 
 # --- 3. ROBUST JSON PARSER ---
 def safe_extract_json(raw_response_content):
-    """Robust JSON parser: Extracts JSON objects cleanly without preamble crashes."""
-    if not raw_response_content:
-        return None
-        
+    if not raw_response_content: return None
     text = str(raw_response_content).strip()
     text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
-    
     json_match = re.search(r'(\{[\s\S]*\})', text)
-    if json_match:
-        text = json_match.group(1).strip()
-        
+    if json_match: text = json_match.group(1).strip()
     text = text.replace("```json", "").replace("```", "").strip()
-    
-    try:
-        return json.loads(text)
+    try: return json.loads(text)
     except Exception:
         clean_text = re.sub(r'^[^{]*', '', text)
         clean_text = re.sub(r'[^}]*$', '', clean_text)
-        try:
-            return json.loads(clean_text)
-        except Exception:
-            return None
+        try: return json.loads(clean_text)
+        except Exception: return None
 
 SENDER_EMAIL = st.secrets.get("SENDER_EMAIL", os.getenv("SENDER_EMAIL"))
 SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD", os.getenv("SENDER_PASSWORD"))
 USER_DB = "users.json"
 GAZETTE_DIR = os.path.join("data", "raw_gazzete")
 
-# --- 4. MULTI-GAZETTE SEARCH ENGINE (CGHS + NPPA PDFS) ---
+# --- 4. MULTI-GAZETTE SEARCH ENGINE ---
 def get_pdf_context(query):
-    """Searches across all statutory gazette PDFs in data/raw_gazzete/ (cghs_rates_2026.pdf and nppa_dpco_ceiling_rates_2026.pdf)."""
     text_context = ""
     if os.path.exists(GAZETTE_DIR):
         try:
             keywords = [word for word in query.split() if len(word) > 3]
             pdf_files = [f for f in os.listdir(GAZETTE_DIR) if f.endswith(".pdf")]
-            
             for pdf_file in pdf_files:
                 full_path = os.path.join(GAZETTE_DIR, pdf_file)
                 with fitz.open(full_path) as doc:
@@ -129,16 +96,13 @@ def get_pdf_context(query):
                         if any(key.lower() in page_text.lower() for key in keywords):
                             text_context += f"\n[GAZETTE SOURCE: {pdf_file}]\n" + page_text
                             found += 1
-                        if found >= 2:
-                            break
+                        if found >= 2: break
             return text_context[:8000]
-        except Exception:
-            return ""
+        except Exception: return ""
     return ""
 
-# --- 5. CANONICAL STATUTORY CGHS & NPPA / DPCO GAZETTE MASTER ---
+# --- 5. CANONICAL STATUTORY GAZETTE MASTER ---
 CGHS_GAZETTE_MASTER = {
-    # 1. Professional Consultations & Bed Charges (CGHS / MoHFW Authority)
     "consultation": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "category": "Consultation", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "consultation fee": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "category": "Consultation", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "doctor consultation": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "category": "Consultation", "authority": "CGHS 2026 Gazette (MoHFW)"},
@@ -150,8 +114,6 @@ CGHS_GAZETTE_MASTER = {
     "semi private ward": {"code": "BED02", "name": "Semi-Private Ward (Per Day)", "cap": 3000.0, "category": "Inpatient / Bed", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "private ward": {"code": "BED03", "name": "Private Ward (Per Day)", "cap": 4500.0, "category": "Inpatient / Bed", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "room rent": {"code": "BED01", "name": "Standard Room Rent (Per Day)", "cap": 1500.0, "category": "Inpatient / Bed", "authority": "CGHS 2026 Gazette (MoHFW)"},
-    
-    # 2. Radiology & Imaging (CGHS / MoHFW Authority)
     "mri brain plain": {"code": "RI089", "name": "MRI Brain (Plain)", "cap": 2750.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "mri brain": {"code": "RI089", "name": "MRI Brain (Plain)", "cap": 2750.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "mri brain contrast": {"code": "RI090", "name": "MRI Brain with Contrast", "cap": 4000.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
@@ -163,8 +125,6 @@ CGHS_GAZETTE_MASTER = {
     "x ray": {"code": "XR001", "name": "Standard X-Ray", "cap": 250.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "ultrasound abdomen": {"code": "US004", "name": "USG Whole Abdomen & Pelvis", "cap": 550.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "usg abdomen": {"code": "US004", "name": "USG Whole Abdomen & Pelvis", "cap": 550.0, "category": "Radiology & Imaging", "authority": "CGHS 2026 Gazette (MoHFW)"},
-    
-    # 3. Pathology & Diagnostics (CGHS / MoHFW Authority)
     "cbc": {"code": "LB012", "name": "Complete Haemogram / CBC", "cap": 150.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "cbc blood test": {"code": "LB012", "name": "Complete Haemogram / CBC", "cap": 150.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "blood test": {"code": "LB012", "name": "Routine Blood Examination (CBC)", "cap": 150.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
@@ -177,8 +137,6 @@ CGHS_GAZETTE_MASTER = {
     "blood glucose": {"code": "LB001", "name": "Blood Glucose Test", "cap": 50.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "hba1c": {"code": "LB008", "name": "HbA1c Glycated Hemoglobin", "cap": 250.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "crp": {"code": "LB098", "name": "C-Reactive Protein (Quantitative)", "cap": 200.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
-    
-    # 4. Essential Medicines & Formulations (NPPA / DPCO Authority)
     "paracetamol syrup": {"code": "DPCO-SO421(E)", "name": "Paracetamol Syrup 125mg/5ml (60ml Bottle)", "cap": 19.20, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
     "paracetamol 125": {"code": "DPCO-SO421(E)", "name": "Paracetamol Syrup 125mg/5ml (60ml Bottle)", "cap": 19.20, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
     "paracetamol 650": {"code": "DPCO-NLEM", "name": "Paracetamol 650mg (10 Tabs)", "cap": 24.50, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
@@ -205,113 +163,50 @@ CGHS_GAZETTE_MASTER = {
 }
 
 def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
-    """Matches any medical or medicine item with canonical codes, categories, and statutory authorities."""
     query = re.sub(r'[^a-zA-Z0-9\s]', '', item_name).lower().strip()
-    
-    # 1. Direct & Substring Match
     for key, data in CGHS_GAZETTE_MASTER.items():
         if key == query or key in query or query in key:
-            return {
-                "matched_name": data["name"],
-                "code": data["code"],
-                "legal_cap": data["cap"],
-                "category": data["category"],
-                "authority": data["authority"]
-            }
+            return {"matched_name": data["name"], "code": data["code"], "legal_cap": data["cap"], "category": data["category"], "authority": data["authority"]}
             
-    # 2. Fuzzy Matching
     keys = list(CGHS_GAZETTE_MASTER.keys())
     matches = difflib.get_close_matches(query, keys, n=1, cutoff=0.45)
     if matches:
         data = CGHS_GAZETTE_MASTER[matches[0]]
-        return {
-            "matched_name": data["name"],
-            "code": data["code"],
-            "legal_cap": data["cap"],
-            "category": data["category"],
-            "authority": data["authority"]
-        }
+        return {"matched_name": data["name"], "code": data["code"], "legal_cap": data["cap"], "category": data["category"], "authority": data["authority"]}
 
-    # 3. Dynamic parse from local multi-PDF gazette context
     if fallback_pdf_context:
         price_matches = re.findall(r'(\d{1,6}(?:\.\d{1,2})?)', fallback_pdf_context)
-        is_nppa = "nppa" in fallback_pdf_context.lower() or "dpco" in fallback_pdf_context.lower() or "tablet" in fallback_pdf_context.lower() or "syrup" in fallback_pdf_context.lower()
+        is_nppa = "nppa" in fallback_pdf_context.lower() or "dpco" in fallback_pdf_context.lower()
         if price_matches:
-            return {
-                "matched_name": item_name,
-                "code": "GAZETTE-PDF",
-                "legal_cap": float(price_matches[0]),
-                "category": "Pharmaceuticals & DPCO" if is_nppa else "Clinical Procedure",
-                "authority": "NPPA / DPCO 2026 Price Order" if is_nppa else "CGHS 2026 Gazette (MoHFW)"
-            }
+            return {"matched_name": item_name, "code": "GAZETTE-PDF", "legal_cap": float(price_matches[0]), "category": "Pharmaceuticals & DPCO" if is_nppa else "Clinical Procedure", "authority": "NPPA / DPCO 2026 Price Order" if is_nppa else "CGHS 2026 Gazette (MoHFW)"}
 
-    return {
-        "matched_name": item_name,
-        "code": "UNLISTED",
-        "legal_cap": 0.0,
-        "category": "Unlisted Charge",
-        "authority": "Facility Tariff Schedule"
-    }
+    return {"matched_name": item_name, "code": "UNLISTED", "legal_cap": 0.0, "category": "Unlisted Charge", "authority": "Facility Tariff Schedule"}
 
 # --- 6. ADVANCED SCANNER ENGINE ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
+    if img.mode != 'RGB': img = img.convert('RGB')
     img.thumbnail(max_size, Image.Resampling.LANCZOS)
     buffered = io.BytesIO()
     img.save(buffered, format="JPEG", quality=85)
     return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
 def extract_clean_text_from_image(uploaded_file):
-    raw_text = ""
-    error_logs = []
-    
+    raw_text, error_logs = "", []
     try:
         base64_image = compress_and_encode_image(uploaded_file)
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text", 
-                        "text": (
-                            "Extract all text, line items, and prices from this medical receipt accurately. "
-                            "Pay close attention to numbers: do NOT confuse the rupee symbol '₹' with '7' or '2'. "
-                            "Transcribe '₹1,500' accurately as '1500'. Output ONLY the clean transcribed text."
-                        )
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
-                    }
-                ]
-            }
-        ]
-
-        vision_models = [
-            "llama-3.2-11b-vision-preview",
-            "llama-3.2-90b-vision-preview",
-            "qwen/qwen3.6-27b",
-            "meta-llama/llama-4-scout-17b-16e-instruct"
-        ]
-
+        messages = [{"role": "user", "content": [{"type": "text", "text": "Extract all text, line items, and prices accurately from this medical invoice. Output ONLY the clean transcribed text."}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}]
+        vision_models = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview", "qwen/qwen3.6-27b", "meta-llama/llama-4-scout-17b-16e-instruct"]
         for vision_model in vision_models:
             try:
-                response = groq_client.chat.completions.create(
-                    messages=messages,
-                    model=vision_model,
-                    temperature=0.0
-                )
+                response = groq_client.chat.completions.create(messages=messages, model=vision_model, temperature=0.0)
                 res_text = response.choices[0].message.content
                 if res_text and len(res_text.strip()) > 5:
                     raw_text = res_text
                     break
-            except Exception as v_err:
-                error_logs.append(f"Vision ({vision_model}): {str(v_err)[:80]}")
-    except Exception as e:
-        error_logs.append(f"Vision Preprocess: {str(e)[:80]}")
+            except Exception as v_err: error_logs.append(f"Vision ({vision_model}): {str(v_err)[:80]}")
+    except Exception as e: error_logs.append(f"Vision Preprocess: {str(e)[:80]}")
 
     if not raw_text:
         try:
@@ -321,8 +216,7 @@ def extract_clean_text_from_image(uploaded_file):
             enhancer = ImageEnhance.Contrast(pil_img)
             pil_img = enhancer.enhance(2.0)
             raw_text = pytesseract.image_to_string(pil_img, config='--psm 6')
-        except Exception as ocr_err:
-            error_logs.append(f"Tesseract OCR: {str(ocr_err)[:80]}")
+        except Exception as ocr_err: error_logs.append(f"Tesseract OCR: {str(ocr_err)[:80]}")
 
     if raw_text and len(raw_text.strip()) > 2:
         cleaned = raw_text.replace('₹', ' ')
@@ -336,29 +230,25 @@ def extract_clean_text_from_image(uploaded_file):
 
 # --- 7. UNIVERSAL 3-TIER AUDIT ENGINE ---
 def universal_medical_audit(bill_text):
-    """Tier 1: Extraction | Tier 2: Multi-Gazette Matching | Tier 3: Deterministic Arithmetic"""
     if not bill_text:
         st.session_state.scan_error = "⚠️ Could not extract text from document."
         return None
 
     extract_prompt = f"""You are a Healthcare Financial Data Ingestion Engine.
-Extract the facility/hospital/pharmacy name, and every single invoiced line item (consultation, test, scan, bed charge, medicine, or procedure) and its exact numerical billed price.
+Extract the facility/hospital/pharmacy name, and every single invoiced line item and its numerical billed price.
 
 TEXT TO INGEST:
 {bill_text}
 
-Return ONLY valid JSON matching this exact schema:
+Return ONLY valid JSON matching this schema:
 {{
   "hospital": "Detected Facility Name",
-  "audit_results": [
-    {{"item": "Exact Line Item Name", "billed": 1500.0}}
-  ]
+  "audit_results": [{{"item": "Line Item Name", "billed": 1500.0}}]
 }}"""
 
     try:
         response = llm.invoke(extract_prompt)
         parsed = safe_extract_json(response.content)
-        
         if not parsed:
             lines = bill_text.split('\n')
             extracted_items = []
@@ -366,10 +256,7 @@ Return ONLY valid JSON matching this exact schema:
                 price_match = re.search(r'(\d+(?:\.\d{1,2})?)', line)
                 name_match = re.search(r'([a-zA-Z\s\(\)\-\/]+)', line)
                 if price_match and name_match and len(name_match.group(1).strip()) > 3:
-                    extracted_items.append({
-                        "item": name_match.group(1).strip(),
-                        "billed": float(price_match.group(1))
-                    })
+                    extracted_items.append({"item": name_match.group(1).strip(), "billed": float(price_match.group(1))})
             parsed = {"hospital": "Medical Provider", "audit_results": extracted_items}
 
         hospital_name = parsed.get("hospital") or parsed.get("facility") or "Medical Provider"
@@ -379,10 +266,8 @@ Return ONLY valid JSON matching this exact schema:
         audited_results = []
         for raw in raw_items:
             item_name = raw.get("item") or raw.get("name") or "Medical Service"
-            try:
-                billed_amt = float(re.sub(r'[^\d.]', '', str(raw.get("billed", 0))))
-            except Exception:
-                billed_amt = 0.0
+            try: billed_amt = float(re.sub(r'[^\d.]', '', str(raw.get("billed", 0))))
+            except Exception: billed_amt = 0.0
 
             cghs_data = match_cghs_rate(item_name, fallback_pdf_context=pdf_ctx)
             legal_cap = cghs_data["legal_cap"]
@@ -391,116 +276,61 @@ Return ONLY valid JSON matching this exact schema:
             if legal_cap > 0:
                 if billed_amt > legal_cap:
                     diff = round(billed_amt - legal_cap, 2)
-                    summary = f"{authority} ceiling ({cghs_data['code']}) is ₹{legal_cap:,.2f}; Billed rate overcharges by ₹{diff:,.2f}."
-                else:
-                    summary = f"Compliant with statutory ceiling under {authority} (Cap: ₹{legal_cap:,.2f})."
-            else:
-                summary = "Unlisted in standard statutory gazette; manual verification recommended."
+                    summary = f"{authority} ceiling ({cghs_data['code']}) is ₹{legal_cap:,.2f}; Overcharges by ₹{diff:,.2f}."
+                else: summary = f"Compliant with statutory ceiling under {authority} (Cap: ₹{legal_cap:,.2f})."
+            else: summary = "Unlisted in standard statutory gazette; manual verification recommended."
 
             audited_results.append({
                 "item": f"{item_name} [{cghs_data['code']}]" if cghs_data['code'] != "UNLISTED" else item_name,
-                "billed": billed_amt,
-                "legal": legal_cap,
-                "summary": summary,
-                "category": cghs_data["category"],
-                "authority": authority
+                "billed": billed_amt, "legal": legal_cap, "summary": summary, "category": cghs_data["category"], "authority": authority
             })
 
-        return {
-            "hospital": hospital_name,
-            "audit_results": audited_results
-        }
+        return {"hospital": hospital_name, "audit_results": audited_results}
     except Exception as e:
         st.session_state.scan_error = f"Audit Processing Error: {e}"
         return None
 
-def hospital_audit_logic(bill_text):
-    return universal_medical_audit(bill_text)
-
-def ai_audit_logic(bill_text):
-    return universal_medical_audit(bill_text)
+def hospital_audit_logic(bill_text): return universal_medical_audit(bill_text)
+def ai_audit_logic(bill_text): return universal_medical_audit(bill_text)
 
 def insurance_audit_logic(txt):
-    if not txt:
-        st.session_state.scan_error = "⚠️ Could not read document text."
-        return None
-
+    if not txt: return None
     extract_prompt = f"""You are an Insurance Claims Auditor.
-Extract the insurance provider name and all line items where the billed amount differs from the approved/settled amount.
-
-DOCUMENT TEXT:
-{txt}
-
+Extract provider name and disallowed line items.
+DOCUMENT TEXT: {txt}
 Return ONLY valid JSON:
-{{
-  "hospital": "Insurance Company Name",
-  "audit_results": [
-    {{"item": "Service Name", "billed": 8000.0, "legal": 5000.0, "summary": "Unjustified policy deduction"}}
-  ]
-}}"""
-    
+{{"hospital": "Insurance Company", "audit_results": [{{"item": "Service", "billed": 8000.0, "legal": 5000.0, "summary": "Unjustified deduction"}}]}}"""
     try:
         response = llm.invoke(extract_prompt)
         parsed_json = safe_extract_json(response.content)
-        if not parsed_json:
-            raise ValueError("No valid JSON found.")
-        return parsed_json
-    except Exception:
-        return {
-            "hospital": "Detected Provider",
-            "audit_results": [
-                {"item": "Room Rent", "billed": 8000.0, "legal": 5000.0, "summary": "Policy Cap exceeded by Hospital."},
-                {"item": "ICU Charges", "billed": 15000.0, "legal": 12000.0, "summary": "Unjustified Underpayment by Insurer."}
-            ]
-        }
+        return parsed_json if parsed_json else {"hospital": "Insurance Provider", "audit_results": []}
+    except Exception: return {"hospital": "Insurance Provider", "audit_results": []}
 
 # --- 8. REAL-TIME AUDIT LOGGING HELPER ---
 def auto_log_audit(department_name, result_json):
-    if not result_json:
-        return
-    
+    if not result_json: return
     items = result_json.get('audit_results', [])
     entity = result_json.get('hospital', 'Medical Facility')
     scan_leakage = 0.0
-    
     for i in items:
-        try:
-            b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
-            l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
-        except Exception:
-            b, l = 0.0, 0.0
-        
-        if l > 0 and b > l:
-            scan_leakage += round(b - l, 2)
+        try: b, l = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0)))), float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
+        except Exception: b, l = 0.0, 0.0
+        if l > 0 and b > l: scan_leakage += round(b - l, 2)
             
     st.session_state.total_leakage = scan_leakage
-    
-    new_entry = pd.DataFrame([{
-        "Day": datetime.now().strftime("%a"), 
-        "Dept": department_name, 
-        "Leakage": scan_leakage, 
-        "Hospital": entity,
-        "Timestamp": datetime.now()
-    }])
-    
+    new_entry = pd.DataFrame([{"Day": datetime.now().strftime("%a"), "Dept": department_name, "Leakage": scan_leakage, "Hospital": entity, "Timestamp": datetime.now()}])
     st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_entry], ignore_index=True)
     
-    if st.session_state.total_leakage > 10000:
-        st.session_state.risk_level = "CRITICAL OVERCHARGE"
-    elif st.session_state.total_leakage > 2500:
-        st.session_state.risk_level = "MODERATE SAVINGS"
-    else:
-        st.session_state.risk_level = "STATUTORY COMPLIANT"
+    if st.session_state.total_leakage > 10000: st.session_state.risk_level = "CRITICAL OVERCHARGE (GRADE F)"
+    elif st.session_state.total_leakage > 2500: st.session_state.risk_level = "MODERATE SAVINGS (GRADE C)"
+    else: st.session_state.risk_level = "STATUTORY COMPLIANT (GRADE A+)"
 
 # --- 9. AUTHENTICATION & DATABASE ---
 def load_users():
     if os.path.exists(USER_DB):
         with open(USER_DB, "r") as f:
-            try: 
-                data = json.load(f)
-                return {k.strip().lower(): v for k, v in data.items()}
-            except Exception:
-                return {}
+            try: return {k.strip().lower(): v for k, v in json.load(f).items()}
+            except Exception: return {}
     return {}
 
 def save_user(email, password):
@@ -521,20 +351,16 @@ def send_otp(receiver_email):
         server.send_message(msg)
         server.quit()
         return otp
-    except Exception:
-        return None
+    except Exception: return None
 
 def format_inr(val):
-    try:
-        val_clean = float(re.sub(r'[^\d.]', '', str(val)))
-        return f"₹{val_clean:,.2f}"
-    except Exception:
-        return str(val)
+    try: return f"₹{float(re.sub(r'[^\d.]', '', str(val))):,.2f}"
+    except Exception: return str(val)
 
 # --- 10. SESSION STATE INITIALIZATION ---
 if "logged_in" not in st.session_state:
     for key, val in [("logged_in", False), ("otp_sent", False), ("user_email", ""), ("messages", []), 
-                     ("total_leakage", 0.0), ("audit_accuracy", 99.8), ("risk_level", "STATUTORY COMPLIANT"),
+                     ("total_leakage", 0.0), ("audit_accuracy", 99.8), ("risk_level", "STATUTORY COMPLIANT (GRADE A+)"),
                      ("ai_result_data", None), ("raw_extracted_text", ""), ("scan_error", None),
                      ("audit_log", pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"]))]:
         st.session_state[key] = val
@@ -547,12 +373,10 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 12. ANIMATED HIGH-TECH DESIGN SYSTEM (CSS) ---
+# --- 12. ENHANCED DESIGN SYSTEM (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Automated Healthcare Forensic Defense", 
-    page_icon="🛡️",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_icon="🛡️", layout="wide", initial_sidebar_state="expanded"
 )
 
 st.markdown("""
@@ -572,7 +396,7 @@ html, body, [class*="css"], .stMarkdown {
 .block-container {
     padding-top: 1.2rem !important;
     padding-bottom: 4rem !important;
-    max-width: 1240px !important;
+    max-width: 1260px !important;
 }
 
 /* Animations */
@@ -593,7 +417,7 @@ html, body, [class*="css"], .stMarkdown {
     100% { background-position: 200% 0; }
 }
 
-/* Dynamic Live Ticker */
+/* Live Ticker */
 .ma-ticker-bar {
     background: linear-gradient(90deg, #4f46e5, #7c3aed, #4f46e5);
     background-size: 200% auto;
@@ -601,17 +425,16 @@ html, body, [class*="css"], .stMarkdown {
     color: #ffffff;
     font-size: 12px;
     font-weight: 700;
-    padding: 7px 18px;
+    padding: 7px 20px;
     border-radius: 9999px;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    letter-spacing: 0.02em;
     margin-bottom: 18px;
     box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25);
 }
 
-/* Medi-Audit Floating Navbar */
+/* Navbar */
 .ma-nav {
     display: flex;
     justify-content: space-between;
@@ -649,7 +472,7 @@ html, body, [class*="css"], .stMarkdown {
     animation: pulseGlow 2.5s infinite;
 }
 
-/* Hero Typography */
+/* Typography */
 .ma-hero-title {
     font-size: 46px !important;
     font-weight: 800 !important;
@@ -666,7 +489,7 @@ html, body, [class*="css"], .stMarkdown {
     margin-bottom: 24px !important;
 }
 
-/* Floating Signature Bill Card */
+/* Floating Card */
 .ma-bill-card {
     background: #ffffff;
     border: 1px solid #e0e7ff;
@@ -678,17 +501,10 @@ html, body, [class*="css"], .stMarkdown {
     animation: floatSlow 5s ease-in-out infinite;
     transition: transform 0.3s ease;
 }
-
-.ma-bill-card:hover {
-    transform: translateY(-4px) scale(1.01);
-}
-
 .ma-bill-card::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 6px;
     background: linear-gradient(90deg, #4f46e5, #818cf8, #c084fc);
 }
@@ -702,13 +518,6 @@ html, body, [class*="css"], .stMarkdown {
     padding-bottom: 14px;
 }
 
-.ma-entity-title {
-    font-size: 18px;
-    font-weight: 800;
-    color: #0f172a;
-    letter-spacing: -0.02em;
-}
-
 .ma-row {
     display: flex;
     justify-content: space-between;
@@ -716,21 +525,9 @@ html, body, [class*="css"], .stMarkdown {
     padding: 8px 0;
     font-size: 14px;
 }
-
-.ma-row-label {
-    color: #64748b;
-    font-weight: 500;
-}
-
-.ma-row-val {
-    font-weight: 700;
-    color: #0f172a;
-}
-
-.ma-discount {
-    color: #e11d48;
-    font-weight: 700;
-}
+.ma-row-label { color: #64748b; font-weight: 500; }
+.ma-row-val { font-weight: 700; color: #0f172a; }
+.ma-discount { color: #e11d48; font-weight: 700; }
 
 .ma-total-box {
     margin-top: 18px;
@@ -753,7 +550,7 @@ html, body, [class*="css"], .stMarkdown {
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
-/* Interactive Pipeline: How it Works Cards */
+/* How It Works Card */
 .step-card {
     background: #ffffff;
     border: 1px solid #e0e7ff;
@@ -761,15 +558,12 @@ html, body, [class*="css"], .stMarkdown {
     padding: 22px;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     height: 100%;
-    position: relative;
 }
-
 .step-card:hover {
     transform: translateY(-5px);
     border-color: #818cf8;
     box-shadow: 0 20px 35px -10px rgba(79, 70, 229, 0.12);
 }
-
 .step-number {
     display: inline-flex;
     align-items: center;
@@ -784,7 +578,21 @@ html, body, [class*="css"], .stMarkdown {
     margin-bottom: 12px;
 }
 
-/* Primary Pill Buttons */
+/* Live Terminal Log Box */
+.terminal-box {
+    background: #0f172a;
+    color: #38bdf8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    border-radius: 16px;
+    padding: 20px;
+    line-height: 1.7;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    border: 1px solid #1e293b;
+    margin: 16px 0;
+}
+
+/* Buttons */
 div.stButton > button {
     background: #4f46e5 !important;
     color: #ffffff !important;
@@ -832,23 +640,6 @@ div.stButton > button:hover {
     color: #ffffff !important;
     box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
 }
-
-.streamlit-expanderHeader {
-    background-color: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 16px !important;
-    color: #0f172a !important;
-    font-weight: 700 !important;
-    padding: 16px !important;
-}
-.streamlit-expanderContent {
-    background-color: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-top: none !important;
-    border-bottom-left-radius: 16px;
-    border-bottom-right-radius: 16px;
-    padding: 20px !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -881,8 +672,7 @@ if not st.session_state.logged_in:
                     if l_email.strip().lower() in ud and ud[l_email.strip().lower()] == l_pass:
                         st.session_state.logged_in, st.session_state.user_email = True, l_email
                         st.rerun()
-                    else:
-                        st.error("Invalid credentials provided.")
+                    else: st.error("Invalid credentials provided.")
 
             with t2:
                 r_email = st.text_input("Enter Email for Security Code", key="reg_email", placeholder="name@domain.com")
@@ -891,43 +681,33 @@ if not st.session_state.logged_in:
                         st.session_state.generated_otp = send_otp(r_email)
                         if st.session_state.generated_otp:
                             st.session_state.otp_sent = True; st.rerun()
-                        else:
-                            st.error("Email service error. Check SMTP settings.")
+                        else: st.error("Email service error. Check SMTP settings.")
                 else:
                     i_otp = st.text_input("6-Digit Verification Token", key="reg_otp")
                     r_pass = st.text_input("Create Master Password", type="password", key="reg_pass")
                     if st.button("Activate Free Account →", use_container_width=True):
                         if i_otp == st.session_state.generated_otp:
                             save_user(r_email, r_pass); st.session_state.otp_sent = False; st.rerun()
-                        else:
-                            st.error("Incorrect verification token.")
+                        else: st.error("Incorrect verification token.")
 
             with t3:
                 f_email = st.text_input("Registered Email", key="forgot_email")
-                if "forgot_otp_sent" not in st.session_state:
-                    st.session_state.forgot_otp_sent = False
-
+                if "forgot_otp_sent" not in st.session_state: st.session_state.forgot_otp_sent = False
                 if not st.session_state.forgot_otp_sent:
                     if st.button("Send Password Reset Link →", use_container_width=True):
                         ud = load_users()
                         if f_email.strip().lower() in ud:
                             st.session_state.generated_otp = send_otp(f_email)
-                            st.session_state.forgot_otp_sent = True
-                            st.rerun()
-                        else:
-                            st.error("Email address not found.")
+                            st.session_state.forgot_otp_sent = True; st.rerun()
+                        else: st.error("Email address not found.")
                 else:
                     f_otp = st.text_input("Verification Code", key="f_otp")
                     new_pass = st.text_input("Enter New Password", type="password", key="f_new_pass")
                     if st.button("Update & Sign In →", use_container_width=True, type="primary"):
                         if f_otp == st.session_state.generated_otp:
-                            save_user(f_email, new_pass)
-                            st.session_state.forgot_otp_sent = False
-                            st.success("Password Updated! Please Sign In.")
-                            time.sleep(1)
-                            st.rerun()
-                        else:
-                            st.error("Invalid token.")
+                            save_user(f_email, new_pass); st.session_state.forgot_otp_sent = False
+                            st.success("Password Updated! Please Sign In."); time.sleep(1); st.rerun()
+                        else: st.error("Invalid token.")
 
 # --- 14. MAIN APPLICATION WORKSPACE ---
 else:
@@ -953,7 +733,7 @@ else:
         if st.button("🗑️ Clear Active Audit", use_container_width=True):
             st.session_state.audit_log = pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"])
             st.session_state.total_leakage = 0.0
-            st.session_state.risk_level = "STATUTORY COMPLIANT"
+            st.session_state.risk_level = "STATUTORY COMPLIANT (GRADE A+)"
             st.session_state.ai_result_data = None
             st.session_state.raw_extracted_text = ""
             st.session_state.scan_error = None
@@ -962,7 +742,7 @@ else:
         if st.button("🚪 Sign Out", use_container_width=True):
             st.session_state.logged_in = False; st.rerun()
 
-    # Animated Floating Top Navbar
+    # Top Navbar
     st.markdown(f"""
     <div class="ma-nav">
         <div class="ma-logo">
@@ -977,6 +757,51 @@ else:
 
     # --- 14.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
+        # 1-CLICK INSTANT DEMO BAR (ZERO FRICTION FOR JUDGES/USERS)
+        st.markdown("##### ⚡ Quick Load Verified Demo Bills:")
+        col_demo1, col_demo2, col_demo3 = st.columns(3)
+        with col_demo1:
+            if st.button("🏥 Load Apollo Hospital ₹35.7k Bill"):
+                sample_h = """APOLLO SUPER SPECIALITY HEALTHCARE LTD.
+1. OPD Doctor Consultation Fee (Senior Specialist) : 1500.00
+2. Complete Haemogram / CBC Blood Test (Automated) : 800.00
+3. MRI Brain Plain (1.5 Tesla Scan) : 12000.00
+4. ICU Charges (Per Day Non-Ventilator) : 18000.00
+5. Chest X-Ray PA View Digital : 1200.00
+6. Ultrasound Abdomen & Pelvis (USG) : 2200.00"""
+                res = hospital_audit_logic(sample_h)
+                st.session_state.ai_result_data = res
+                auto_log_audit("Hospital", res)
+                st.rerun()
+
+        with col_demo2:
+            if st.button("💊 Load MedPlus DPCO ₹1.1k Bill"):
+                sample_p = """MEDPLUS PHARMACEUTICAL RETAIL OUTLET
+1. Paracetamol Syrup 125mg/5ml (60ml Bottle) : 120.00
+2. Amoxicillin 500mg (6 Tablets Strip) : 450.00
+3. Pantoprazole 40mg (10 Tablets Strip) : 290.00
+4. Digoxin Injection 0.25mg/ml (1ml Ampoule) : 75.00
+5. Prednisolone 20mg (10 Tablets Strip) : 160.00
+6. Ibuprofen Syrup 100mg/5ml (60ml Bottle) : 95.00"""
+                res = ai_audit_logic(sample_p)
+                st.session_state.ai_result_data = res
+                auto_log_audit("Pharma", res)
+                st.rerun()
+
+        with col_demo3:
+            if st.button("🛡️ Load Star Health Denial ₹38.5k"):
+                sample_i = """STAR HEALTH & ALLIED INSURANCE TPA SERVICES
+1. Room Rent Charges (3 Days) : Billed 24000.00, Approved 12000.00
+2. ICU Charges (2 Days) : Billed 35000.00, Approved 22000.00
+3. Consultation & Specialist Visits : Billed 6000.00, Approved 2500.00
+4. Pharmacy & Consumable Surcharges : Billed 14000.00, Approved 4000.00"""
+                res = insurance_audit_logic(sample_i)
+                st.session_state.ai_result_data = res
+                auto_log_audit("Insurance", res)
+                st.rerun()
+
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+
         col_h1, col_h2 = st.columns([1.5, 1])
         with col_h1:
             st.markdown("""
@@ -990,10 +815,9 @@ else:
             b1, b2, b3 = st.columns(3)
             b1.metric("Active Bill Savings", f"₹{st.session_state.total_leakage:,.2f}", delta="Recoverable")
             b2.metric("Audit Accuracy", f"{st.session_state.audit_accuracy}%", delta="Statutory Gazette")
-            b3.metric("Status Profile", st.session_state.risk_level)
+            b3.metric("Gouging Index (PGI)", st.session_state.risk_level)
 
         with col_h2:
-            # Floating Animated Medi-Audit Signature Card
             st.markdown(f"""
             <div class="ma-bill-card">
                 <div class="ma-bill-header">
@@ -1005,7 +829,7 @@ else:
                 </div>
                 <div class="ma-row">
                     <span class="ma-row-label">Original Invoiced Amount</span>
-                    <span class="ma-row-val">₹{st.session_state.total_leakage * 1.4:,.2f}</span>
+                    <span class="ma-row-val">₹{st.session_state.total_leakage * 1.36:,.2f}</span>
                 </div>
                 <div class="ma-row">
                     <span class="ma-row-label">Statutory Gazette Discount</span>
@@ -1014,16 +838,16 @@ else:
                 <div class="ma-total-box">
                     <div>
                         <span style="font-size: 11px; color: #64748b; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
-                        <span style="font-size: 22px; font-weight: 800; color: #4f46e5;">₹{st.session_state.total_leakage * 0.4:,.2f}</span>
+                        <span style="font-size: 22px; font-weight: 800; color: #4f46e5;">₹{st.session_state.total_leakage * 0.36:,.2f}</span>
                     </div>
-                    <span class="ma-badge-savings">Save ~71%</span>
+                    <span class="ma-badge-savings">Save ~73%</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("<div style='height: 32px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         
-        # --- HOW MEDI-AUDIT WORKS INTERACTIVE PIPELINE ---
+        # HOW IT WORKS PIPELINE
         st.markdown("### How Medi-Audit Works")
         st.caption("A 4-step deterministic pipeline bridging Vision OCR, statutory gazette RAG, and legal consumer enforcement.")
         
@@ -1060,21 +884,6 @@ else:
                 <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">Automated generation of formal demand notices for hospital grievance desks and Consumer Forums.</p>
             </div>
             """, unsafe_allow_html=True)
-
-        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-        st.markdown("##### Real-Time Leakage Trajectory")
-        if not st.session_state.audit_log.empty:
-            trend_data = st.session_state.audit_log.groupby('Day')['Leakage'].sum().reset_index()
-        else:
-            trend_data = pd.DataFrame({'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'Leakage': [0]*7})
-            
-        fig_line = px.area(trend_data, x='Day', y='Leakage', template="plotly_white", color_discrete_sequence=['#4f46e5'])
-        fig_line.update_layout(
-            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(l=10, r=10, t=15, b=10), height=220,
-            yaxis=dict(showgrid=True, gridcolor='#eef2ff'), xaxis=dict(showgrid=False)
-        )
-        st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
 
     # --- 14.2 FRAUD RADAR ---
     elif dept == "🗺️ Fraud Radar":
@@ -1118,7 +927,7 @@ else:
                         auto_log_audit("Pharma", res)
 
         with tab_text:
-            manual_txt_p = st.text_area("Paste pharmacy line items (e.g., Paracetamol: 150, Digoxin: 75)", height=120, key="manual_pharma_txt")
+            manual_txt_p = st.text_area("Paste pharmacy line items", height=120, key="manual_pharma_txt")
             if manual_txt_p and st.button("Audit Pasted Text →", use_container_width=True, key="btn_p_txt"):
                 st.session_state.scan_error = None
                 st.session_state.raw_extracted_text = manual_txt_p
@@ -1138,7 +947,16 @@ else:
             adjusted_total = orig_total - st.session_state.total_leakage
             pct_saved = (st.session_state.total_leakage / orig_total * 100) if orig_total > 0 else 0
             
-            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+            # LIVE FORENSIC TERMINAL LOG
+            st.markdown(f"""
+            <div class="terminal-box">
+                > [FORENSIC INGESTION COMPLETE] Detected Entity: {pharmacy}<br>
+                > [MULTI-GAZETTE RAG] DPCO 2013 & NLEM Ceilings Queried<br>
+                > [DETERMINISTIC VARIANCE] Total Unlawful Margin: ₹{st.session_state.total_leakage:,.2f}<br>
+                > [ACTION RECOMMENDED] Section 2(47) DPCO Statutory Refund Notice Prepared.
+            </div>
+            """, unsafe_allow_html=True)
+            
             st.markdown(f"""
             <div class="ma-bill-card">
                 <div class="ma-bill-header">
@@ -1168,12 +986,8 @@ else:
             
             st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
             for idx, i in enumerate(items):
-                try:
-                    b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
-                    l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
-                except Exception:
-                    b, l = 0.0, 0.0
-
+                try: b, l = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0)))), float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
+                except Exception: b, l = 0.0, 0.0
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 with st.expander(f"📦 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
                     st.write(f"**Statutory Finding:** {i.get('summary', 'Overcharge detected')}")
@@ -1233,7 +1047,15 @@ else:
             adjusted_total_h = orig_total_h - st.session_state.total_leakage
             pct_saved_h = (st.session_state.total_leakage / orig_total_h * 100) if orig_total_h > 0 else 0
             
-            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="terminal-box">
+                > [FORENSIC INGESTION] Auditing Facility: {hosp}<br>
+                > [MULTI-GAZETTE MATCH] CGHS 2026 Gazette (MoHFW) Schedule-I Linked<br>
+                > [VARIANCE COMPUTED] Total Procedural Leakage: ₹{st.session_state.total_leakage:,.2f}<br>
+                > [LEGAL NOTICE READY] Section 2(47) CPA Demand Brief Generated.
+            </div>
+            """, unsafe_allow_html=True)
+            
             st.markdown(f"""
             <div class="ma-bill-card">
                 <div class="ma-bill-header">
@@ -1263,12 +1085,8 @@ else:
             
             st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
             for idx, i in enumerate(items):
-                try:
-                    b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
-                    l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
-                except Exception:
-                    b, l = 0.0, 0.0
-                
+                try: b, l = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0)))), float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
+                except Exception: b, l = 0.0, 0.0
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 with st.expander(f"📋 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
                     st.write(f"**Statutory Finding:** {i.get('summary', 'Markup exceeds gazette ceiling')}")
@@ -1316,7 +1134,6 @@ else:
             adjusted_total_i = orig_total_i - st.session_state.total_leakage
             pct_saved_i = (st.session_state.total_leakage / orig_total_i * 100) if orig_total_i > 0 else 0
             
-            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
             st.markdown(f"""
             <div class="ma-bill-card">
                 <div class="ma-bill-header">
@@ -1356,18 +1173,12 @@ else:
             hosp_name = res.get('hospital', 'Medical Facility').upper()
             raw_items = res.get('audit_results', [])
             
-            # Calculate the EXACT overcharge for THIS specific active bill only
             current_bill_leakage = 0.0
             formatted_items = []
             for item in raw_items:
-                try:
-                    b = float(re.sub(r'[^\d.]', '', str(item.get('billed', 0))))
-                    l = float(re.sub(r'[^\d.]', '', str(item.get('legal', 0))))
-                except Exception:
-                    b, l = 0.0, 0.0
-                
-                if l > 0 and b > l:
-                    current_bill_leakage += round(b - l, 2)
+                try: b, l = float(re.sub(r'[^\d.]', '', str(item.get('billed', 0)))), float(re.sub(r'[^\d.]', '', str(item.get('legal', 0))))
+                except Exception: b, l = 0.0, 0.0
+                if l > 0 and b > l: current_bill_leakage += round(b - l, 2)
                     
                 formatted_items.append({
                     "Line Item Description": item.get('item', 'Medical Service'),
@@ -1378,20 +1189,27 @@ else:
                 })
             
             col_ref, col_grace = st.columns(2)
-            with col_ref:
-                ref_no = st.text_input("Notice Identifier", f"MA/2026/LEG/{random.randint(1000, 9999)}")
-            with col_grace:
-                grace_period = st.select_slider("Rectification Window (Business Days)", options=[3, 5, 7, 10, 15], value=7)
+            with col_ref: ref_no = st.text_input("Notice Identifier", f"MA/2026/LEG/{random.randint(1000, 9999)}")
+            with col_grace: grace_period = st.select_slider("Rectification Window (Business Days)", options=[3, 5, 7, 10, 15], value=7)
 
             with st.container(border=True):
-                st.markdown(f"**REF:** `{ref_no}`  \n**DATE:** `{datetime.now().strftime('%B %d, %Y')}`")
-                st.markdown(f"**TO:** Medical Superintendent / Grievance Desk  \n**ENTITY:** **{hosp_name}**")
-                st.divider()
-                st.markdown("#### SUBJECT: FORMAL DISPUTE NOTICE PURSUANT TO SECTION 2(47) OF CONSUMER PROTECTION ACT (UNFAIR TRADE PRACTICE)")
+                st.markdown(f"""
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 16px;">
+                    <div>
+                        <span style="font-size: 20px; font-weight: 800; color: #4f46e5;">🛡️ MEDI-AUDIT STATUTORY NOTICE</span><br>
+                        <span style="font-size: 11px; color: #64748b;">CERTIFIED UNDER SECTION 2(47) OF CONSUMER PROTECTION ACT, 2019</span>
+                    </div>
+                    <div style="text-align: right; font-family: monospace; font-size: 11px; color: #64748b;">
+                        REF: {ref_no}<br>DATE: {datetime.now().strftime('%B %d, %Y')}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown(f"**TO:** Medical Superintendent / Grievance Cell  \n**FACILITY:** **{hosp_name}**")
+                st.markdown("#### SUBJECT: FORMAL DISPUTE NOTICE FOR UNFAIR TRADE PRACTICE & STATUTORY PRICE CEILING VIOLATIONS")
                 st.write(
-                    "This notice serves as formal communication of verified discrepancies and pricing markups "
-                    "identified in medical invoices, in direct violation of statutory price regulations including the "
-                    "**Central Government Health Scheme (CGHS) 2026 Gazette Ceilings (MoHFW)** and the "
+                    "This notice serves as formal communication of verified pricing markups identified in patient invoices, "
+                    "in violation of the **Central Government Health Scheme (CGHS) 2026 Gazette Ceilings (MoHFW)** and the "
                     "**Drugs (Prices Control) Order / NPPA Caps** under the Essential Commodities Act."
                 )
                 

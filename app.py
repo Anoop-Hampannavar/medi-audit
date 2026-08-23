@@ -387,6 +387,14 @@ html, body, [class*="css"], .stMarkdown {
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
 }
 
+/* FIX: Completely Remove Top White Header & Toolbars */
+header, [data-testid="stHeader"], [data-testid="stToolbar"], .stAppHeader, #MainMenu, footer {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    background: transparent !important;
+}
+
 /* Deep Obsidian Background */
 .stApp {
     background-color: #080c14 !important;
@@ -397,9 +405,8 @@ html, body, [class*="css"], .stMarkdown {
     color: #ffffff !important;
 }
 
-#MainMenu, footer {visibility: hidden; height: 0;}
 .block-container {
-    padding-top: 1.2rem !important;
+    padding-top: 1.5rem !important;
     padding-bottom: 4rem !important;
     max-width: 1260px !important;
 }

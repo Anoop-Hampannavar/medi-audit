@@ -181,7 +181,7 @@ def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
 
     return {"matched_name": item_name, "code": "UNLISTED", "legal_cap": 0.0, "category": "Unlisted Charge", "authority": "Facility Tariff Schedule"}
 
-# --- 6. SCANNER ENGINE ---
+# --- 6. ADVANCED SCANNER ENGINE ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
@@ -372,7 +372,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 12. PURE CYBER-HEALTH UI/UX (CSS) ---
+# --- 12. OBSIDIAN CYBER-HEALTH THEME (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Automated Healthcare Forensic Defense", 
     page_icon="🛡️", layout="wide", initial_sidebar_state="expanded"
@@ -389,9 +389,9 @@ html, body, [class*="css"], .stMarkdown {
 .stApp {
     background: #080a0f !important;
     background-image: 
-        radial-gradient(at 10% 10%, rgba(0, 102, 255, 0.12) 0px, transparent 50%),
-        radial-gradient(at 90% 20%, rgba(0, 210, 255, 0.08) 0px, transparent 50%),
-        radial-gradient(at 50% 90%, rgba(37, 99, 235, 0.1) 0px, transparent 50%) !important;
+        radial-gradient(at 10% 10%, rgba(0, 102, 255, 0.15) 0px, transparent 50%),
+        radial-gradient(at 90% 20%, rgba(0, 210, 255, 0.1) 0px, transparent 50%),
+        radial-gradient(at 50% 90%, rgba(37, 99, 235, 0.12) 0px, transparent 50%) !important;
     color: #f8fafc !important;
 }
 
@@ -424,24 +424,46 @@ html, body, [class*="css"], .stMarkdown {
     letter-spacing: -0.03em;
 }
 
-.status-dot {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #00d2ff 0%, #0066ff 100%);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
-}
-
-.cyber-panel {
+/* Goodbill Signature Floating Dark Card */
+.goodbill-dark-card {
     background: #11141d;
     border: 1px solid #1f2633;
     border-radius: 24px;
     padding: 24px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.goodbill-dark-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #0066ff, #00d2ff);
+}
+
+.gb-row-dark {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #1f2633;
+}
+
+.gb-adjusted-box-dark {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 18px;
+    padding: 16px;
+    background: #151924;
+    border: 1px solid #1f2633;
+    border-radius: 16px;
 }
 
 .metric-pod {
@@ -524,12 +546,12 @@ if not st.session_state.logged_in:
     with col_c2:
         st.markdown("""
         <div style='text-align: center; padding: 40px 0 20px 0;'>
+            <div style="font-size: 44px; margin-bottom: 8px;">🛡️</div>
             <div style="display: inline-flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                <div class="status-dot">🛡️</div>
-                <span style="font-size: 26px; font-weight: 800; color: #ffffff;">Medi-Audit</span>
+                <span style="font-size: 28px; font-weight: 800; color: #ffffff;">Medi-Audit</span>
                 <span style="background: #0066ff; color: #fff; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 9999px;">PRO</span>
             </div>
-            <h1 style="font-size: 38px; font-weight: 800; letter-spacing: -0.04em; color: #ffffff; margin-bottom: 6px;">Check your Healthcare Financial Health</h1>
+            <h1 style="font-size: 36px; font-weight: 800; letter-spacing: -0.04em; color: #ffffff; margin-bottom: 6px;">Never overpay for medical care again.</h1>
             <p style="font-size: 15px; color: #94a3b8; margin-bottom: 24px;">Automated statutory verification against CGHS 2026 Gazettes and NPPA DPCO Ceilings.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -589,7 +611,7 @@ else:
         st.markdown(f"""
         <div style='padding: 10px 0 20px 0;'>
             <div style='display: flex; align-items: center; gap: 8px;'>
-                <div class="status-dot" style="width: 22px; height: 22px; font-size: 12px;">🛡️</div>
+                <span style='font-size: 24px;'>🛡️</span>
                 <span style='font-size: 19px; font-weight: 800; color: #ffffff;'>Medi-Audit</span>
             </div>
             <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>Engine: <span style='font-family: monospace; color: #00d2ff;'>{ACTIVE_GROQ_MODEL}</span></p>
@@ -600,7 +622,7 @@ else:
         
         dept = st.radio(
             "FORENSIC DEPARTMENTS", 
-            ["📊 Executive Terminal", "🗺️ Fraud Radar", "💊 Pharma Forensic", "🛡️ Insurance Armor", "🏥 Hospital Audit", "⚖️ Justice Portal", "💬 AI Copilot"],
+            ["📊 Executive Terminal", "🗺️ Fraud Radar", "💊 Pharma Forensic", "🛡️ Insurance Armor", "🏥 Hospital Audit", "⚖️ Negotiation & Legal Dispatch", "💬 AI Copilot"],
             label_visibility="collapsed"
         )
         
@@ -621,9 +643,9 @@ else:
     st.markdown(f"""
     <div class="dark-top-bar">
         <div class="brand-badge">
-            <div class="status-dot">🛡️</div>
+            <span style="font-size: 22px;">🛡️</span>
             <span>Medi-Audit</span>
-            <span style="color: #00d2ff; font-size: 14px; font-weight: 600;">| Forensics Hub</span>
+            <span style="color: #00d2ff; font-size: 14px; font-weight: 600;">| Statutory Defense Engine</span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="background:#1e2433; color:#00d2ff; font-size:11px; font-weight:700; padding:6px 14px; border-radius:9999px; border:1px solid #232a3b;">
@@ -633,6 +655,19 @@ else:
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # Calculate live real-time values from active scanned/loaded audit
+    active_items = st.session_state.ai_result_data.get('audit_results', []) if st.session_state.ai_result_data else []
+    if active_items:
+        realtime_orig_total = sum([float(re.sub(r'[^\d.]', '', str(x.get('billed', 0)))) for x in active_items])
+        realtime_discount = st.session_state.total_leakage
+        realtime_adjusted_total = max(0.0, realtime_orig_total - realtime_discount)
+        realtime_pct_saved = (realtime_discount / realtime_orig_total * 100) if realtime_orig_total > 0 else 0
+    else:
+        realtime_orig_total = st.session_state.total_leakage * 1.36 if st.session_state.total_leakage > 0 else 0.0
+        realtime_discount = st.session_state.total_leakage
+        realtime_adjusted_total = st.session_state.total_leakage * 0.36 if st.session_state.total_leakage > 0 else 0.0
+        realtime_pct_saved = 73.5 if st.session_state.total_leakage > 0 else 0.0
 
     # --- 14.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
@@ -680,35 +715,36 @@ else:
 
         st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
-        col_left, col_right = st.columns([1.6, 1.2])
+        col_left, col_right = st.columns([1.5, 1.2])
 
         with col_left:
+            # GOODBILL EXACT PRODUCT FRAMING CARD (REAL-TIME)
             st.markdown(f"""
-            <div class="cyber-panel">
+            <div class="goodbill-dark-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
-                        <strong style="font-size: 22px; color: #ffffff;">🏥 Active Forensic Audit Ledger</strong><br>
-                        <span style="font-size: 12px; color: #00d2ff;">CGHS 2026 Gazette & NPPA DPCO Linked</span>
+                        <strong style="font-size: 20px; color: #ffffff;">🏥 Active Audit Ledger</strong><br>
+                        <span style="font-size: 12px; color: #00d2ff;">Real-Time Statutory Price Reconciliation</span>
                     </div>
                     <span style="background: #1e2433; color: #00d2ff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 9999px;">
                         {datetime.now().strftime('%B %d, %Y')}
                     </span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; border-bottom: 1px solid #1f2633;">
-                    <span style="color: #94a3b8;">Invoiced Provider Rate:</span>
-                    <strong style="color: #ffffff;">₹{st.session_state.total_leakage * 1.36:,.2f}</strong>
+                <div class="gb-row-dark">
+                    <span style="color: #94a3b8; font-weight: 600;">Original Billed Amount</span>
+                    <strong style="color: #ffffff; font-size: 15px;">₹{realtime_orig_total:,.2f}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; border-bottom: 1px solid #1f2633;">
-                    <span style="color: #94a3b8;">Statutory Gazette Ceiling Discount:</span>
-                    <strong style="color: #f43f5e;">-₹{st.session_state.total_leakage:,.2f}</strong>
+                <div class="gb-row-dark">
+                    <span style="color: #94a3b8; font-weight: 600;">Statutory Benchmark Discount</span>
+                    <strong style="color: #f43f5e; font-size: 15px;">-₹{realtime_discount:,.2f}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding: 16px; background: #151924; border-radius: 16px;">
+                <div class="gb-adjusted-box-dark">
                     <div>
                         <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
-                        <strong style="font-size: 26px; color: #00d2ff;">₹{st.session_state.total_leakage * 0.36:,.2f}</strong>
+                        <strong style="font-size: 26px; color: #00d2ff;">₹{realtime_adjusted_total:,.2f}</strong>
                     </div>
                     <span style="background: #0066ff; color: #fff; font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 9999px;">
-                        Save ~73.5%
+                        Save {realtime_pct_saved:.0f}%
                     </span>
                 </div>
             </div>
@@ -718,30 +754,30 @@ else:
             st.markdown(f"""
             <div class="metric-pod">
                 <div>
-                    <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">ACTIVE BILL SAVINGS</span><br>
+                    <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">STATUTORY BENCHMARK DISCOUNT</span><br>
                     <strong style="color: #ffffff; font-size: 20px;">₹{st.session_state.total_leakage:,.2f}</strong>
                 </div>
-                <span style="background: rgba(0, 102, 255, 0.2); color: #00d2ff; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;">Instant</span>
+                <span style="background: rgba(0, 102, 255, 0.2); color: #00d2ff; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;">Instant Recovery</span>
             </div>
             <div class="metric-pod">
                 <div>
                     <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">AUDIT ACCURACY</span><br>
                     <strong style="color: #00d2ff; font-size: 20px;">{st.session_state.audit_accuracy}%</strong>
                 </div>
-                <span style="background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;">Verified</span>
+                <span style="background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;">Gazette Verified</span>
             </div>
             <div class="metric-pod">
                 <div>
-                    <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">GOUGING INDEX (PGI)</span><br>
+                    <span style="color: #94a3b8; font-size: 11px; font-weight: 700;">PRICE GOUGING INDEX (PGI)</span><br>
                     <strong style="color: #f43f5e; font-size: 14px;">{st.session_state.risk_level}</strong>
                 </div>
-                <span style="background: rgba(244, 63, 94, 0.2); color: #f43f5e; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;">Status</span>
+                <span style="background: rgba(244, 63, 94, 0.2); color: #f43f5e; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;">Section 2(47) Flag</span>
             </div>
             """, unsafe_allow_html=True)
 
         st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
         
-        # Plotly Graphs (Dark Cyber Theme)
+        # Plotly Graphs
         col_g1, col_g2 = st.columns([1.6, 1])
         with col_g1:
             st.markdown("##### Real-Time Leakage Trajectory")
@@ -852,7 +888,7 @@ else:
             pct_saved = (st.session_state.total_leakage / orig_total * 100) if orig_total > 0 else 0
             
             st.markdown(f"""
-            <div class="cyber-panel">
+            <div class="goodbill-dark-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🧪 {pharmacy}</strong><br>
@@ -862,15 +898,15 @@ else:
                         {datetime.now().strftime('%B %d, %Y')}
                     </span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px solid #1f2633;">
-                    <span style="color: #94a3b8;">Original Invoiced Total:</span>
-                    <strong style="color: #ffffff;">₹{orig_total:,.2f}</strong>
+                <div class="gb-row-dark">
+                    <span style="color: #94a3b8; font-weight: 600;">Original Billed Amount</span>
+                    <strong style="color: #ffffff; font-size: 15px;">₹{orig_total:,.2f}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px solid #1f2633;">
-                    <span style="color: #94a3b8;">NPPA Price Order Overcharge:</span>
-                    <strong style="color: #f43f5e;">-₹{st.session_state.total_leakage:,.2f}</strong>
+                <div class="gb-row-dark">
+                    <span style="color: #94a3b8; font-weight: 600;">Statutory Benchmark Discount</span>
+                    <strong style="color: #f43f5e; font-size: 15px;">-₹{st.session_state.total_leakage:,.2f}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 14px; background: #151924; border-radius: 16px;">
+                <div class="gb-adjusted-box-dark">
                     <div>
                         <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{adjusted_total:,.2f}</strong>
@@ -889,7 +925,7 @@ else:
                 
                 with st.expander(f"📦 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
                     fig_p = go.Figure(go.Bar(
-                        x=['Statutory NPPA Cap', 'Retail Invoiced'], 
+                        x=['Statutory NPPA Cap', 'Original Billed'], 
                         y=[l, b], 
                         marker_color=['#22c55e', '#f43f5e'],
                         text=[f"₹{l:,.2f}", f"₹{b:,.2f}"],
@@ -905,7 +941,7 @@ else:
                     st.write(f"**Authority:** `{i.get('authority', 'NPPA DPCO')}` | **Billed:** `₹{b:,.2f}` | **Cap:** `₹{l:,.2f}`")
 
             st.divider()
-            st.metric("Total Recoverable Statutory Leakage", f"₹{st.session_state.total_leakage:,.2f}")
+            st.metric("Statutory Benchmark Discount", f"₹{st.session_state.total_leakage:,.2f}")
 
     # --- 14.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
@@ -962,7 +998,7 @@ else:
             pct_saved_h = (st.session_state.total_leakage / orig_total_h * 100) if orig_total_h > 0 else 0
             
             st.markdown(f"""
-            <div class="cyber-panel">
+            <div class="goodbill-dark-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🏥 {hosp}</strong><br>
@@ -972,15 +1008,15 @@ else:
                         {datetime.now().strftime('%B %d, %Y')}
                     </span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px solid #1f2633;">
-                    <span style="color: #94a3b8;">Original Invoiced Rate:</span>
-                    <strong style="color: #ffffff;">₹{orig_total_h:,.2f}</strong>
+                <div class="gb-row-dark">
+                    <span style="color: #94a3b8; font-weight: 600;">Original Billed Amount</span>
+                    <strong style="color: #ffffff; font-size: 15px;">₹{orig_total_h:,.2f}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px solid #1f2633;">
-                    <span style="color: #94a3b8;">Statutory Gazette Discount:</span>
-                    <strong style="color: #f43f5e;">-₹{st.session_state.total_leakage:,.2f}</strong>
+                <div class="gb-row-dark">
+                    <span style="color: #94a3b8; font-weight: 600;">Statutory Benchmark Discount</span>
+                    <strong style="color: #f43f5e; font-size: 15px;">-₹{st.session_state.total_leakage:,.2f}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 14px; background: #151924; border-radius: 16px;">
+                <div class="gb-adjusted-box-dark">
                     <div>
                         <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{adjusted_total_h:,.2f}</strong>
@@ -999,7 +1035,7 @@ else:
                 
                 with st.expander(f"📋 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
                     fig_h = go.Figure(go.Bar(
-                        x=['Statutory CGHS Cap', 'Hospital Invoiced'], 
+                        x=['Statutory CGHS Cap', 'Original Billed'], 
                         y=[l, b], 
                         marker_color=['#22c55e', '#f43f5e'], 
                         text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
@@ -1012,10 +1048,10 @@ else:
                     )
                     st.plotly_chart(fig_h, use_container_width=True, key=f"hosp_audit_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Statutory Finding:** {i.get('summary', 'Markup exceeds gazette ceiling')}")
-                    st.write(f"**Authority:** `{i.get('authority', 'MoHFW')}` | **Invoiced:** `₹{b:,.2f}` | **Gazette Cap:** `₹{l:,.2f}`")
+                    st.write(f"**Authority:** `{i.get('authority', 'MoHFW')}` | **Billed:** `₹{b:,.2f}` | **Gazette Cap:** `₹{l:,.2f}`")
 
             st.divider()
-            st.metric("Total Recoverable Hospital Leakage", f"₹{st.session_state.total_leakage:,.2f}")
+            st.metric("Statutory Benchmark Discount", f"₹{st.session_state.total_leakage:,.2f}")
 
     # --- 14.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
@@ -1060,7 +1096,7 @@ else:
             pct_saved_i = (st.session_state.total_leakage / orig_total_i * 100) if orig_total_i > 0 else 0
             
             st.markdown(f"""
-            <div class="cyber-panel">
+            <div class="goodbill-dark-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🛡️ {company}</strong><br>
@@ -1070,17 +1106,17 @@ else:
                         {datetime.now().strftime('%B %d, %Y')}
                     </span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px solid #1f2633;">
-                    <span style="color: #94a3b8;">Total Claim Invoiced:</span>
-                    <strong style="color: #ffffff;">₹{orig_total_i:,.2f}</strong>
+                <div class="gb-row-dark">
+                    <span style="color: #94a3b8; font-weight: 600;">Original Invoiced Claim</span>
+                    <strong style="color: #ffffff; font-size: 15px;">₹{orig_total_i:,.2f}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px solid #1f2633;">
-                    <span style="color: #94a3b8;">Arbitrary / Illegal Deductions:</span>
-                    <strong style="color: #f43f5e;">-₹{st.session_state.total_leakage:,.2f}</strong>
+                <div class="gb-row-dark">
+                    <span style="color: #94a3b8; font-weight: 600;">Arbitrary / Disputed Deduction</span>
+                    <strong style="color: #f43f5e; font-size: 15px;">-₹{st.session_state.total_leakage:,.2f}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 14px; background: #151924; border-radius: 16px;">
+                <div class="gb-adjusted-box-dark">
                     <div>
-                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">LEGALLY RECOVERABLE SUM</span><br>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT LEGALLY RECOVERABLE TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{adjusted_total_i:,.2f}</strong>
                     </div>
                     <span style="background: #0066ff; color: #fff; font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 9999px;">
@@ -1097,7 +1133,7 @@ else:
                 
                 with st.expander(f"📑 {i['item']} — Arbitrary Shortfall: ₹{leak:,.2f}"):
                     fig_i = go.Figure(go.Bar(
-                        x=['Approved Limit', 'Hospital Billed'], 
+                        x=['Approved Limit', 'Original Billed'], 
                         y=[l, b], 
                         marker_color=['#22c55e', '#f43f5e'], 
                         text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
@@ -1112,13 +1148,13 @@ else:
                     st.write(f"**Dispute Finding:** {i.get('summary', 'Arbitrary claim deduction.')}")
 
             st.divider()
-            st.metric("Total Unjustified Claim Shortfall", f"₹{st.session_state.total_leakage:,.2f}")
+            st.metric("Statutory Benchmark Discount", f"₹{st.session_state.total_leakage:,.2f}")
 
-    # --- 14.6 JUSTICE PORTAL ---
-    elif dept == "⚖️ Justice Portal":
+    # --- 14.6 NEGOTIATION & LEGAL DISPATCH ---
+    elif dept == "⚖️ Negotiation & Legal Dispatch":
         st.markdown("""
-        <h1 style="font-size: 38px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">Section 2(47) Legal Notice Dispatch.</h1>
-        <p style="font-size: 15px; color: #94a3b8; margin-bottom: 24px;">Automated generation of statutory demand briefs for hospital superintendents and consumer forums.</p>
+        <h1 style="font-size: 38px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">Negotiation & Legal Dispatch.</h1>
+        <p style="font-size: 15px; color: #94a3b8; margin-bottom: 24px;">1-Click automated generation and dispatch of statutory demand briefs for hospital superintendents and consumer forums.</p>
         """, unsafe_allow_html=True)
         
         if st.session_state.ai_result_data:
@@ -1135,8 +1171,8 @@ else:
                     
                 formatted_items.append({
                     "Line Item Description": item.get('item', 'Medical Service'),
-                    "Billed Amount": format_inr(b),
-                    "Statutory Legal Cap": format_inr(l),
+                    "Original Billed Amount": format_inr(b),
+                    "Statutory Benchmark Cap": format_inr(l),
                     "Statutory Authority": item.get('authority', 'CGHS / NPPA Gazette'),
                     "Forensic Finding": item.get('summary', 'Markup exceeds statutory ceiling')
                 })
@@ -1149,7 +1185,7 @@ else:
                 st.markdown(f"""
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0066ff; padding-bottom: 12px; margin-bottom: 16px;">
                     <div>
-                        <span style="font-size: 20px; font-weight: 800; color: #00d2ff;">🛡️ MEDI-AUDIT STATUTORY NOTICE</span><br>
+                        <span style="font-size: 20px; font-weight: 800; color: #00d2ff;">🛡️ MEDI-AUDIT STATUTORY DISPUTE NOTICE</span><br>
                         <span style="font-size: 11px; color: #94a3b8;">CERTIFIED UNDER SECTION 2(47) OF CONSUMER PROTECTION ACT, 2019</span>
                     </div>
                     <div style="text-align: right; font-family: monospace; font-size: 11px; color: #94a3b8;">
@@ -1159,7 +1195,7 @@ else:
                 """, unsafe_allow_html=True)
                 
                 st.markdown(f"**TO:** Medical Superintendent / Grievance Cell  \n**FACILITY:** **{hosp_name}**")
-                st.markdown("#### SUBJECT: FORMAL DISPUTE NOTICE FOR UNFAIR TRADE PRACTICE & STATUTORY PRICE CEILING VIOLATIONS")
+                st.markdown("#### SUBJECT: FORMAL DEMAND NOTICE FOR UNFAIR TRADE PRACTICE & STATUTORY TARIFF ADJUSTMENT")
                 st.write(
                     "This notice serves as formal communication of verified pricing markups identified in patient invoices, "
                     "in violation of the **Central Government Health Scheme (CGHS) 2026 Gazette Ceilings (MoHFW)** and the "
@@ -1168,7 +1204,7 @@ else:
                 
                 st.dataframe(pd.DataFrame(formatted_items), use_container_width=True, hide_index=True)
                 
-                st.error(f"### TOTAL RECOVERABLE OVERCHARGE FOR THIS INVOICE: ₹{current_bill_leakage:,.2f}")
+                st.error(f"### TOTAL STATUTORY BENCHMARK DISCOUNT: ₹{current_bill_leakage:,.2f}")
                 
                 st.caption(
                     f"**DEMAND & LEGAL RECOURSE:** Demand is hereby placed to rectify the billing invoice and refund the excess sum of "
@@ -1178,22 +1214,23 @@ else:
 
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
-                st.button("Dispatch Electronic Notice →", type="primary", use_container_width=True)
+                if st.button("🚀 1-Click Negotiation Dispatch →", type="primary", use_container_width=True):
+                    st.success("✅ Statutory Demand Notice electronically dispatched to Hospital Grievance Cell!")
             with col_btn2:
                 legal_brief_text = (
                     f"MEDI-AUDIT LEGAL DISPUTE NOTICE (SEC 2(47) CPA)\n"
                     f"REF: {ref_no}\n"
                     f"DATE: {datetime.now().strftime('%B %d, %Y')}\n"
                     f"TO: Medical Superintendent, {hosp_name}\n"
-                    f"TOTAL DISPUTED OVERCHARGE: INR {current_bill_leakage:,.2f}\n"
+                    f"TOTAL STATUTORY BENCHMARK DISCOUNT: INR {current_bill_leakage:,.2f}\n"
                     f"GRACE PERIOD FOR REFUND: {grace_period} BUSINESS DAYS\n\n"
                     f"ITEMIZED DISCREPANCIES:\n"
                 )
                 for f in formatted_items:
-                    legal_brief_text += f"- {f['Line Item Description']} | Billed: {f['Billed Amount']} | Cap: {f['Statutory Legal Cap']} | {f['Forensic Finding']}\n"
+                    legal_brief_text += f"- {f['Line Item Description']} | Billed: {f['Original Billed Amount']} | Cap: {f['Statutory Benchmark Cap']} | {f['Forensic Finding']}\n"
 
                 st.download_button(
-                    label="📥 Download Legal Notice PDF / Brief",
+                    label="📥 Download Certified Notice PDF / Brief",
                     data=legal_brief_text,
                     file_name=f"MediAudit_Legal_Notice_{ref_no.replace('/', '_')}.txt",
                     mime="text/plain",

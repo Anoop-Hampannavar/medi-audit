@@ -1,4 +1,4 @@
-```python
+
 import streamlit as st
 import base64, json, os, random, smtplib, time, re, io, shutil, pandas as pd, difflib
 import fitz  # PyMuPDF for fast multi-PDF search
@@ -1358,4 +1358,4 @@ else:
         for m in st.session_state.messages[-4:]: 
             st.chat_message(m["role"]).write(m["content"])
 
-```
+

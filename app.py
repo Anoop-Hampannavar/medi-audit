@@ -372,7 +372,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 12. DATACORE THEME STYLING (CSS) ---
+# --- 12. HIGH-CONTRAST DATACORE THEME STYLING (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Automated Healthcare Forensic Defense", 
     page_icon="🛡️", layout="wide", initial_sidebar_state="expanded"
@@ -382,18 +382,20 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
-html, body, [class*="css"], .stMarkdown {
+/* Global Font & High-Contrast White Text Rule */
+html, body, [class*="css"], .stMarkdown, p, span, label, div, [data-testid="stMarkdownContainer"] p {
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif !important;
+    color: #f8fafc !important;
 }
 
-/* DataCore Dark Canvas with Soft Atmospheric Cyan/Blue Radial Glows */
+/* Deep Obsidian Space Background */
 .stApp {
     background-color: #080c14 !important;
     background-image: 
-        radial-gradient(circle at 85% 15%, rgba(0, 102, 255, 0.18) 0%, transparent 45%),
-        radial-gradient(circle at 15% 75%, rgba(0, 210, 255, 0.12) 0%, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(13, 22, 38, 0.8) 0%, #080c14 100%) !important;
-    color: #f1f5f9 !important;
+        radial-gradient(circle at 85% 15%, rgba(0, 102, 255, 0.22) 0%, transparent 45%),
+        radial-gradient(circle at 15% 75%, rgba(0, 210, 255, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(13, 22, 38, 0.9) 0%, #080c14 100%) !important;
+    color: #f8fafc !important;
 }
 
 #MainMenu, header, footer {visibility: hidden; height: 0;}
@@ -403,18 +405,40 @@ html, body, [class*="css"], .stMarkdown {
     max-width: 1260px !important;
 }
 
-/* DataCore Pill Navbar */
+/* Captions & Subtitles in High-Contrast Silver-White */
+.stCaption, [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] *, p.stCaption {
+    color: #e2e8f0 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+}
+
+/* Streamlit Native Metric Overrides */
+[data-testid="stMetricLabel"], [data-testid="stMetricLabel"] * {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+}
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] * {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+}
+[data-testid="stMetricDelta"], [data-testid="stMetricDelta"] * {
+    color: #00d2ff !important;
+    font-weight: 700 !important;
+}
+
+/* Navbar */
 .dc-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(13, 19, 33, 0.75);
+    background: rgba(13, 19, 33, 0.85);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 163, 255, 0.18);
+    border: 1px solid rgba(0, 163, 255, 0.25);
     border-radius: 9999px;
     padding: 12px 28px;
     margin-bottom: 28px;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .dc-logo {
@@ -423,19 +447,19 @@ html, body, [class*="css"], .stMarkdown {
     gap: 10px;
     font-weight: 800;
     font-size: 20px;
-    color: #ffffff;
+    color: #ffffff !important;
     letter-spacing: -0.03em;
 }
 
 .dc-pill-badge {
-    background: rgba(0, 163, 255, 0.1);
-    color: #00d2ff;
+    background: rgba(0, 163, 255, 0.15);
+    color: #00d2ff !important;
     font-size: 11px;
     font-weight: 700;
     padding: 6px 16px;
     border-radius: 9999px;
-    border: 1px solid rgba(0, 210, 255, 0.3);
-    box-shadow: 0 0 12px rgba(0, 210, 255, 0.2);
+    border: 1px solid rgba(0, 210, 255, 0.4);
+    box-shadow: 0 0 12px rgba(0, 210, 255, 0.25);
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -453,19 +477,19 @@ html, body, [class*="css"], .stMarkdown {
 
 .dc-hero-sub {
     font-size: 16px !important;
-    color: #94a3b8 !important;
+    color: #f1f5f9 !important;
     line-height: 1.6 !important;
     margin-bottom: 24px !important;
 }
 
-/* DataCore Glass Card */
+/* DataCore Glass Cards */
 .dc-card {
-    background: linear-gradient(135deg, rgba(16, 24, 40, 0.75) 0%, rgba(11, 17, 30, 0.85) 100%);
-    border: 1px solid rgba(0, 163, 255, 0.18);
+    background: linear-gradient(135deg, rgba(16, 24, 40, 0.85) 0%, rgba(11, 17, 30, 0.95) 100%);
+    border: 1px solid rgba(0, 163, 255, 0.25);
     border-radius: 24px;
     padding: 26px;
     backdrop-filter: blur(25px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     transition: all 0.25s ease;
     position: relative;
     overflow: hidden;
@@ -473,8 +497,8 @@ html, body, [class*="css"], .stMarkdown {
 }
 
 .dc-card:hover {
-    border-color: rgba(0, 210, 255, 0.4);
-    box-shadow: 0 25px 60px rgba(0, 102, 255, 0.2);
+    border-color: rgba(0, 210, 255, 0.5);
+    box-shadow: 0 25px 60px rgba(0, 102, 255, 0.25);
     transform: translateY(-2px);
 }
 
@@ -493,17 +517,26 @@ html, body, [class*="css"], .stMarkdown {
     align-items: center;
     padding: 10px 0;
     font-size: 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.dc-row-label { color: #94a3b8; font-weight: 500; }
-.dc-row-val { font-weight: 700; color: #ffffff; }
-.dc-discount { color: #f43f5e; font-weight: 700; }
+.dc-row-label { 
+    color: #ffffff !important; 
+    font-weight: 600 !important; 
+}
+.dc-row-val { 
+    font-weight: 700; 
+    color: #ffffff !important; 
+}
+.dc-discount { 
+    color: #f43f5e !important; 
+    font-weight: 800 !important; 
+}
 
 .dc-adjusted-box {
     margin-top: 18px;
     padding: 16px 20px;
-    background: rgba(8, 12, 20, 0.85);
-    border: 1px solid rgba(0, 163, 255, 0.25);
+    background: rgba(8, 12, 20, 0.95);
+    border: 1px solid rgba(0, 163, 255, 0.3);
     border-radius: 16px;
     display: flex;
     justify-content: space-between;
@@ -512,8 +545,8 @@ html, body, [class*="css"], .stMarkdown {
 
 /* Metric Pods */
 .dc-metric-pod {
-    background: rgba(13, 19, 33, 0.7);
-    border: 1px solid rgba(0, 163, 255, 0.15);
+    background: rgba(13, 19, 33, 0.85);
+    border: 1px solid rgba(0, 163, 255, 0.2);
     border-radius: 18px;
     padding: 16px 20px;
     display: flex;
@@ -545,21 +578,21 @@ div.stButton > button:hover {
 /* Sidebar */
 [data-testid="stSidebar"] {
     background-color: #090d16 !important;
-    border-right: 1px solid rgba(0, 163, 255, 0.12);
+    border-right: 1px solid rgba(0, 163, 255, 0.15);
 }
 
 /* Tabs */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
-    background-color: rgba(13, 19, 33, 0.7);
+    background-color: rgba(13, 19, 33, 0.85);
     padding: 6px;
     border-radius: 9999px;
-    border: 1px solid rgba(0, 163, 255, 0.15);
+    border: 1px solid rgba(0, 163, 255, 0.2);
 }
 .stTabs [data-baseweb="tab"] {
     height: 38px;
     border-radius: 9999px;
-    color: #94a3b8;
+    color: #e2e8f0 !important;
     font-weight: 700;
     font-size: 13px;
     border: none;
@@ -574,15 +607,15 @@ div.stButton > button:hover {
 
 /* Expanders */
 .streamlit-expanderHeader {
-    background-color: rgba(16, 24, 40, 0.75) !important;
-    border: 1px solid rgba(0, 163, 255, 0.18) !important;
+    background-color: rgba(16, 24, 40, 0.85) !important;
+    border: 1px solid rgba(0, 163, 255, 0.22) !important;
     border-radius: 16px !important;
     color: #ffffff !important;
     font-weight: 700 !important;
 }
 .streamlit-expanderContent {
-    background-color: rgba(11, 17, 30, 0.9) !important;
-    border: 1px solid rgba(0, 163, 255, 0.18) !important;
+    background-color: rgba(11, 17, 30, 0.95) !important;
+    border: 1px solid rgba(0, 163, 255, 0.22) !important;
     border-top: none !important;
     border-bottom-left-radius: 16px;
     border-bottom-right-radius: 16px;
@@ -603,7 +636,7 @@ if not st.session_state.logged_in:
                 <span>🛡️ Medi-Audit</span><span style="color:#00d2ff; font-weight:400;">Core</span>
             </div>
             <p class="dc-hero-title" style="font-size: 28px !important; margin-bottom: 6px;">Never overpay for medical care again.</p>
-            <p class="dc-hero-sub" style="font-size: 14px !important;">Automated statutory verification against CGHS 2026 Gazettes and NPPA DPCO Ceilings.</p>
+            <p class="dc-hero-sub" style="font-size: 15px !important;">Automated statutory verification against CGHS 2026 Gazettes and NPPA DPCO Ceilings.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -664,7 +697,7 @@ else:
             <div class="dc-logo">
                 <span>🛡️ Medi-Audit</span><span style="color:#00d2ff; font-weight:400; font-size:15px;">PRO</span>
             </div>
-            <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>AI Engine: <span style='font-family: monospace; color: #00d2ff;'>{ACTIVE_GROQ_MODEL}</span></p>
+            <p style='color: #ffffff; font-size: 12px; margin: 4px 0 0 0;'>AI Engine: <span style='font-family: monospace; color: #00d2ff;'>{ACTIVE_GROQ_MODEL}</span></p>
         </div>
         """, unsafe_allow_html=True)
         st.caption(f"Authenticated: **{st.session_state.user_email}**")
@@ -698,7 +731,7 @@ else:
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <span class="dc-pill-badge">🟢 CGHS 2026 + NPPA DPCO ACTIVE</span>
-            <span style="color: #94a3b8; font-size: 12px; font-weight: 700;">{ACTIVE_GROQ_MODEL.upper()}</span>
+            <span style="color: #ffffff; font-size: 12px; font-weight: 700;">{ACTIVE_GROQ_MODEL.upper()}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -784,7 +817,7 @@ else:
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                     <div>
                         <strong style="font-size: 18px; color: #ffffff;">🏥 Active Audit Ledger</strong><br>
-                        <span style="font-size: 12px; color: #00d2ff;">Real-Time Statutory Price Reconciliation</span>
+                        <span style="font-size: 12px; color: #00d2ff; font-weight: 600;">Real-Time Statutory Price Reconciliation</span>
                     </div>
                     <span class="dc-pill-badge">{datetime.now().strftime('%b %d, %Y')}</span>
                 </div>
@@ -798,7 +831,7 @@ else:
                 </div>
                 <div class="dc-adjusted-box">
                     <div>
-                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 12px; color: #ffffff; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{realtime_adjusted_total:,.2f}</strong>
                     </div>
                     <span class="dc-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-size: 12px; font-weight: 800;">
@@ -823,7 +856,8 @@ else:
             fig_line.update_layout(
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 margin=dict(l=10, r=10, t=15, b=10), height=240,
-                yaxis=dict(showgrid=True, gridcolor='rgba(0, 163, 255, 0.1)'), xaxis=dict(showgrid=False)
+                yaxis=dict(showgrid=True, gridcolor='rgba(0, 163, 255, 0.15)', tickfont=dict(color='#ffffff')), 
+                xaxis=dict(showgrid=False, tickfont=dict(color='#ffffff'))
             )
             st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
 
@@ -837,7 +871,8 @@ else:
             fig_pie = px.pie(pie_data, values='Value', names='Dept', hole=0.6, color_discrete_sequence=['#0066ff', '#00d2ff', '#38bdf8'])
             fig_pie.update_layout(
                 template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                margin=dict(l=10, r=10, t=15, b=10), height=240
+                margin=dict(l=10, r=10, t=15, b=10), height=240,
+                legend=dict(font=dict(color='#ffffff'))
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
@@ -851,7 +886,8 @@ else:
         fig_rank.update_layout(
             plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
             margin=dict(l=10, r=10, t=15, b=10), height=180,
-            xaxis=dict(showgrid=True, gridcolor='rgba(0, 163, 255, 0.1)')
+            xaxis=dict(showgrid=True, gridcolor='rgba(0, 163, 255, 0.15)', tickfont=dict(color='#ffffff')),
+            yaxis=dict(tickfont=dict(color='#ffffff'))
         )
         st.plotly_chart(fig_rank, use_container_width=True, config={'displayModeBar': False})
         
@@ -926,7 +962,7 @@ else:
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🧪 {pharmacy}</strong><br>
-                        <span style="font-size: 12px; color: #00d2ff;">Statutory NPPA DPCO Schedule-I Verified</span>
+                        <span style="font-size: 12px; color: #00d2ff; font-weight: 600;">Statutory NPPA DPCO Schedule-I Verified</span>
                     </div>
                     <span class="dc-pill-badge">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
@@ -940,7 +976,7 @@ else:
                 </div>
                 <div class="dc-adjusted-box">
                     <div>
-                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 12px; color: #ffffff; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{adjusted_total:,.2f}</strong>
                     </div>
                     <span class="dc-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-weight: 800;">
@@ -966,7 +1002,9 @@ else:
                     ))
                     fig_p.update_layout(
                         template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='rgba(0, 163, 255, 0.1)')
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), 
+                        yaxis=dict(showgrid=True, gridcolor='rgba(0, 163, 255, 0.15)', tickfont=dict(color='#ffffff')),
+                        xaxis=dict(tickfont=dict(color='#ffffff'))
                     )
                     st.plotly_chart(fig_p, use_container_width=True, key=f"pharma_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Statutory Finding:** {i.get('summary', 'Overcharge detected')}")
@@ -1035,7 +1073,7 @@ else:
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🏥 {hosp}</strong><br>
-                        <span style="font-size: 12px; color: #00d2ff;">CGHS 2026 Gazette (MoHFW) Verified</span>
+                        <span style="font-size: 12px; color: #00d2ff; font-weight: 600;">CGHS 2026 Gazette (MoHFW) Verified</span>
                     </div>
                     <span class="dc-pill-badge">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
@@ -1049,7 +1087,7 @@ else:
                 </div>
                 <div class="dc-adjusted-box">
                     <div>
-                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 12px; color: #ffffff; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{adjusted_total_h:,.2f}</strong>
                     </div>
                     <span class="dc-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-weight: 800;">
@@ -1075,7 +1113,9 @@ else:
                     ))
                     fig_h.update_layout(
                         template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='rgba(0, 163, 255, 0.1)')
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), 
+                        yaxis=dict(showgrid=True, gridcolor='rgba(0, 163, 255, 0.15)', tickfont=dict(color='#ffffff')),
+                        xaxis=dict(tickfont=dict(color='#ffffff'))
                     )
                     st.plotly_chart(fig_h, use_container_width=True, key=f"hosp_audit_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Statutory Finding:** {i.get('summary', 'Markup exceeds gazette ceiling')}")
@@ -1132,7 +1172,7 @@ else:
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🛡️ {company}</strong><br>
-                        <span style="font-size: 12px; color: #00d2ff;">IRDAI Master Circular & Ombudsman Rules Audited</span>
+                        <span style="font-size: 12px; color: #00d2ff; font-weight: 600;">IRDAI Master Circular & Ombudsman Rules Audited</span>
                     </div>
                     <span class="dc-pill-badge">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
@@ -1146,7 +1186,7 @@ else:
                 </div>
                 <div class="dc-adjusted-box">
                     <div>
-                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT LEGALLY RECOVERABLE TOTAL</span><br>
+                        <span style="font-size: 12px; color: #ffffff; font-weight: 700;">MEDI-AUDIT LEGALLY RECOVERABLE TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{adjusted_total_i:,.2f}</strong>
                     </div>
                     <span class="dc-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-weight: 800;">
@@ -1172,7 +1212,9 @@ else:
                     ))
                     fig_i.update_layout(
                         template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='rgba(0, 163, 255, 0.1)')
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), 
+                        yaxis=dict(showgrid=True, gridcolor='rgba(0, 163, 255, 0.15)', tickfont=dict(color='#ffffff')),
+                        xaxis=dict(tickfont=dict(color='#ffffff'))
                     )
                     st.plotly_chart(fig_i, use_container_width=True, key=f"ins_audit_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Dispute Finding:** {i.get('summary', 'Arbitrary claim deduction.')}")
@@ -1216,9 +1258,9 @@ else:
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0066ff; padding-bottom: 12px; margin-bottom: 16px;">
                     <div>
                         <span style="font-size: 20px; font-weight: 800; color: #00d2ff;">🛡️ MEDI-AUDIT STATUTORY DISPUTE NOTICE</span><br>
-                        <span style="font-size: 11px; color: #94a3b8;">CERTIFIED UNDER SECTION 2(47) OF CONSUMER PROTECTION ACT, 2019</span>
+                        <span style="font-size: 12px; color: #ffffff; font-weight: 600;">CERTIFIED UNDER SECTION 2(47) OF CONSUMER PROTECTION ACT, 2019</span>
                     </div>
-                    <div style="text-align: right; font-family: monospace; font-size: 11px; color: #94a3b8;">
+                    <div style="text-align: right; font-family: monospace; font-size: 12px; color: #ffffff;">
                         REF: {ref_no}<br>DATE: {datetime.now().strftime('%B %d, %Y')}
                     </div>
                 </div>

@@ -473,7 +473,8 @@ def auto_log_audit(department_name, result_json):
         if l > 0 and b > l:
             scan_leakage += round(b - l, 2)
             
-    st.session_state.total_leakage += scan_leakage
+    # Set total_leakage strictly to the current active scanned document
+    st.session_state.total_leakage = scan_leakage
     
     new_entry = pd.DataFrame([{
         "Day": datetime.now().strftime("%a"), 
@@ -743,7 +744,7 @@ if not st.session_state.logged_in:
         st.markdown("""
         <div style='text-align: center; padding: 48px 0 24px 0;'>
             <span class="badge-tag" style="margin-bottom: 16px;">SECURE ACCESS PORTAL</span>
-            <h1 class="editorial-title" style="font-size: 38px; margin-dialog 0 6px 0;">Medi-Audit Pro.</h1>
+            <h1 class="editorial-title" style="font-size: 38px; margin: 12px 0 6px 0;">Medi-Audit Pro.</h1>
             <p class="editorial-quote" style="margin-bottom: 24px;">Precision healthcare financial defense & claim recovery.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -881,7 +882,7 @@ else:
 
         m1, m2, m3, m4 = st.columns(4)
         m1.markdown(f'<div class="editorial-card"><div class="card-label">Variance</div><div class="card-value" style="color:#0284c7;">{variance_text}</div></div>', unsafe_allow_html=True)
-        m2.markdown(f'<div class="editorial-card" style="border-top:3px solid #f59e0b;"><div class="card-label">Identified Leakage</div><div class="card-value" style="color:#d97706;">₹{st.session_state.total_leakage:,.2f}</div></div>', unsafe_allow_html=True)
+        m2.markdown(f'<div class="editorial-card" style="border-top:3px solid #f59e0b;"><div class="card-label">Active Bill Leakage</div><div class="card-value" style="color:#d97706;">₹{st.session_state.total_leakage:,.2f}</div></div>', unsafe_allow_html=True)
         m3.markdown(f'<div class="editorial-card" style="border-top:3px solid #10b981;"><div class="card-label">Audit Accuracy</div><div class="card-value" style="color:#059669;">{st.session_state.audit_accuracy}%</div></div>', unsafe_allow_html=True)
         
         r_col = "#059669" if st.session_state.risk_level == "STABLE" else ("#d97706" if st.session_state.risk_level == "ELEVATED RISK" else "#dc2626")
@@ -1183,6 +1184,28 @@ else:
         if st.session_state.ai_result_data:
             res = st.session_state.ai_result_data
             hosp_name = res.get('hospital', 'Medical Facility').upper()
+            raw_items = res.get('audit_results', [])
+            
+            # Calculate the EXACT overcharge for THIS specific active bill only
+            current_bill_leakage = 0.0
+            formatted_items = []
+            for item in raw_items:
+                try:
+                    b = float(re.sub(r'[^\d.]', '', str(item.get('billed', 0))))
+                    l = float(re.sub(r'[^\d.]', '', str(item.get('legal', 0))))
+                except Exception:
+                    b, l = 0.0, 0.0
+                
+                if l > 0 and b > l:
+                    current_bill_leakage += round(b - l, 2)
+                    
+                formatted_items.append({
+                    "Line Item Description": item.get('item', 'Medical Service'),
+                    "Billed Amount": format_inr(b),
+                    "Statutory Legal Cap": format_inr(l),
+                    "Statutory Authority": item.get('authority', 'CGHS / NPPA Gazette'),
+                    "Forensic Finding": item.get('summary', 'Markup exceeds statutory ceiling')
+                })
             
             col_ref, col_grace = st.columns(2)
             with col_ref:
@@ -1191,56 +1214,48 @@ else:
                 grace_period = st.select_slider("Rectification Grace Period (Business Days)", options=[3, 5, 7, 10, 15], value=7)
 
             st.markdown("##### Formal Demand Notice Preview")
-            with st.container():
-                st.markdown(f"""
-                <div class="legal-box">
-                    <div style="text-align: right; color:#64748b; font-size:12px; font-family:'JetBrains Mono', monospace;">
-                        <strong>REF:</strong> {ref_no}<br><strong>DATE:</strong> {datetime.now().strftime('%B %d, %Y')}
-                    </div>
-                    
-                    <p style="margin-top: 14px;"><strong>TO, THE ADMINISTRATOR / MEDICAL SUPERINTENDENT,</strong><br>
-                    <span style="color: #0f172a; font-weight: 800; font-size: 16px;">{hosp_name}</span></p>
-                    
-                    <p><strong>SUBJECT: FORMAL DISPUTE NOTICE PURSUANT TO SECTION 2(47) OF CONSUMER PROTECTION ACT (UNFAIR TRADE PRACTICE)</strong></p>
-                    
-                    <p style="color: #475569; font-size: 13px; line-height: 1.6;">
-                    This notice serves as formal communication of verified discrepancies and pricing markups identified in medical invoices, in direct violation of statutory price regulations including the <strong>Central Government Health Scheme (CGHS) 2026 Gazette Ceilings (MoHFW)</strong> and the <strong>Drugs (Prices Control) Order / NPPA Caps</strong> under the Essential Commodities Act.
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
+            
+            with st.container(border=True):
+                st.markdown(f"**REF:** `{ref_no}`  \n**DATE:** `{datetime.now().strftime('%B %d, %Y')}`")
+                st.markdown(f"**TO:** The Administrator / Medical Superintendent  \n**FACILITY:** **{hosp_name}**")
+                st.divider()
+                st.markdown("### SUBJECT: FORMAL DISPUTE NOTICE PURSUANT TO SECTION 2(47) OF CONSUMER PROTECTION ACT (UNFAIR TRADE PRACTICE)")
+                st.write(
+                    "This notice serves as formal communication of verified discrepancies and pricing markups "
+                    "identified in medical invoices, in direct violation of statutory price regulations including the "
+                    "**Central Government Health Scheme (CGHS) 2026 Gazette Ceilings (MoHFW)** and the "
+                    "**Drugs (Prices Control) Order / NPPA Caps** under the Essential Commodities Act."
+                )
                 
-                raw_items = res.get('audit_results', [])
-                formatted_items = []
-                for item in raw_items:
-                    formatted_items.append({
-                        "Line Item Description": item.get('item', 'Medical Service'),
-                        "Billed Amount": format_inr(item.get('billed', 0)),
-                        "Statutory Legal Cap": format_inr(item.get('legal', 0)),
-                        "Statutory Authority": item.get('authority', 'CGHS / NPPA Gazette'),
-                        "Forensic Finding": item.get('summary', 'Markup exceeds statutory ceiling')
-                    })
+                st.dataframe(pd.DataFrame(formatted_items), use_container_width=True, hide_index=True)
                 
-                df_audit_display = pd.DataFrame(formatted_items)
-                st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-                st.dataframe(df_audit_display, use_container_width=True, hide_index=True)
+                st.error(f"### TOTAL RECOVERABLE OVERCHARGE FOR THIS INVOICE: ₹{current_bill_leakage:,.2f}")
                 
-                st.markdown(f"""
-                <div style="background: #fee2e2; border: 1px solid #fca5a5; border-radius: 12px; padding: 16px; margin: 16px 0;">
-                    <span style="color: #991b1b; font-weight: 800; font-size: 16px;">TOTAL RECOVERABLE OVERCHARGE: ₹{st.session_state.total_leakage:,.2f}</span>
-                </div>
-                
-                <p style="color: #64748b; font-size: 12px; line-height: 1.6;">
-                <strong>DEMAND & LEGAL RECOURSE:</strong> Demand is hereby placed to rectify the billing invoice and refund the excess sum of <strong>₹{st.session_state.total_leakage:,.2f}</strong> within <strong>{grace_period} business days</strong>, failing which formal complaints shall be escalated before the District Consumer Disputes Redressal Commission and Insurance Ombudsman.
-                </p>
-                """, unsafe_allow_html=True)
+                st.caption(
+                    f"**DEMAND & LEGAL RECOURSE:** Demand is hereby placed to rectify the billing invoice and refund the excess sum of "
+                    f"**₹{current_bill_leakage:,.2f}** within **{grace_period} business days**, failing which formal complaints shall be escalated before "
+                    "the District Consumer Disputes Redressal Commission and Insurance Ombudsman."
+                )
 
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
                 st.button("Dispatch Electronic Notice →", type="primary", use_container_width=True)
             with col_btn2:
+                legal_brief_text = (
+                    f"FORMAL DISPUTE NOTICE (SEC 2(47) CPA)\n"
+                    f"REF: {ref_no}\n"
+                    f"DATE: {datetime.now().strftime('%B %d, %Y')}\n"
+                    f"TO: Medical Superintendent, {hosp_name}\n"
+                    f"TOTAL DISPUTED OVERCHARGE: INR {current_bill_leakage:,.2f}\n"
+                    f"GRACE PERIOD FOR REFUND: {grace_period} BUSINESS DAYS\n\n"
+                    f"ITEMIZED DISCREPANCIES:\n"
+                )
+                for f in formatted_items:
+                    legal_brief_text += f"- {f['Line Item Description']} | Billed: {f['Billed Amount']} | Cap: {f['Statutory Legal Cap']} | {f['Forensic Finding']}\n"
+
                 st.download_button(
                     label="📥 Download Notice PDF / Legal Brief",
-                    data=f"FORMAL NOTICE REF: {ref_no}\nTO: {hosp_name}\nRECOVERABLE AMOUNT: INR {st.session_state.total_leakage:,.2f}\nGRACE PERIOD: {grace_period} DAYS",
+                    data=legal_brief_text,
                     file_name=f"Legal_Notice_{ref_no.replace('/', '_')}.txt",
                     mime="text/plain",
                     use_container_width=True

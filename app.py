@@ -620,19 +620,50 @@ div[data-testid="stRadio"] label:hover {
     color: #ffffff !important;
 }
 
-/* File Uploader Dark Dropzone */
+/* File Uploader Dark Dropzone & Themed Upload Button */
+[data-testid="stFileUploader"],
+[data-testid="stFileUploader"] > div,
 [data-testid="stFileUploader"] section,
 [data-testid="stFileUploaderDropzone"],
-div[data-testid="stFileUploaderDropzone"] {
+div[data-testid="stFileUploaderDropzone"],
+[data-testid="stFileUploadDropzone"] {
     background-color: #0e1d3b !important;
+    background: #0e1d3b !important;
     border: 2px dashed rgba(0, 163, 255, 0.45) !important;
     border-radius: 18px !important;
-    padding: 24px !important;
+    padding: 20px !important;
 }
+
+[data-testid="stFileUploader"]:hover,
+[data-testid="stFileUploaderDropzone"]:hover,
+[data-testid="stFileUploader"] section:hover {
+    border-color: #00d2ff !important;
+    box-shadow: 0 0 20px rgba(0, 210, 255, 0.25) !important;
+}
+
 [data-testid="stFileUploader"] *,
-[data-testid="stFileUploaderDropzone"] * {
+[data-testid="stFileUploaderDropzone"] *,
+[data-testid="stFileUploaderDropzoneInstructions"] *,
+[data-testid="stFileUploader"] small,
+[data-testid="stFileUploader"] span,
+[data-testid="stFileUploader"] p,
+[data-testid="stFileUploader"] div {
     color: #ffffff !important;
     opacity: 1 !important;
+}
+
+/* Browse Files Button inside Dropzone */
+[data-testid="stFileUploader"] button,
+[data-testid="stFileUploaderDropzone"] button,
+div[data-testid="stFileUploaderDropzone"] button,
+[data-testid="stFileUploader"] [data-testid="baseButton-secondary"] {
+    background: linear-gradient(90deg, #0066ff, #00d2ff) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 9999px !important;
+    font-weight: 700 !important;
+    padding: 8px 22px !important;
+    box-shadow: 0 4px 14px rgba(0, 102, 255, 0.4) !important;
 }
 
 /* Text Area (Paste Text): Black Text on Solid White Background */
@@ -773,7 +804,7 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. TOP HORIZONTAL NAVIGATION BAR (MOVED OUT OF SIDEBAR TO UPSIDE)
+    # 2. TOP HORIZONTAL NAVIGATION BAR
     col_nav, col_usr = st.columns([4.2, 1.2])
     with col_nav:
         dept = st.radio(
@@ -806,7 +837,7 @@ else:
 
     # --- 14.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
-        # White Breakout Section (Matches Screenshot 2)
+        # White Breakout Section
         st.markdown("""
         <div class="white-breakout-card">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
@@ -943,7 +974,7 @@ else:
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
-        # 3-Column Services Grid (Matches Screenshot 3)
+        # 3-Column Services Grid
         st.markdown("<h2 style='text-align: center; margin: 30px 0 16px 0;'>What We Provide</h2>", unsafe_allow_html=True)
         s1, s2, s3 = st.columns(3)
         with s1:

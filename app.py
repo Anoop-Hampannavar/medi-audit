@@ -141,7 +141,7 @@ def get_pdf_context(query):
 
 def hospital_audit_logic(bill_text):
     if not bill_text:
-        st.session_state.scan_error = "⚠️ Could not extract text from the invoice image. Please try a clearer scan."
+        st.session_state.scan_error = "⚠️ Could not extract text from the invoice image. Please upload a higher resolution document."
         return None
 
     pdf_context = get_pdf_context(bill_text)
@@ -299,7 +299,6 @@ def send_otp(receiver_email):
         return otp
     except: return None
 
-# Helper currency formatter
 def format_inr(val):
     try:
         val_clean = float(re.sub(r'[^\d.]', '', str(val)))
@@ -323,9 +322,9 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 8. UI STYLING & PRECISION THEME ---
+# --- 8. INSTITUTIONAL SAAS DESIGN SYSTEM (CSS) ---
 st.set_page_config(
-    page_title="Medi-Audit Pro | Healthcare Forensic Intelligence", 
+    page_title="Medi-Audit Pro | Healthcare Financial Defense", 
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -335,111 +334,157 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
+/* Global Font & Canvas */
 html, body, [class*="css"], .stMarkdown {
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
-/* Background canvas */
 .stApp {
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #0b0f17;
+    color: #f8fafc;
 }
 
-/* Clean Header */
-#MainMenu, footer, header {visibility: hidden;}
-
-/* Container Metric Cards */
-.med-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 22px;
-    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
-    transition: all 0.2s ease-in-out;
-}
-.med-card:hover {
-    border-color: #cbd5e1;
-    transform: translateY(-2px);
-}
-.med-label {
-    color: #64748b;
-    font-size: 11px;
-    text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    margin-bottom: 6px;
-}
-.med-value {
-    color: #0f172a;
-    font-size: 26px;
-    font-weight: 800;
-    line-height: 1.2;
+/* Hide Default Headers & Toolbars */
+#MainMenu, header, footer {visibility: hidden; height: 0;}
+.block-container {
+    padding-top: 2rem !important;
+    padding-bottom: 3rem !important;
+    max-width: 1280px !important;
 }
 
-/* Status Terminal Header */
-.terminal-status {
-    background: #0f172a;
-    color: #38bdf8;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    padding: 10px 18px;
-    border-radius: 12px;
-    font-weight: 600;
-    margin-bottom: 20px;
+/* Modern Top Navigation Bar */
+.top-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border: 1px solid #1e293b;
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 12px 24px;
+    margin-bottom: 24px;
+}
+.brand-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.02em;
+}
+.badge-live {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
-/* Buttons */
+/* Glassmorphism Metric Cards */
+.saas-card {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.saas-card:hover {
+    border-color: #374151;
+    transform: translateY(-2px);
+}
+.saas-label {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+}
+.saas-value {
+    color: #ffffff;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+/* Primary Linear-Style CTA Buttons */
 div.stButton > button {
-    border-radius: 10px !important;
     background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
     color: #ffffff !important;
-    border: none !important;
-    padding: 0.7rem 1.4rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 10px !important;
+    padding: 0.65rem 1.25rem !important;
     font-weight: 700 !important;
-    font-size: 0.92rem !important;
-    box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.25) !important;
-    transition: all 0.2s ease-in-out !important;
+    font-size: 0.9rem !important;
+    box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.3) !important;
+    transition: all 0.2s ease !important;
     width: 100% !important;
 }
 div.stButton > button:hover {
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4) !important;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5) !important;
     transform: translateY(-1px) !important;
 }
 
-/* Sidebar styling */
+/* Sidebar Custom Styling */
 [data-testid="stSidebar"] {
-    background-color: #ffffff !important;
-    border-right: 1px solid #e2e8f0;
+    background-color: #030712 !important;
+    border-right: 1px solid #1f2937;
 }
 
-/* Notice Box */
-.notice-container {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
+/* Modern Tab Segmented Control */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    background-color: #111827;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid #1f2937;
+}
+.stTabs [data-baseweb="tab"] {
+    height: 38px;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    background-color: transparent;
+}
+.stTabs [aria-selected="true"] {
+    background-color: #1f2937 !important;
+    color: #ffffff !important;
+}
+
+/* Expander Cards */
+.streamlit-expanderHeader {
+    background-color: #111827 !important;
+    border: 1px solid #1f2937 !important;
+    border-radius: 10px !important;
+    color: #f8fafc !important;
+    font-weight: 600 !important;
+}
+.streamlit-expanderContent {
+    background-color: #0f172a !important;
+    border: 1px solid #1f2937 !important;
+    border-top: none !important;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+/* Formal Legal Container */
+.legal-box {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
     padding: 24px;
-    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
-}
-
-.badge-overcharge {
-    background-color: #fee2e2;
-    color: #991b1b;
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-}
-.badge-compliant {
-    background-color: #dcfce7;
-    color: #166534;
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -449,96 +494,99 @@ if not st.session_state.logged_in:
     col_c1, col_c2, col_c3 = st.columns([1, 1.8, 1])
     with col_c2:
         st.markdown("""
-        <div style='text-align:center; padding: 40px 0 20px 0;'>
-            <div style='font-size: 40px; margin-bottom: 8px;'>🛡️</div>
-            <h1 style='font-size: 30px; font-weight: 800; color: #0f172a; margin: 0;'>MEDI-AUDIT PRO</h1>
-            <p style='color: #64748b; font-size: 14px; margin-top: 4px;'>Healthcare Financial Defense & Forensic Infrastructure</p>
+        <div style='text-align: center; padding: 40px 0 24px 0;'>
+            <div style='width: 48px; height: 48px; margin: 0 auto 12px auto; background: rgba(2, 132, 199, 0.15); border: 1px solid rgba(2, 132, 199, 0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;'>
+                🛡️
+            </div>
+            <h1 style='font-size: 26px; font-weight: 800; color: #ffffff; margin: 0;'>Medi-Audit Enterprise</h1>
+            <p style='color: #94a3b8; font-size: 13px; margin-top: 4px;'>Statutory Medical Forensic & Financial Recovery Infrastructure</p>
         </div>
         """, unsafe_allow_html=True)
         
         with st.container(border=True):
-            t1, t2, t3 = st.tabs(["🔑 SIGN IN", "📝 REGISTER", "🆘 RECOVER"])
+            t1, t2, t3 = st.tabs(["🔑 SIGN IN", "📝 CREATE ACCOUNT", "🆘 PASSWORD RECOVERY"])
             
             with t1:
-                l_email = st.text_input("Registered Email ID", key="login_email", placeholder="auditor@facility.com")
-                l_pass = st.text_input("Password", type="password", key="login_pass", placeholder="••••••••")
-                st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-                if st.button("AUTHENTICATE SESSION", use_container_width=True, type="primary"):
+                l_email = st.text_input("Work Email Address", key="login_email", placeholder="auditor@hospital.gov.in")
+                l_pass = st.text_input("Access Password", type="password", key="login_pass", placeholder="••••••••")
+                st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+                if st.button("AUTHENTICATE WORKSPACE", use_container_width=True, type="primary"):
                     ud = load_users()
                     if l_email.strip().lower() in ud and ud[l_email.strip().lower()] == l_pass:
                         st.session_state.logged_in, st.session_state.user_email = True, l_email
                         st.rerun()
                     else:
-                        st.error("Invalid credentials entered.")
+                        st.error("Authentication failed. Invalid email or password.")
 
             with t2:
-                r_email = st.text_input("Enter Official Email", key="reg_email", placeholder="user@company.com")
+                r_email = st.text_input("Enter Registered Email", key="reg_email", placeholder="officer@domain.com")
                 if not st.session_state.otp_sent:
-                    if st.button("GENERATE SECURITY CODE", use_container_width=True):
+                    if st.button("DISPATCH 2FA SECURITY CODE", use_container_width=True):
                         st.session_state.generated_otp = send_otp(r_email)
                         if st.session_state.generated_otp:
                             st.session_state.otp_sent = True; st.rerun()
                         else:
-                            st.error("Email service temporarily unavailable.")
+                            st.error("SMTP Delivery Error: Ensure SENDER_EMAIL is configured.")
                 else:
-                    i_otp = st.text_input("6-Digit OTP Code", key="reg_otp")
-                    r_pass = st.text_input("Create Secure Password", type="password", key="reg_pass")
-                    if st.button("FINALIZE REGISTRATION", use_container_width=True):
+                    i_otp = st.text_input("6-Digit Verification Token", key="reg_otp")
+                    r_pass = st.text_input("Create Master Password", type="password", key="reg_pass")
+                    if st.button("ACTIVATE AUDITOR ACCOUNT", use_container_width=True):
                         if i_otp == st.session_state.generated_otp:
                             save_user(r_email, r_pass); st.session_state.otp_sent = False; st.rerun()
                         else:
-                            st.error("Incorrect verification code.")
+                            st.error("Invalid OTP token.")
 
             with t3:
-                f_email = st.text_input("Enter Registered Email", key="forgot_email")
+                f_email = st.text_input("Account Email", key="forgot_email")
                 if "forgot_otp_sent" not in st.session_state:
                     st.session_state.forgot_otp_sent = False
 
                 if not st.session_state.forgot_otp_sent:
-                    if st.button("SEND RESET CODE", use_container_width=True):
+                    if st.button("SEND RECOVERY OTP", use_container_width=True):
                         ud = load_users()
                         if f_email.strip().lower() in ud:
                             st.session_state.generated_otp = send_otp(f_email)
                             st.session_state.forgot_otp_sent = True
                             st.rerun()
                         else:
-                            st.error("Email not found in database.")
+                            st.error("Email address not found.")
                 else:
-                    f_otp = st.text_input("Verification Code", key="f_otp")
-                    new_pass = st.text_input("New Password", type="password", key="f_new_pass")
-                    if st.button("RESET PASSWORD & LOGIN", use_container_width=True, type="primary"):
+                    f_otp = st.text_input("Security Token", key="f_otp")
+                    new_pass = st.text_input("Enter New Password", type="password", key="f_new_pass")
+                    if st.button("OVERWRITE CREDENTIALS", use_container_width=True, type="primary"):
                         if f_otp == st.session_state.generated_otp:
                             save_user(f_email, new_pass)
                             st.session_state.forgot_otp_sent = False
-                            st.success("Password Updated! Please Sign In.")
+                            st.success("Credentials updated successfully. Please Sign In.")
                             time.sleep(1)
                             st.rerun()
                         else:
-                            st.error("Invalid verification code.")
+                            st.error("Invalid token.")
 
 # --- 10. MAIN APPLICATION WORKSPACE ---
 else:
+    # Sidebar Navigation
     with st.sidebar:
         st.markdown("""
-        <div style='padding: 10px 0 15px 0;'>
+        <div style='padding: 6px 0 16px 0;'>
             <div style='display: flex; align-items: center; gap: 8px;'>
-                <span style='font-size: 22px;'>🛡️</span>
-                <span style='font-size: 20px; font-weight: 800; color: #0284c7;'>MEDI-AUDIT</span>
+                <span style='font-size: 20px;'>🛡️</span>
+                <span style='font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;'>MEDI-AUDIT</span>
             </div>
-            <span class='badge-compliant' style='margin-top: 6px; display: inline-block;'>CGHS 2026 LIVE</span>
+            <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>Institutional Healthcare Suite</p>
         </div>
         """, unsafe_allow_html=True)
-        st.caption(f"Authenticated: **{st.session_state.user_email}**")
+        st.caption(f"Operator: **{st.session_state.user_email}**")
         st.divider()
         
         dept = st.radio(
-            "SELECT MODULE", 
-            ["📊 Executive Terminal", "🗺️ Fraud Radar", "💊 Pharma Forensic", "🛡️ Insurance Armor", "🏥 Hospital Audit", "⚖️ Justice Portal", "💬 Regulatory AI Copilot"],
+            "SELECT WORKSPACE", 
+            ["📊 Executive Terminal", "🗺️ Fraud Radar", "💊 Pharma Forensic", "🛡️ Insurance Armor", "🏥 Hospital Audit", "⚖️ Justice Portal", "💬 Regulatory Copilot"],
             label_visibility="collapsed"
         )
         
         st.divider()
-        if st.button("🗑️ Reset Audit Log", use_container_width=True):
+        if st.button("🗑️ Reset Workspace Log", use_container_width=True):
             st.session_state.audit_log = pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"])
             st.session_state.total_leakage = 0.0
             st.session_state.risk_level = "STABLE"
@@ -547,23 +595,31 @@ else:
             st.session_state.scan_error = None
             st.rerun()
             
-        if st.button("🚪 Sign Out", use_container_width=True):
+        if st.button("🚪 Terminate Session", use_container_width=True):
             st.session_state.logged_in = False; st.rerun()
+
+    # Top Brand Navigation Strip
+    st.markdown(f"""
+    <div class="top-nav">
+        <div class="brand-title">
+            <span>🛡️ Medi-Audit Forensic Platform</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="badge-live">● CGHS 2026 GAZETTE ACTIVE</span>
+            <span style="color: #64748b; font-size: 12px; font-family: 'JetBrains Mono', monospace;">NODES: 3/3</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # --- 10.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
-        st.markdown("""<div class="terminal-status">
-            <span>DATABASE: CGHS_2026_GAZETTE >> RAG_NODES: ONLINE</span>
-            <span>SYSTEM ACTIVE 🟢</span>
-        </div>""", unsafe_allow_html=True)
-        
-        st.markdown("<h2 style='font-weight: 800; color: #0f172a; margin: 0 0 18px 0;'>Executive Forensic Overview</h2>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-weight: 800; color: #ffffff; margin-bottom: 16px;'>Executive Forensic Overview</h3>", unsafe_allow_html=True)
         
         if st.session_state.audit_log.empty:
             trend_data = pd.DataFrame({'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'Leakage': [0]*7})
             pie_data = pd.DataFrame({'Dept': ['Pharma', 'Hospital', 'Insurance'], 'Value': [0, 0, 0]})
             entity_data = pd.DataFrame({'Hospital': ['No Audited Invoices'], 'Leakage': [0]})
-            variance_text = "0.0% (Calibrated)"
+            variance_text = "0.0% (Baseline)"
         else:
             trend_data = st.session_state.audit_log.groupby('Day')['Leakage'].sum().reset_index()
             day_map = {'Mon':0, 'Tue':1, 'Wed':2, 'Thu':3, 'Fri':4, 'Sat':5, 'Sun':6}
@@ -572,55 +628,66 @@ else:
             entity_data = st.session_state.audit_log.groupby('Hospital')['Leakage'].sum().sort_values(ascending=False).reset_index()
             last_week_avg = 15000 
             variance_val = ((st.session_state.total_leakage - last_week_avg) / last_week_avg) * 100 if st.session_state.total_leakage > 0 else 0
-            variance_text = f"{variance_val:+.1f}% vs Baseline"
+            variance_text = f"{variance_val:+.1f}% vs Target"
 
         m1, m2, m3, m4 = st.columns(4)
-        m1.markdown(f'<div class="med-card"><div class="med-label">Variance</div><div class="med-value" style="color:#0ea5e9;">{variance_text}</div></div>', unsafe_allow_html=True)
-        m2.markdown(f'<div class="med-card" style="border-top:3px solid #f59e0b;"><div class="med-label">Identified Leakage</div><div class="med-value" style="color:#f59e0b;">₹{st.session_state.total_leakage:,.2f}</div></div>', unsafe_allow_html=True)
-        m3.markdown(f'<div class="med-card" style="border-top:3px solid #10b981;"><div class="med-label">RAG Accuracy</div><div class="med-value" style="color:#10b981;">{st.session_state.audit_accuracy}%</div></div>', unsafe_allow_html=True)
+        m1.markdown(f'<div class="saas-card"><div class="saas-label">Variance</div><div class="saas-value" style="color:#38bdf8;">{variance_text}</div></div>', unsafe_allow_html=True)
+        m2.markdown(f'<div class="saas-card" style="border-top:2px solid #f59e0b;"><div class="saas-label">Detected Leakage</div><div class="saas-value" style="color:#f59e0b;">₹{st.session_state.total_leakage:,.2f}</div></div>', unsafe_allow_html=True)
+        m3.markdown(f'<div class="saas-card" style="border-top:2px solid #10b981;"><div class="saas-label">Audit Engine Accuracy</div><div class="saas-value" style="color:#10b981;">{st.session_state.audit_accuracy}%</div></div>', unsafe_allow_html=True)
         
         r_col = "#10b981" if st.session_state.risk_level == "STABLE" else ("#f59e0b" if st.session_state.risk_level == "ELEVATED RISK" else "#ef4444")
-        m4.markdown(f'<div class="med-card" style="border-top:3px solid {r_col};"><div class="med-label">Risk Profile</div><div class="med-value" style="color:{r_col}; font-size:20px;">{st.session_state.risk_level}</div></div>', unsafe_allow_html=True)
+        m4.markdown(f'<div class="saas-card" style="border-top:2px solid {r_col};"><div class="saas-label">Facility Risk Tier</div><div class="saas-value" style="color:{r_col}; font-size:20px;">{st.session_state.risk_level}</div></div>', unsafe_allow_html=True)
 
-        st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
         col_g1, col_g2 = st.columns([1.6, 1])
         
         with col_g1:
-            st.markdown("### 📈 Real-Time Audit Trend")
-            fig_line = px.line(trend_data, x='Day', y='Leakage', markers=True, template="plotly_white", color_discrete_sequence=['#0ea5e9'])
-            fig_line.update_layout(margin=dict(l=10, r=10, t=15, b=10), height=250, yaxis=dict(showgrid=True, gridcolor='#f1f5f9'))
+            st.markdown("##### Real-Time Leakage Trajectory")
+            fig_line = px.line(trend_data, x='Day', y='Leakage', markers=True, template="plotly_dark", color_discrete_sequence=['#38bdf8'])
+            fig_line.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                margin=dict(l=10, r=10, t=15, b=10), height=240,
+                yaxis=dict(showgrid=True, gridcolor='#1e293b'), xaxis=dict(showgrid=False)
+            )
             st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
 
         with col_g2:
-            st.markdown("### 🍕 Leakage by Stream")
-            fig_pie = px.pie(pie_data, values='Value', names='Dept', hole=0.55, color_discrete_sequence=['#0ea5e9', '#6366f1', '#f43f5e'])
-            fig_pie.update_layout(margin=dict(l=10, r=10, t=15, b=10), height=250)
+            st.markdown("##### Discrepancy by Category")
+            fig_pie = px.pie(pie_data, values='Value', names='Dept', hole=0.6, color_discrete_sequence=['#0284c7', '#6366f1', '#f43f5e'])
+            fig_pie.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                margin=dict(l=10, r=10, t=15, b=10), height=240
+            )
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
-        st.markdown("### 🏥 Entity Overcharge Ranking")
-        fig_rank = px.bar(entity_data, x='Leakage', y='Hospital', orientation='h', color='Leakage', color_continuous_scale='Reds', template="plotly_white")
-        fig_rank.update_layout(margin=dict(l=10, r=10, t=15, b=10), height=190, xaxis=dict(showgrid=True, gridcolor='#f1f5f9'))
+        st.markdown("##### Entity Overcharge Index")
+        fig_rank = px.bar(entity_data, x='Leakage', y='Hospital', orientation='h', color='Leakage', color_continuous_scale='Reds', template="plotly_dark")
+        fig_rank.update_layout(
+            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(l=10, r=10, t=15, b=10), height=180,
+            xaxis=dict(showgrid=True, gridcolor='#1e293b')
+        )
         st.plotly_chart(fig_rank, use_container_width=True, config={'displayModeBar': False})
         
         csv = st.session_state.audit_log.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Export Audit Ledger (CSV)", data=csv, file_name=f"audit_report_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
+        st.download_button("📥 Export Comprehensive Forensic Audit (CSV)", data=csv, file_name=f"audit_report_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
 
     # --- 10.2 FRAUD RADAR ---
     elif dept == "🗺️ Fraud Radar":
-        st.markdown("<h2 style='font-weight: 800; color: #0f172a; margin-bottom: 12px;'>National Healthcare Price Discrepancy Radar</h2>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-weight: 800; color: #ffffff; margin-bottom: 16px;'>National Price Discrepancy & Markup Radar</h3>", unsafe_allow_html=True)
         st.map(fraud_map_data, size='fraud_intensity', color='#ef4444')
 
     # --- 10.3 PHARMA FORENSIC ---
     elif dept == "💊 Pharma Forensic":
-        st.markdown("<h2 style='font-weight: 800; color: #0f172a; margin-bottom: 12px;'>Pharma Price & NPPA Cap Forensic Engine</h2>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-weight: 800; color: #ffffff; margin-bottom: 16px;'>Pharma Price & NPPA Cap Forensic Engine</h3>", unsafe_allow_html=True)
         
-        tab_upload, tab_cam, tab_text = st.tabs(["🖼️ Upload Receipt File", "📸 Mobile Camera Scan", "📝 Direct Text Entry"])
+        tab_upload, tab_cam, tab_text = st.tabs(["🖼️ Ingest Receipt Document", "📸 Live Camera Scanner", "📝 Manual Line Items"])
         
         with tab_upload:
-            u_p = st.file_uploader("Upload Pharmacy Invoice", type=["jpg", "png", "jpeg"], key="pharma_upload")
-            if u_p and st.button("🔍 EXECUTE AI FORENSIC SCAN", use_container_width=True, key="btn_p_file"):
+            u_p = st.file_uploader("Upload Pharmacy Invoice (JPEG, PNG, PDF)", type=["jpg", "png", "jpeg"], key="pharma_upload")
+            if u_p and st.button("🔍 EXECUTE FORENSIC OCR AUDIT", use_container_width=True, key="btn_p_file"):
                 st.session_state.scan_error = None
-                with st.spinner("Analyzing Receipt against NPPA & CGHS Price Gazettes..."):
+                with st.spinner("Reconciling Pharmacy Invoices against NPPA & CGHS Price Lists..."):
                     txt_to_audit = extract_clean_text_from_image(u_p)
                     st.session_state.raw_extracted_text = txt_to_audit
                     if txt_to_audit:
@@ -629,10 +696,10 @@ else:
                         auto_log_audit("Pharma", res)
 
         with tab_cam:
-            cam_p = st.camera_input("Take photo of pharmacy bill", key="cam_pharma")
-            if cam_p and st.button("🔍 AUDIT CAMERA SCAN", use_container_width=True, key="btn_p_cam"):
+            cam_p = st.camera_input("Capture live photo of pharmacy bill", key="cam_pharma")
+            if cam_p and st.button("🔍 SCAN CAMERA RECEIPT", use_container_width=True, key="btn_p_cam"):
                 st.session_state.scan_error = None
-                with st.spinner("Processing Camera Feed..."):
+                with st.spinner("Processing High-Resolution Camera Feed..."):
                     txt_to_audit = extract_clean_text_from_image(cam_p)
                     st.session_state.raw_extracted_text = txt_to_audit
                     if txt_to_audit:
@@ -642,7 +709,7 @@ else:
 
         with tab_text:
             manual_txt_p = st.text_area("Paste receipt line items (e.g., Paracetamol: 150, Amoxicillin: 450)", height=120, key="manual_pharma_txt")
-            if manual_txt_p and st.button("🚀 AUDIT PASTED PHARMA TEXT", use_container_width=True, key="btn_p_txt"):
+            if manual_txt_p and st.button("🚀 AUDIT TEXT INPUT", use_container_width=True, key="btn_p_txt"):
                 st.session_state.scan_error = None
                 st.session_state.raw_extracted_text = manual_txt_p
                 res = ai_audit_logic(manual_txt_p)
@@ -657,7 +724,7 @@ else:
             items = res.get('audit_results', [])
             pharmacy = res.get('hospital', 'Detected Pharmacy')
             
-            st.markdown(f"### 🧪 {pharmacy}")
+            st.markdown(f"#### 🧪 Audited Entity: {pharmacy}")
             total_p_leak = 0.0
             
             for idx, i in enumerate(items):
@@ -669,34 +736,37 @@ else:
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 total_p_leak += leak
                 
-                with st.expander(f"📦 {i['item']} | Discrepancy: ₹{leak:,.2f}"):
+                with st.expander(f"📦 {i['item']} | Overcharge: ₹{leak:,.2f}"):
                     fig = go.Figure(go.Bar(
-                        x=['Legal Cap', 'Billed'], 
+                        x=['Statutory Cap', 'Hospital Invoiced'], 
                         y=[l, b], 
                         marker_color=['#10b981', '#ef4444'],
                         text=[f"₹{l:,.2f}", f"₹{b:,.2f}"],
                         textposition='auto',
-                        width=0.4
+                        width=0.35
                     ))
-                    fig.update_layout(template="plotly_white", height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9'))
+                    fig.update_layout(
+                        template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#1e293b')
+                    )
                     st.plotly_chart(fig, use_container_width=True, key=f"pharma_chart_{idx}", config={'displayModeBar': False})
-                    verdict_msg = i.get('summary', 'Overcharged') if leak > 0 else "Billed within acceptable limits."
-                    st.write(f"**Verdict:** {verdict_msg}")
+                    verdict_msg = i.get('summary', 'Overcharge detected') if leak > 0 else "Billed within acceptable limits."
+                    st.write(f"**Forensic Finding:** {verdict_msg}")
 
             st.divider()
-            st.metric("Total Pharma Financial Leakage", f"₹{total_p_leak:,.2f}")
+            st.metric("Total Recoverable Pharmacy Leakage", f"₹{total_p_leak:,.2f}")
 
     # --- 10.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
-        st.markdown("<h2 style='font-weight: 800; color: #0f172a; margin-bottom: 12px;'>Hospital Invoice Forensic Engine</h2>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-weight: 800; color: #ffffff; margin-bottom: 16px;'>Hospital Invoice & Discharge Summary Forensic Engine</h3>", unsafe_allow_html=True)
         
-        tab_h_upload, tab_h_cam, tab_h_text = st.tabs(["🖼️ Upload Invoice File", "📸 Mobile Camera Scan", "📝 Direct Text Entry"])
+        tab_h_upload, tab_h_cam, tab_h_text = st.tabs(["🖼️ Ingest Hospital Bill", "📸 Live Camera Scanner", "📝 Manual Line Items"])
         
         with tab_h_upload:
-            u_h = st.file_uploader("Upload Hospital Bill/Invoice", type=["jpg", "png", "jpeg"], key="hosp_upload_main")
-            if u_h and st.button("🚀 EXECUTE AI DEEP SCAN", use_container_width=True, key="btn_h_file"):
+            u_h = st.file_uploader("Upload Hospital Invoice (JPEG, PNG, PDF)", type=["jpg", "png", "jpeg"], key="hosp_upload_main")
+            if u_h and st.button("🚀 EXECUTE INVOICE AUDIT", use_container_width=True, key="btn_h_file"):
                 st.session_state.scan_error = None
-                with st.spinner("Analyzing Hospital Invoice against 2026 CGHS Gazette..."):
+                with st.spinner("Cross-referencing against CGHS 2026 Price Gazette..."):
                     txt = extract_clean_text_from_image(u_h)
                     st.session_state.raw_extracted_text = txt
                     if txt:
@@ -705,10 +775,10 @@ else:
                         auto_log_audit("Hospital", res)
 
         with tab_h_cam:
-            cam_h = st.camera_input("Take photo of hospital bill", key="cam_hosp")
-            if cam_h and st.button("🚀 AUDIT CAMERA INVOICE", use_container_width=True, key="btn_h_cam"):
+            cam_h = st.camera_input("Scan hospital invoice with camera", key="cam_hosp")
+            if cam_h and st.button("🚀 AUDIT CAPTURED INVOICE", use_container_width=True, key="btn_h_cam"):
                 st.session_state.scan_error = None
-                with st.spinner("Analyzing Camera Capture..."):
+                with st.spinner("Analyzing High-Resolution Camera Feed..."):
                     txt = extract_clean_text_from_image(cam_h)
                     st.session_state.raw_extracted_text = txt
                     if txt:
@@ -733,7 +803,7 @@ else:
             items = res.get('audit_results', [])
             hosp = res.get('hospital', 'Detected Facility')
             
-            st.markdown(f"### 🏥 {hosp}")
+            st.markdown(f"#### 🏥 Audited Provider: {hosp}")
             total_h_leak = 0.0
             
             for idx, i in enumerate(items):
@@ -745,34 +815,37 @@ else:
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 total_h_leak += leak
                 
-                with st.expander(f"📋 {i['item']} | Leakage: ₹{leak:,.2f}"):
+                with st.expander(f"📋 {i['item']} | Markup: ₹{leak:,.2f}"):
                     fig = go.Figure(go.Bar(
-                        x=['Legal Cap', 'Billed'], 
+                        x=['CGHS Price Cap', 'Hospital Invoiced'], 
                         y=[l, b], 
                         marker_color=['#10b981', '#ef4444'], 
                         text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
                         textposition='auto',
-                        width=0.4
+                        width=0.35
                     ))
-                    fig.update_layout(template="plotly_white", height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9'))
+                    fig.update_layout(
+                        template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#1e293b')
+                    )
                     st.plotly_chart(fig, use_container_width=True, key=f"hosp_audit_chart_{idx}", config={'displayModeBar': False})
-                    verdict_msg = i.get('summary', 'Discrepancy detected.') if leak > 0 else "Billed within acceptable CGHS limits."
-                    st.error(f"**Verdict:** {verdict_msg}") if leak > 0 else st.success(f"**Verdict:** {verdict_msg}")
+                    verdict_msg = i.get('summary', 'Markup exceeds gazette ceiling') if leak > 0 else "Compliant with statutory price ceilings."
+                    st.write(f"**Forensic Finding:** {verdict_msg}")
 
             st.divider()
-            st.metric("Total Hospital Leakage", f"₹{total_h_leak:,.2f}")
+            st.metric("Total Recoverable Hospital Leakage", f"₹{total_h_leak:,.2f}")
 
     # --- 10.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
-        st.markdown("<h2 style='font-weight: 800; color: #0f172a; margin-bottom: 12px;'>Insurance Claim Settlement Reconciler</h2>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-weight: 800; color: #ffffff; margin-bottom: 16px;'>Insurance Claim Settlement Reconciler</h3>", unsafe_allow_html=True)
         
-        tab_i_upload, tab_i_text = st.tabs(["🖼️ Upload Settlement Letter", "📝 Paste Document Text"])
+        tab_i_upload, tab_i_text = st.tabs(["🖼️ Ingest Settlement Letter", "📝 Direct Claim Text"])
         
         with tab_i_upload:
-            u_i = st.file_uploader("Upload Settlement Letter / Policy", type=["jpg", "png", "jpeg"], key="ins_upload_main")
-            if u_i and st.button("🚀 EXECUTE CLAIM AUDIT", use_container_width=True):
+            u_i = st.file_uploader("Upload Settlement Letter / Denial Document", type=["jpg", "png", "jpeg"], key="ins_upload_main")
+            if u_i and st.button("🚀 AUDIT CLAIM DEDUCTIONS", use_container_width=True):
                 st.session_state.scan_error = None
-                with st.spinner("Reconciling Claim Settlement..."):
+                with st.spinner("Reconciling Claim Deductions..."):
                     txt = extract_clean_text_from_image(u_i)
                     st.session_state.raw_extracted_text = txt
                     if txt:
@@ -781,7 +854,7 @@ else:
                         auto_log_audit("Insurance", res)
 
         with tab_i_text:
-            manual_txt_i = st.text_area("Paste settlement letter text directly", height=120, key="manual_ins_txt")
+            manual_txt_i = st.text_area("Paste settlement document text directly", height=120, key="manual_ins_txt")
             if manual_txt_i and st.button("🚀 AUDIT PASTED CLAIM TEXT", use_container_width=True):
                 st.session_state.scan_error = None
                 st.session_state.raw_extracted_text = manual_txt_i
@@ -797,7 +870,7 @@ else:
             items = res.get('audit_results', [])
             company = res.get('hospital', 'Insurance Provider')
             
-            st.markdown(f"### 🛡️ {company} Audit Report")
+            st.markdown(f"#### 🛡️ Reconciled Provider: {company}")
             total_i_leak = 0.0
             
             for idx, i in enumerate(items):
@@ -811,23 +884,26 @@ else:
                 
                 with st.expander(f"📑 {i['item']} | Arbitrary Shortfall: ₹{leak:,.2f}"):
                     fig = go.Figure(go.Bar(
-                        x=['Approved Limit', 'Billed Amount'], 
+                        x=['Approved Limit', 'Hospital Billed'], 
                         y=[l, b], 
                         marker_color=['#10b981', '#f43f5e'], 
                         text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
                         textposition='auto',
-                        width=0.4
+                        width=0.35
                     ))
-                    fig.update_layout(template="plotly_white", height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9'))
+                    fig.update_layout(
+                        template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#1e293b')
+                    )
                     st.plotly_chart(fig, use_container_width=True, key=f"ins_audit_chart_{idx}", config={'displayModeBar': False})
-                    st.error(f"**Verdict:** {i.get('summary', 'Unjustified deduction.')}")
+                    st.write(f"**Dispute Reason:** {i.get('summary', 'Arbitrary claim deduction.')}")
 
             st.divider()
             st.metric("Total Unjustified Claim Shortfall", f"₹{total_i_leak:,.2f}")
 
     # --- 10.6 JUSTICE PORTAL ---
     elif dept == "⚖️ Justice Portal":
-        st.markdown("<h2 style='font-weight: 800; color: #0f172a; margin-bottom: 12px;'>Legal Dispute Recovery Generator</h2>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-weight: 800; color: #ffffff; margin-bottom: 16px;'>Section 2(47) Legal Dispute Recovery Notice Generator</h3>", unsafe_allow_html=True)
         
         if st.session_state.ai_result_data:
             res = st.session_state.ai_result_data
@@ -835,23 +911,27 @@ else:
             
             col_ref, col_grace = st.columns(2)
             with col_ref:
-                ref_no = st.text_input("Notice Ref Number", f"MA/2026/LEG/{random.randint(1000, 9999)}")
+                ref_no = st.text_input("Notice Reference Identifier", f"MA/2026/LEG/{random.randint(1000, 9999)}")
             with col_grace:
-                grace_period = st.select_slider("Dispute Grace Period (Days)", options=[3, 5, 7, 10, 15], value=7)
+                grace_period = st.select_slider("Rectification Grace Period (Business Days)", options=[3, 5, 7, 10, 15], value=7)
 
-            st.markdown("### 📄 Formal Notice Preview")
-            with st.container(border=True):
+            st.markdown("##### Formal Demand Notice Preview")
+            with st.container():
                 st.markdown(f"""
-                <div style="text-align: right; color:#64748b; font-size:12px;"><strong>REF:</strong> {ref_no}<br><strong>DATE:</strong> {datetime.now().strftime('%B %d, %Y')}</div>
-                
-                **TO, THE ADMINISTRATOR / MEDICAL SUPERINTENDENT,**  
-                **{hosp_name}**
-                
-                **SUBJECT: FORMAL DISPUTE NOTICE PURSUANT TO SECTION 2(47) OF CONSUMER PROTECTION ACT (UNFAIR TRADE PRACTICE)**
-                
-                Sir/Madam,
-                
-                This notice confirms audited pricing discrepancies in medical invoices in direct violation of **Central Government Health Scheme (CGHS) 2026 Gazette Price Ceilings** and statutory NPPA caps.
+                <div class="legal-box">
+                    <div style="text-align: right; color:#94a3b8; font-size:12px; font-family:'JetBrains Mono', monospace;">
+                        <strong>REF:</strong> {ref_no}<br><strong>DATE:</strong> {datetime.now().strftime('%B %d, %Y')}
+                    </div>
+                    
+                    <p style="margin-top: 14px;"><strong>TO, THE ADMINISTRATOR / MEDICAL SUPERINTENDENT,</strong><br>
+                    <span style="color: #38bdf8; font-weight: 700;">{hosp_name}</span></p>
+                    
+                    <p><strong>SUBJECT: FORMAL DISPUTE NOTICE PURSUANT TO SECTION 2(47) OF CONSUMER PROTECTION ACT (UNFAIR TRADE PRACTICE)</strong></p>
+                    
+                    <p style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
+                    This notice serves as formal communication of price inflation and billing discrepancies identified in patient medical invoices, violating statutory <strong>Central Government Health Scheme (CGHS) 2026 Gazette Price Ceilings</strong> and NPPA generic drug caps.
+                    </p>
+                </div>
                 """, unsafe_allow_html=True)
                 
                 raw_items = res.get('audit_results', [])
@@ -865,33 +945,36 @@ else:
                     })
                 
                 df_audit_display = pd.DataFrame(formatted_items)
-                st.table(df_audit_display)
+                st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                st.dataframe(df_audit_display, use_container_width=True, hide_index=True)
                 
                 st.markdown(f"""
-                <div style="background:#fee2e2; border: 1px solid #ef4444; border-radius:8px; padding:12px; margin: 15px 0;">
-                    <span style="color:#991b1b; font-weight:800; font-size:16px;">TOTAL RECOVERABLE LEAKAGE: ₹{st.session_state.total_leakage:,.2f}</span>
+                <div style="background: rgba(220, 38, 38, 0.12); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 10px; padding: 14px; margin: 16px 0;">
+                    <span style="color: #f87171; font-weight: 800; font-size: 15px;">TOTAL RECOVERABLE LEAKAGE: ₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
                 
-                **DEMAND & LEGAL RECOURSE:** Demand is hereby placed to rectify the billing invoice and refund the excess sum of **₹{st.session_state.total_leakage:,.2f}** within **{grace_period} business days**, failing which formal complaints shall be escalated before the District Consumer Disputes Redressal Commission and Insurance Ombudsman.
+                <p style="color: #94a3b8; font-size: 12px; line-height: 1.6;">
+                <strong>DEMAND & LEGAL RECOURSE:</strong> Demand is hereby placed to rectify the billing invoice and refund the excess sum of <strong>₹{st.session_state.total_leakage:,.2f}</strong> within <strong>{grace_period} business days</strong>, failing which formal complaints shall be escalated before the District Consumer Disputes Redressal Commission and Insurance Ombudsman.
+                </p>
                 """, unsafe_allow_html=True)
 
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
-                st.button("📧 Dispatch Electronic Notice to Grievance Desk", type="primary", use_container_width=True)
+                st.button("📧 Dispatch Notice to Grievance Desk", type="primary", use_container_width=True)
             with col_btn2:
                 st.download_button(
-                    label="📥 Download Official Legal Dispute Notice (TXT)",
-                    data=f"FORMAL NOTICE REF: {ref_no}\nTO: {hosp_name}\nRECOVERABLE AMOUNT: INR {st.session_state.total_leakage:,.2f}\nDEMAND GRACE PERIOD: {grace_period} DAYS",
+                    label="📥 Download Notice PDF / Legal Brief",
+                    data=f"FORMAL NOTICE REF: {ref_no}\nTO: {hosp_name}\nRECOVERABLE AMOUNT: INR {st.session_state.total_leakage:,.2f}\nGRACE PERIOD: {grace_period} DAYS",
                     file_name=f"Legal_Notice_{ref_no.replace('/', '_')}.txt",
                     mime="text/plain",
                     use_container_width=True
                 )
         else:
-            st.warning("⚠️ Complete an invoice or pharma audit first to generate legal dispute documentation.")
+            st.warning("⚠️ Complete an invoice or pharma scan first to generate legal dispute documentation.")
 
-    # --- 10.7 ASSISTANT AI ---
-    elif dept == "💬 Regulatory AI Copilot":
-        st.markdown("<h2 style='font-weight: 800; color: #0f172a; margin-bottom: 12px;'>CGHS Regulatory AI Co-Pilot</h2>", unsafe_allow_html=True)
+    # --- 10.7 REGULATORY AI COPILOT ---
+    elif dept == "💬 Regulatory Copilot":
+        st.markdown("<h3 style='font-weight: 800; color: #ffffff; margin-bottom: 16px;'>CGHS Regulatory AI Co-Pilot</h3>", unsafe_allow_html=True)
         u_m = st.chat_input("Ask about CGHS procedure rates, generic medicine rules, or dispute procedures...")
         if u_m:
             st.session_state.messages.append({"role": "user", "content": u_m})

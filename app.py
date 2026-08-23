@@ -1,6 +1,6 @@
 import streamlit as st
 import base64, json, os, random, smtplib, time, re, io, shutil, pandas as pd, difflib
-import fitz  # PyMuPDF for fast PDF search
+import fitz  # PyMuPDF for fast multi-PDF search
 import plotly.graph_objects as go
 import plotly.express as px
 import pytesseract
@@ -31,7 +31,7 @@ if not GROQ_API_KEY:
 # Initialize Native Groq Client
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# --- 2. ACTIVE MODEL DISCOVERY & PROBING ---
+# --- 2. BULLETPROOF ACTIVE MODEL DISCOVERY ---
 def get_best_available_groq_model():
     """Probes candidate models dynamically to guarantee 100% active, error-free execution."""
     try:
@@ -109,9 +109,34 @@ def safe_extract_json(raw_response_content):
 SENDER_EMAIL = st.secrets.get("SENDER_EMAIL", os.getenv("SENDER_EMAIL"))
 SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD", os.getenv("SENDER_PASSWORD"))
 USER_DB = "users.json"
-PDF_PATH = os.path.join("data", "raw_gazzete", "cghs_rates_2026.pdf")
+GAZETTE_DIR = os.path.join("data", "raw_gazzete")
 
-# --- 4. CANONICAL STATUTORY CGHS & NPPA GAZETTE MASTER ---
+# --- 4. MULTI-GAZETTE SEARCH ENGINE (CGHS + NPPA PDFS) ---
+def get_pdf_context(query):
+    """Searches across all statutory gazette PDFs in data/raw_gazzete/ (cghs_rates_2026.pdf and nppa_dpco_ceiling_rates_2026.pdf)."""
+    text_context = ""
+    if os.path.exists(GAZETTE_DIR):
+        try:
+            keywords = [word for word in query.split() if len(word) > 3]
+            pdf_files = [f for f in os.listdir(GAZETTE_DIR) if f.endswith(".pdf")]
+            
+            for pdf_file in pdf_files:
+                full_path = os.path.join(GAZETTE_DIR, pdf_file)
+                with fitz.open(full_path) as doc:
+                    found = 0
+                    for page in doc:
+                        page_text = page.get_text()
+                        if any(key.lower() in page_text.lower() for key in keywords):
+                            text_context += f"\n[GAZETTE SOURCE: {pdf_file}]\n" + page_text
+                            found += 1
+                        if found >= 2:
+                            break
+            return text_context[:8000]
+        except Exception:
+            return ""
+    return ""
+
+# --- 5. CANONICAL STATUTORY CGHS & NPPA / DPCO GAZETTE MASTER ---
 CGHS_GAZETTE_MASTER = {
     # 1. Professional Consultations & Bed Charges (CGHS / MoHFW Authority)
     "consultation": {"code": "CON01", "name": "OPD Consultation (Specialist)", "cap": 350.0, "category": "Consultation", "authority": "CGHS 2026 Gazette (MoHFW)"},
@@ -153,23 +178,37 @@ CGHS_GAZETTE_MASTER = {
     "hba1c": {"code": "LB008", "name": "HbA1c Glycated Hemoglobin", "cap": 250.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
     "crp": {"code": "LB098", "name": "C-Reactive Protein (Quantitative)", "cap": 200.0, "category": "Pathology & Diagnostics", "authority": "CGHS 2026 Gazette (MoHFW)"},
     
-    # 4. Essential Medicines & Pharmaceuticals (NPPA / DPCO Authority)
-    "paracetamol 650": {"code": "MED01", "name": "Paracetamol 650mg (10 Tabs)", "cap": 24.50, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
-    "paracetamol": {"code": "MED01", "name": "Paracetamol 650mg (10 Tabs)", "cap": 24.50, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
-    "amoxicillin 500": {"code": "MED02", "name": "Amoxicillin + Clavulanic 625mg (6 Tabs)", "cap": 120.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
-    "amoxicillin": {"code": "MED02", "name": "Amoxicillin 500mg", "cap": 120.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
-    "pantoprazole 40": {"code": "MED03", "name": "Pantoprazole 40mg (10 Tabs)", "cap": 85.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
-    "pantoprazole": {"code": "MED03", "name": "Pantoprazole 40mg (10 Tabs)", "cap": 85.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
-    "azithromycin 500": {"code": "MED04", "name": "Azithromycin 500mg (3 Tabs)", "cap": 72.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
-    "azithromycin": {"code": "MED04", "name": "Azithromycin 500mg", "cap": 72.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"},
-    "ceftriaxone 1g": {"code": "MED05", "name": "Ceftriaxone 1g IV Injection", "cap": 65.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO 2026 Price Order"}
+    # 4. Essential Medicines & Formulations (NPPA / DPCO Authority)
+    "paracetamol syrup": {"code": "DPCO-SO421(E)", "name": "Paracetamol Syrup 125mg/5ml (60ml Bottle)", "cap": 19.20, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "paracetamol 125": {"code": "DPCO-SO421(E)", "name": "Paracetamol Syrup 125mg/5ml (60ml Bottle)", "cap": 19.20, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "paracetamol 650": {"code": "DPCO-NLEM", "name": "Paracetamol 650mg (10 Tabs)", "cap": 24.50, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "paracetamol": {"code": "DPCO-NLEM", "name": "Paracetamol 650mg (10 Tabs)", "cap": 24.50, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "digoxin injection": {"code": "DPCO-SO422(E)", "name": "Digoxin Injection 0.25mg/ml (1ml Ampoule)", "cap": 3.74, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "digoxin": {"code": "DPCO-SO422(E)", "name": "Digoxin Injection 0.25mg/ml (1ml Ampoule)", "cap": 3.74, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "clotrimazole pessaries 100": {"code": "DPCO-SO423(E)", "name": "Clotrimazole Pessaries 100mg (1 Unit)", "cap": 8.69, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "clotrimazole pessaries 200": {"code": "DPCO-SO922(E)", "name": "Clotrimazole Pessaries 200mg (1 Unit)", "cap": 13.31, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "promethazine injection": {"code": "DPCO-SO424(E)", "name": "Promethazine Injection 25mg/ml (1ml Ampoule)", "cap": 2.84, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "promethazine": {"code": "DPCO-SO424(E)", "name": "Promethazine Injection 25mg/ml (1ml Ampoule)", "cap": 2.84, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "lignocaine injection": {"code": "DPCO-SO923(E)", "name": "Lignocaine 2% + Adrenaline Injection (1ml)", "cap": 0.92, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "lignocaine": {"code": "DPCO-SO923(E)", "name": "Lignocaine 2% + Adrenaline Injection (1ml)", "cap": 0.92, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "ibuprofen syrup": {"code": "DPCO-SO946(E)", "name": "Ibuprofen Syrup 100mg/5ml (60ml Bottle)", "cap": 12.60, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "ibuprofen": {"code": "DPCO-SO946(E)", "name": "Ibuprofen Syrup 100mg/5ml (60ml Bottle)", "cap": 12.60, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "prednisolone 20": {"code": "DPCO-SO947(E)", "name": "Prednisolone 20mg (10 Tablets Strip)", "cap": 18.50, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "prednisolone": {"code": "DPCO-SO947(E)", "name": "Prednisolone 20mg (10 Tablets Strip)", "cap": 18.50, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "amoxicillin 500": {"code": "DPCO-MED02", "name": "Amoxicillin + Clavulanic 625mg (6 Tabs)", "cap": 120.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "amoxicillin": {"code": "DPCO-MED02", "name": "Amoxicillin 500mg", "cap": 120.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "pantoprazole 40": {"code": "DPCO-MED03", "name": "Pantoprazole 40mg (10 Tabs)", "cap": 85.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "pantoprazole": {"code": "DPCO-MED03", "name": "Pantoprazole 40mg (10 Tabs)", "cap": 85.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "azithromycin 500": {"code": "DPCO-MED04", "name": "Azithromycin 500mg (3 Tabs)", "cap": 72.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "azithromycin": {"code": "DPCO-MED04", "name": "Azithromycin 500mg", "cap": 72.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"},
+    "ceftriaxone 1g": {"code": "DPCO-MED05", "name": "Ceftriaxone 1g IV Injection", "cap": 65.0, "category": "Pharmaceuticals & DPCO", "authority": "NPPA / DPCO Price Order"}
 }
 
 def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
-    """Matches any medical line item with canonical codes, categories, and exact statutory authorities."""
+    """Matches any medical or medicine item with canonical codes, categories, and statutory authorities."""
     query = re.sub(r'[^a-zA-Z0-9\s]', '', item_name).lower().strip()
     
-    # Direct & Substring Match
+    # 1. Direct & Substring Match
     for key, data in CGHS_GAZETTE_MASTER.items():
         if key == query or key in query or query in key:
             return {
@@ -180,7 +219,7 @@ def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
                 "authority": data["authority"]
             }
             
-    # Fuzzy Matching (>45% similarity)
+    # 2. Fuzzy Matching
     keys = list(CGHS_GAZETTE_MASTER.keys())
     matches = difflib.get_close_matches(query, keys, n=1, cutoff=0.45)
     if matches:
@@ -193,27 +232,28 @@ def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
             "authority": data["authority"]
         }
 
-    # Dynamic fallback to local PDF context
+    # 3. Dynamic parse from local multi-PDF gazette context
     if fallback_pdf_context:
-        price_matches = re.findall(r'(\d{2,6}(?:\.\d{2})?)', fallback_pdf_context)
+        price_matches = re.findall(r'(\d{1,6}(?:\.\d{1,2})?)', fallback_pdf_context)
+        is_nppa = "nppa" in fallback_pdf_context.lower() or "dpco" in fallback_pdf_context.lower() or "tablet" in fallback_pdf_context.lower() or "syrup" in fallback_pdf_context.lower()
         if price_matches:
             return {
                 "matched_name": item_name,
-                "code": "CGHS-PDF",
+                "code": "GAZETTE-PDF",
                 "legal_cap": float(price_matches[0]),
-                "category": "Hospital Procedure / Service",
-                "authority": "CGHS 2026 Gazette (MoHFW)"
+                "category": "Pharmaceuticals & DPCO" if is_nppa else "Clinical Procedure",
+                "authority": "NPPA / DPCO 2026 Price Order" if is_nppa else "CGHS 2026 Gazette (MoHFW)"
             }
 
     return {
         "matched_name": item_name,
         "code": "UNLISTED",
         "legal_cap": 0.0,
-        "category": "Unlisted Hospital Item",
-        "authority": "Hospital Tariff Schedule"
+        "category": "Unlisted Charge",
+        "authority": "Facility Tariff Schedule"
     }
 
-# --- 5. ADVANCED SCANNER ENGINE ---
+# --- 6. ADVANCED SCANNER ENGINE ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
@@ -294,27 +334,9 @@ def extract_clean_text_from_image(uploaded_file):
         st.session_state.scan_error = f"⚠️ Scan Failed: {err_msg}"
         return ""
 
-# --- 6. UNIVERSAL 3-TIER AUDIT ENGINE ---
-def get_pdf_context(query):
-    text_context = ""
-    if os.path.exists(PDF_PATH):
-        try:
-            with fitz.open(PDF_PATH) as doc:
-                found = 0
-                keywords = [word for word in query.split() if len(word) > 3]
-                for page in doc:
-                    page_text = page.get_text()
-                    if any(key.lower() in page_text.lower() for key in keywords):
-                        text_context += page_text
-                        found += 1
-                    if found >= 2: break 
-            return text_context[:6000] 
-        except Exception:
-            return ""
-    return ""
-
+# --- 7. UNIVERSAL 3-TIER AUDIT ENGINE ---
 def universal_medical_audit(bill_text):
-    """Tier 1: LLM Line Extraction | Tier 2: Statutory Gazette Matching | Tier 3: Deterministic Arithmetic"""
+    """Tier 1: Extraction | Tier 2: Multi-Gazette Matching | Tier 3: Deterministic Arithmetic"""
     if not bill_text:
         st.session_state.scan_error = "⚠️ Could not extract text from document."
         return None
@@ -362,7 +384,6 @@ Return ONLY valid JSON matching this exact schema:
             except Exception:
                 billed_amt = 0.0
 
-            # Deterministic statutory match
             cghs_data = match_cghs_rate(item_name, fallback_pdf_context=pdf_ctx)
             legal_cap = cghs_data["legal_cap"]
             authority = cghs_data["authority"]
@@ -433,7 +454,7 @@ Return ONLY valid JSON:
             ]
         }
 
-# --- 7. REAL-TIME AUDIT LOGGING HELPER ---
+# --- 8. REAL-TIME AUDIT LOGGING HELPER ---
 def auto_log_audit(department_name, result_json):
     if not result_json:
         return
@@ -471,7 +492,7 @@ def auto_log_audit(department_name, result_json):
     else:
         st.session_state.risk_level = "STABLE"
 
-# --- 8. AUTHENTICATION & DATABASE ---
+# --- 9. AUTHENTICATION & DATABASE ---
 def load_users():
     if os.path.exists(USER_DB):
         with open(USER_DB, "r") as f:
@@ -510,7 +531,7 @@ def format_inr(val):
     except Exception:
         return str(val)
 
-# --- 9. SESSION STATE INITIALIZATION ---
+# --- 10. SESSION STATE INITIALIZATION ---
 if "logged_in" not in st.session_state:
     for key, val in [("logged_in", False), ("otp_sent", False), ("user_email", ""), ("messages", []), 
                      ("total_leakage", 0.0), ("audit_accuracy", 99.8), ("risk_level", "STABLE"),
@@ -518,7 +539,7 @@ if "logged_in" not in st.session_state:
                      ("audit_log", pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"]))]:
         st.session_state[key] = val
 
-# --- 10. GEOGRAPHIC FRAUD MAP DATA ---
+# --- 11. GEOGRAPHIC FRAUD MAP DATA ---
 fraud_map_data = pd.DataFrame({
     'lat': [28.6139, 19.0760, 12.9716, 22.5726, 13.0827, 21.1458, 26.8467, 17.3850, 23.0225, 30.7333],
     'lon': [77.2090, 72.8777, 77.5946, 88.3639, 80.2707, 79.0882, 80.9462, 78.4867, 72.5714, 76.7794],
@@ -526,7 +547,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 11. EDITORIAL LUXURY DESIGN SYSTEM (CSS) ---
+# --- 12. EDITORIAL LUXURY DESIGN SYSTEM (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Forensic Healthcare Intelligence", 
     page_icon="🛡️",
@@ -715,14 +736,14 @@ div.stButton > button:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# --- 12. AUTHENTICATION MODULE ---
+# --- 13. AUTHENTICATION MODULE ---
 if not st.session_state.logged_in:
     col_c1, col_c2, col_c3 = st.columns([1, 1.6, 1])
     with col_c2:
         st.markdown("""
         <div style='text-align: center; padding: 48px 0 24px 0;'>
             <span class="badge-tag" style="margin-bottom: 16px;">SECURE ACCESS PORTAL</span>
-            <h1 class="editorial-title" style="font-size: 38px; margin: 12px 0 6px 0;">Medi-Audit Pro.</h1>
+            <h1 class="editorial-title" style="font-size: 38px; margin-dialog 0 6px 0;">Medi-Audit Pro.</h1>
             <p class="editorial-quote" style="margin-bottom: 24px;">Precision healthcare financial defense & claim recovery.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -787,9 +808,8 @@ if not st.session_state.logged_in:
                         else:
                             st.error("Invalid token.")
 
-# --- 13. MAIN APPLICATION WORKSPACE ---
+# --- 14. MAIN APPLICATION WORKSPACE ---
 else:
-    # Sidebar Navigation
     with st.sidebar:
         st.markdown(f"""
         <div style='padding: 10px 0 20px 0;'>
@@ -822,20 +842,20 @@ else:
         if st.button("🚪 Sign Out", use_container_width=True):
             st.session_state.logged_in = False; st.rerun()
 
-    # Floating Minimal Top Header
+    # Floating Top Header
     st.markdown(f"""
     <div class="top-nav">
         <div class="brand-pill">
-            <span>🛡️ Medi-Audit Forensic Engine</span>
+            <span>🛡️ Medi-Audit Multi-Gazette Engine</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-            <span class="badge-tag">🟢 CGHS 2026 GAZETTE ACTIVE</span>
+            <span class="badge-tag">🟢 CGHS (MoHFW) + NPPA (DPCO) ACTIVE</span>
             <span style="color: #64748b; font-size: 12px; font-weight: 600;">ACTIVE MODEL: {ACTIVE_GROQ_MODEL}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 13.1 EXECUTIVE DASHBOARD ---
+    # --- 14.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
         st.markdown("""
         <div style="margin-bottom: 24px;">
@@ -862,7 +882,7 @@ else:
         m1, m2, m3, m4 = st.columns(4)
         m1.markdown(f'<div class="editorial-card"><div class="card-label">Variance</div><div class="card-value" style="color:#0284c7;">{variance_text}</div></div>', unsafe_allow_html=True)
         m2.markdown(f'<div class="editorial-card" style="border-top:3px solid #f59e0b;"><div class="card-label">Identified Leakage</div><div class="card-value" style="color:#d97706;">₹{st.session_state.total_leakage:,.2f}</div></div>', unsafe_allow_html=True)
-        m3.markdown(f'<div class="editorial-card" style="border-top:3px solid #10b981;"><div class="card-label">RAG Accuracy</div><div class="card-value" style="color:#059669;">{st.session_state.audit_accuracy}%</div></div>', unsafe_allow_html=True)
+        m3.markdown(f'<div class="editorial-card" style="border-top:3px solid #10b981;"><div class="card-label">Audit Accuracy</div><div class="card-value" style="color:#059669;">{st.session_state.audit_accuracy}%</div></div>', unsafe_allow_html=True)
         
         r_col = "#059669" if st.session_state.risk_level == "STABLE" else ("#d97706" if st.session_state.risk_level == "ELEVATED RISK" else "#dc2626")
         m4.markdown(f'<div class="editorial-card" style="border-top:3px solid {r_col};"><div class="card-label">Risk Profile</div><div class="card-value" style="color:{r_col}; font-size:22px;">{st.session_state.risk_level}</div></div>', unsafe_allow_html=True)
@@ -901,7 +921,7 @@ else:
         csv = st.session_state.audit_log.to_csv(index=False).encode('utf-8')
         st.download_button("📥 Export Comprehensive Forensic Audit (CSV)", data=csv, file_name=f"audit_report_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
 
-    # --- 13.2 FRAUD RADAR ---
+    # --- 14.2 FRAUD RADAR ---
     elif dept == "🗺️ Fraud Radar":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -911,12 +931,12 @@ else:
         """, unsafe_allow_html=True)
         st.map(fraud_map_data, size='fraud_intensity', color='#ef4444')
 
-    # --- 13.3 PHARMA FORENSIC ---
+    # --- 14.3 PHARMA FORENSIC ---
     elif dept == "💊 Pharma Forensic":
         st.markdown("""
         <div style="margin-bottom: 20px;">
-            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">Pharmacy & Medical Forensic Engine.</h2>
-            <p class="editorial-quote">Automated verification of medical invoices against NPPA generic caps and CGHS gazettes.</p>
+            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">Pharmacy & Medicine Forensic Engine.</h2>
+            <p class="editorial-quote">Automated verification of branded medicine invoices against NPPA ceilings & DPCO price orders.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -926,7 +946,7 @@ else:
             u_p = st.file_uploader("Upload Medical / Pharmacy Invoice (JPEG, PNG, PDF)", type=["jpg", "png", "jpeg"], key="pharma_upload")
             if u_p and st.button("Run Forensic AI Scan →", use_container_width=True, key="btn_p_file"):
                 st.session_state.scan_error = None
-                with st.spinner("Reconciling line items against statutory CGHS/NPPA rates..."):
+                with st.spinner("Reconciling line items against statutory CGHS & NPPA gazettes..."):
                     txt_to_audit = extract_clean_text_from_image(u_p)
                     st.session_state.raw_extracted_text = txt_to_audit
                     if txt_to_audit:
@@ -947,7 +967,7 @@ else:
                         auto_log_audit("Pharma", res)
 
         with tab_text:
-            manual_txt_p = st.text_area("Paste bill line items (e.g., Consultation Fee: 1500, CBC Blood Test: 800, MRI Brain: 12000)", height=120, key="manual_pharma_txt")
+            manual_txt_p = st.text_area("Paste bill line items (e.g., Paracetamol: 150, Consultation Fee: 1500, CBC Blood Test: 800, MRI Brain: 12000)", height=120, key="manual_pharma_txt")
             if manual_txt_p and st.button("Audit Pasted Text →", use_container_width=True, key="btn_p_txt"):
                 st.session_state.scan_error = None
                 st.session_state.raw_extracted_text = manual_txt_p
@@ -993,14 +1013,14 @@ else:
                     st.write(f"**Forensic Finding:** {i.get('summary', 'Overcharge detected')}")
 
             st.divider()
-            st.metric("Total Recoverable Leakage", f"₹{total_p_leak:,.2f}")
+            st.metric("Total Recoverable Statutory Leakage", f"₹{total_p_leak:,.2f}")
 
-    # --- 13.4 HOSPITAL AUDIT ---
+    # --- 14.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
         st.markdown("""
         <div style="margin-bottom: 20px;">
             <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">Hospital Invoice Forensic Engine.</h2>
-            <p class="editorial-quote">Cross-referencing itemized billing line items against statutory CGHS gazette ceilings.</p>
+            <p class="editorial-quote">Cross-referencing itemized billing line items against statutory CGHS & NPPA gazette ceilings.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -1010,7 +1030,7 @@ else:
             u_h = st.file_uploader("Upload Hospital Invoice (JPEG, PNG, PDF)", type=["jpg", "png", "jpeg"], key="hosp_upload_main")
             if u_h and st.button("Run Deep Forensic Audit →", use_container_width=True, key="btn_h_file"):
                 st.session_state.scan_error = None
-                with st.spinner("Reconciling against 2026 CGHS Gazette Database..."):
+                with st.spinner("Reconciling against 2026 CGHS Gazette & NPPA Databases..."):
                     txt = extract_clean_text_from_image(u_h)
                     st.session_state.raw_extracted_text = txt
                     if txt:
@@ -1062,7 +1082,7 @@ else:
                 
                 with st.expander(f"📋 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
                     fig = go.Figure(go.Bar(
-                        x=['CGHS Price Cap', 'Hospital Invoiced'], 
+                        x=['Statutory Cap', 'Hospital Invoiced'], 
                         y=[l, b], 
                         marker_color=['#10b981', '#ef4444'], 
                         text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
@@ -1079,7 +1099,7 @@ else:
             st.divider()
             st.metric("Total Recoverable Hospital Leakage", f"₹{total_h_leak:,.2f}")
 
-    # --- 13.5 INSURANCE ARMOR ---
+    # --- 14.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -1151,7 +1171,7 @@ else:
             st.divider()
             st.metric("Total Unjustified Claim Shortfall", f"₹{total_i_leak:,.2f}")
 
-    # --- 13.6 JUSTICE PORTAL ---
+    # --- 14.6 JUSTICE PORTAL ---
     elif dept == "⚖️ Justice Portal":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -1228,12 +1248,12 @@ else:
         else:
             st.warning("⚠️ Complete an invoice or pharma audit first to generate legal dispute documentation.")
 
-    # --- 13.7 REGULATORY AI COPILOT ---
+    # --- 14.7 REGULATORY AI COPILOT ---
     elif dept == "💬 AI Copilot":
         st.markdown("""
         <div style="margin-bottom: 20px;">
-            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">CGHS Regulatory Co-Pilot.</h2>
-            <p class="editorial-quote">Real-time Socratic lookup of procedure rate ceilings and dispute precedents.</p>
+            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">CGHS & NPPA Regulatory Co-Pilot.</h2>
+            <p class="editorial-quote">Real-time Socratic lookup of procedure rate ceilings and DPCO statutory dispute precedents.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -1241,7 +1261,7 @@ else:
         if u_m:
             st.session_state.messages.append({"role": "user", "content": u_m})
             pdf_data = get_pdf_context(u_m)
-            assistant_prompt = f"Use this PDF context if available: {pdf_data}. Otherwise use standard CGHS 2026 rates to answer clearly and authoritatively. Question: {u_m}"
+            assistant_prompt = f"Use this multi-gazette context if available: {pdf_data}. Otherwise use standard CGHS 2026 and NPPA DPCO rates to answer clearly and authoritatively. Question: {u_m}"
             response = llm.invoke(assistant_prompt)
             st.session_state.messages.append({"role": "assistant", "content": response.content})
         for m in st.session_state.messages[-4:]: 

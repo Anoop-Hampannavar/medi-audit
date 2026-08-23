@@ -31,7 +31,7 @@ if not GROQ_API_KEY:
 # Initialize Native Groq Client
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# --- 2. DYNAMIC SELF-HEALING MODEL DISCOVERY ---
+# --- 2. DYNAMIC MODEL DISCOVERY & ROBUST JSON PARSER ---
 def get_best_available_groq_model():
     """Queries live Groq catalog to select the best active model available for your API key."""
     try:
@@ -39,10 +39,9 @@ def get_best_available_groq_model():
         available_ids = [m.id for m in models_data]
         
         preferred_hierarchy = [
-            "llama3-70b-8192",
             "llama-3.3-70b-versatile",
-            "llama-3.1-70b-versatile",
             "llama-3.1-8b-instant",
+            "llama3-70b-8192",
             "llama3-8b-8192",
             "gemma2-9b-it",
             "mixtral-8x7b-32768",
@@ -60,9 +59,9 @@ def get_best_available_groq_model():
             if not any(x in m_id.lower() for x in ["whisper", "guard", "embed", "vision"]):
                 return m_id
                 
-        return available_ids[0] if available_ids else "llama3-8b-8192"
+        return available_ids[0] if available_ids else "llama-3.1-8b-instant"
     except Exception:
-        return "llama3-8b-8192"
+        return "llama-3.1-8b-instant"
 
 ACTIVE_GROQ_MODEL = get_best_available_groq_model()
 
@@ -72,6 +71,35 @@ llm = ChatGroq(
     model_name=ACTIVE_GROQ_MODEL,
     temperature=0
 )
+
+def safe_extract_json(raw_response_content):
+    """
+    Robust JSON parser: Extracts and decodes JSON objects even if the model 
+    outputs markdown fences, thinking tags (<think>...</think>), or preamble text.
+    """
+    if not raw_response_content:
+        return None
+        
+    text = str(raw_response_content).strip()
+    
+    # 1. Remove deepseek/reasoning tags if present
+    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
+    
+    # 2. Extract content within the outermost JSON brackets { ... }
+    json_match = re.search(r'(\{[\s\S]*\})', text)
+    if json_match:
+        text = json_match.group(1).strip()
+        
+    # 3. Clean any residual markdown formatting
+    text = text.replace("```json", "").replace("```", "").strip()
+    
+    try:
+        return json.loads(text)
+    except Exception:
+        # Fallback: remove non-JSON trailing/leading chars
+        clean_text = re.sub(r'^[^{]*', '', text)
+        clean_text = re.sub(r'[^}]*$', '', clean_text)
+        return json.loads(clean_text)
 
 SENDER_EMAIL = st.secrets.get("SENDER_EMAIL", os.getenv("SENDER_EMAIL"))
 SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD", os.getenv("SENDER_PASSWORD"))
@@ -210,8 +238,10 @@ Return ONLY valid JSON with this exact schema:
 
     try:
         response = llm.invoke(prompt)
-        clean_json = response.content.replace("```json", "").replace("```", "").strip()
-        return json.loads(clean_json)
+        parsed_json = safe_extract_json(response.content)
+        if not parsed_json:
+            raise ValueError("No valid JSON structure found in response.")
+        return parsed_json
     except Exception as e:
         st.session_state.scan_error = f"Audit Processing Error: {e}"
         return None
@@ -240,8 +270,10 @@ Return ONLY a valid JSON object:
     
     try:
         response = llm.invoke(prompt)
-        clean_json = response.content.replace("```json", "").replace("```", "").strip()
-        return json.loads(clean_json)
+        parsed_json = safe_extract_json(response.content)
+        if not parsed_json:
+            raise ValueError("No valid JSON in claim response.")
+        return parsed_json
     except Exception:
         return {
             "hospital": "Detected Provider",
@@ -269,8 +301,10 @@ Return ONLY a valid JSON object:
 
     try:
         response = llm.invoke(prompt)
-        clean_json = response.content.replace("```json", "").replace("```", "").strip()
-        return json.loads(clean_json)
+        parsed_json = safe_extract_json(response.content)
+        if not parsed_json:
+            raise ValueError("Invalid JSON received from pharmacy analysis.")
+        return parsed_json
     except Exception as e:
         st.session_state.scan_error = f"Logic Error: {e}"
         return None
@@ -479,7 +513,7 @@ html, body, [class*="css"], .stMarkdown {
     letter-spacing: -0.03em;
 }
 
-/* Primary Pill Action Buttons */
+/* Primary Pill Buttons */
 div.stButton > button {
     background: #0f172a !important;
     color: #ffffff !important;

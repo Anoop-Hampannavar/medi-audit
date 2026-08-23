@@ -28,22 +28,57 @@ if not GROQ_API_KEY:
     st.error("⚠️ GROQ_API_KEY is missing! Please configure it in Streamlit Secrets or your .env file.")
     st.stop()
 
-# Initialize LangChain ChatGroq and Native Groq Client for Vision
-# Change to:
+# Initialize Native Groq Client
+groq_client = Groq(api_key=GROQ_API_KEY)
+
+# --- 2. DYNAMIC SELF-HEALING MODEL DISCOVERY ---
+def get_best_available_groq_model():
+    """Queries live Groq catalog to select the best active model available for your API key."""
+    try:
+        models_data = groq_client.models.list().data
+        available_ids = [m.id for m in models_data]
+        
+        preferred_hierarchy = [
+            "llama3-70b-8192",
+            "llama-3.3-70b-versatile",
+            "llama-3.1-70b-versatile",
+            "llama-3.1-8b-instant",
+            "llama3-8b-8192",
+            "gemma2-9b-it",
+            "mixtral-8x7b-32768",
+            "deepseek-r1-distill-llama-70b",
+            "qwen-2.5-32b",
+            "llama-3.2-3b-preview",
+            "llama-3.2-1b-preview"
+        ]
+        
+        for pref in preferred_hierarchy:
+            if pref in available_ids:
+                return pref
+                
+        for m_id in available_ids:
+            if not any(x in m_id.lower() for x in ["whisper", "guard", "embed", "vision"]):
+                return m_id
+                
+        return available_ids[0] if available_ids else "llama3-8b-8192"
+    except Exception:
+        return "llama3-8b-8192"
+
+ACTIVE_GROQ_MODEL = get_best_available_groq_model()
+
+# Initialize LangChain ChatGroq with active model
 llm = ChatGroq(
     groq_api_key=GROQ_API_KEY,
-    model_name="llama-3.1-8b-instant",
+    model_name=ACTIVE_GROQ_MODEL,
     temperature=0
 )
-
-groq_client = Groq(api_key=GROQ_API_KEY)
 
 SENDER_EMAIL = st.secrets.get("SENDER_EMAIL", os.getenv("SENDER_EMAIL"))
 SENDER_PASSWORD = st.secrets.get("SENDER_PASSWORD", os.getenv("SENDER_PASSWORD"))
 USER_DB = "users.json"
 PDF_PATH = os.path.join("data", "raw_gazzete", "cghs_rates_2026.pdf")
 
-# --- 2. ADVANCED FAIL-SAFE SCANNER ENGINE ---
+# --- 3. ADVANCED FAIL-SAFE SCANNER ENGINE ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     """Resizes and compresses image to <2MB to prevent Groq API payload errors."""
     uploaded_file.seek(0)
@@ -83,7 +118,14 @@ def extract_clean_text_from_image(uploaded_file):
             }
         ]
 
-        for vision_model in ["qwen/qwen3.6-27b", "meta-llama/llama-4-scout-17b-16e-instruct"]:
+        vision_models = [
+            "llama-3.2-11b-vision-preview",
+            "llama-3.2-90b-vision-preview",
+            "qwen/qwen3.6-27b",
+            "meta-llama/llama-4-scout-17b-16e-instruct"
+        ]
+
+        for vision_model in vision_models:
             try:
                 response = groq_client.chat.completions.create(
                     messages=messages,
@@ -121,7 +163,7 @@ def extract_clean_text_from_image(uploaded_file):
         st.session_state.scan_error = f"⚠️ Scan Failed: {err_msg}"
         return ""
 
-# --- 3. CORE RAG & AUDIT LOGIC ---
+# --- 4. CORE RAG & AUDIT LOGIC ---
 def get_pdf_context(query):
     text_context = ""
     if os.path.exists(PDF_PATH):
@@ -233,7 +275,7 @@ Return ONLY a valid JSON object:
         st.session_state.scan_error = f"Logic Error: {e}"
         return None
 
-# --- 4. REAL-TIME AUDIT LOGGING HELPER ---
+# --- 5. REAL-TIME AUDIT LOGGING HELPER ---
 def auto_log_audit(department_name, result_json):
     if not result_json:
         return
@@ -270,7 +312,7 @@ def auto_log_audit(department_name, result_json):
     else:
         st.session_state.risk_level = "STABLE"
 
-# --- 5. AUTHENTICATION & DATABASE ---
+# --- 6. AUTHENTICATION & DATABASE ---
 def load_users():
     if os.path.exists(USER_DB):
         with open(USER_DB, "r") as f:
@@ -307,7 +349,7 @@ def format_inr(val):
     except:
         return str(val)
 
-# --- 6. SESSION STATE INITIALIZATION ---
+# --- 7. SESSION STATE INITIALIZATION ---
 if "logged_in" not in st.session_state:
     for key, val in [("logged_in", False), ("otp_sent", False), ("user_email", ""), ("messages", []), 
                      ("total_leakage", 0.0), ("audit_accuracy", 99.8), ("risk_level", "STABLE"),
@@ -315,7 +357,7 @@ if "logged_in" not in st.session_state:
                      ("audit_log", pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"]))]:
         st.session_state[key] = val
 
-# --- 7. GEOGRAPHIC FRAUD MAP DATA ---
+# --- 8. GEOGRAPHIC FRAUD MAP DATA ---
 fraud_map_data = pd.DataFrame({
     'lat': [28.6139, 19.0760, 12.9716, 22.5726, 13.0827, 21.1458, 26.8467, 17.3850, 23.0225, 30.7333],
     'lon': [77.2090, 72.8777, 77.5946, 88.3639, 80.2707, 79.0882, 80.9462, 78.4867, 72.5714, 76.7794],
@@ -323,7 +365,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 8. EDITORIAL DESIGN SYSTEM (CSS) ---
+# --- 9. EDITORIAL DESIGN SYSTEM (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Forensic Healthcare Intelligence", 
     page_icon="🛡️",
@@ -335,7 +377,6 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;600&display=swap');
 
-/* Global Font & Editorial Canvas */
 html, body, [class*="css"], .stMarkdown {
     font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
 }
@@ -353,7 +394,7 @@ html, body, [class*="css"], .stMarkdown {
     max-width: 1200px !important;
 }
 
-/* Editorial Serif Accents */
+/* Editorial Typography */
 .editorial-title {
     font-family: 'Playfair Display', Georgia, serif !important;
     font-weight: 700;
@@ -370,7 +411,7 @@ html, body, [class*="css"], .stMarkdown {
     line-height: 1.4;
 }
 
-/* Top Floating Glass Header */
+/* Floating Glass Header */
 .top-nav {
     display: flex;
     justify-content: space-between;
@@ -438,7 +479,7 @@ html, body, [class*="css"], .stMarkdown {
     letter-spacing: -0.03em;
 }
 
-/* Primary Pill Buttons */
+/* Primary Pill Action Buttons */
 div.stButton > button {
     background: #0f172a !important;
     color: #ffffff !important;
@@ -465,7 +506,7 @@ div.stButton > button:hover {
     border-right: 1px solid #f1f5f9;
 }
 
-/* Tabs Segmented Control */
+/* Segmented Tabs */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
     background-color: #f1f5f9;
@@ -507,7 +548,7 @@ div.stButton > button:hover {
     padding: 20px !important;
 }
 
-/* Formal Legal Memorandum */
+/* Formal Legal Container */
 .legal-box {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -518,7 +559,7 @@ div.stButton > button:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# --- 9. AUTHENTICATION MODULE ---
+# --- 10. AUTHENTICATION MODULE ---
 if not st.session_state.logged_in:
     col_c1, col_c2, col_c3 = st.columns([1, 1.6, 1])
     with col_c2:
@@ -590,17 +631,17 @@ if not st.session_state.logged_in:
                         else:
                             st.error("Invalid token.")
 
-# --- 10. MAIN APPLICATION WORKSPACE ---
+# --- 11. MAIN APPLICATION WORKSPACE ---
 else:
     # Sidebar Navigation
     with st.sidebar:
-        st.markdown("""
+        st.markdown(f"""
         <div style='padding: 10px 0 20px 0;'>
             <div style='display: flex; align-items: center; gap: 8px;'>
                 <span style='font-size: 22px;'>🛡️</span>
                 <span style='font-size: 19px; font-weight: 800; color: #0f172a; letter-spacing: -0.03em;'>Medi-Audit</span>
             </div>
-            <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>Statutory Forensic Platform</p>
+            <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>Engine: <span style='font-family: monospace; color: #0284c7;'>{ACTIVE_GROQ_MODEL}</span></p>
         </div>
         """, unsafe_allow_html=True)
         st.caption(f"Auditor: **{st.session_state.user_email}**")
@@ -633,12 +674,12 @@ else:
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <span class="badge-tag">🟢 CGHS 2026 GAZETTE ACTIVE</span>
-            <span style="color: #64748b; font-size: 12px; font-weight: 600;">STATUS: OPERATIONAL</span>
+            <span style="color: #64748b; font-size: 12px; font-weight: 600;">ACTIVE MODEL: {ACTIVE_GROQ_MODEL}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 10.1 EXECUTIVE DASHBOARD ---
+    # --- 11.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
         st.markdown("""
         <div style="margin-bottom: 24px;">
@@ -704,7 +745,7 @@ else:
         csv = st.session_state.audit_log.to_csv(index=False).encode('utf-8')
         st.download_button("📥 Export Comprehensive Forensic Audit (CSV)", data=csv, file_name=f"audit_report_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
 
-    # --- 10.2 FRAUD RADAR ---
+    # --- 11.2 FRAUD RADAR ---
     elif dept == "🗺️ Fraud Radar":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -714,7 +755,7 @@ else:
         """, unsafe_allow_html=True)
         st.map(fraud_map_data, size='fraud_intensity', color='#ef4444')
 
-    # --- 10.3 PHARMA FORENSIC ---
+    # --- 11.3 PHARMA FORENSIC ---
     elif dept == "💊 Pharma Forensic":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -798,7 +839,7 @@ else:
             st.divider()
             st.metric("Total Recoverable Pharmacy Leakage", f"₹{total_p_leak:,.2f}")
 
-    # --- 10.4 HOSPITAL AUDIT ---
+    # --- 11.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -882,7 +923,7 @@ else:
             st.divider()
             st.metric("Total Recoverable Hospital Leakage", f"₹{total_h_leak:,.2f}")
 
-    # --- 10.5 INSURANCE ARMOR ---
+    # --- 11.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -953,7 +994,7 @@ else:
             st.divider()
             st.metric("Total Unjustified Claim Shortfall", f"₹{total_i_leak:,.2f}")
 
-    # --- 10.6 JUSTICE PORTAL ---
+    # --- 11.6 JUSTICE PORTAL ---
     elif dept == "⚖️ Justice Portal":
         st.markdown("""
         <div style="margin-bottom: 20px;">
@@ -1029,7 +1070,7 @@ else:
         else:
             st.warning("⚠️ Complete an invoice or pharma audit first to generate legal dispute documentation.")
 
-    # --- 10.7 REGULATORY AI COPILOT ---
+    # --- 11.7 REGULATORY AI COPILOT ---
     elif dept == "💬 AI Copilot":
         st.markdown("""
         <div style="margin-bottom: 20px;">

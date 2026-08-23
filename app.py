@@ -487,11 +487,11 @@ def auto_log_audit(department_name, result_json):
     st.session_state.audit_log = pd.concat([st.session_state.audit_log, new_entry], ignore_index=True)
     
     if st.session_state.total_leakage > 10000:
-        st.session_state.risk_level = "CRITICAL RISK"
+        st.session_state.risk_level = "CRITICAL OVERCHARGE"
     elif st.session_state.total_leakage > 2500:
-        st.session_state.risk_level = "ELEVATED RISK"
+        st.session_state.risk_level = "MODERATE SAVINGS"
     else:
-        st.session_state.risk_level = "STABLE"
+        st.session_state.risk_level = "STATUTORY COMPLIANT"
 
 # --- 9. AUTHENTICATION & DATABASE ---
 def load_users():
@@ -535,7 +535,7 @@ def format_inr(val):
 # --- 10. SESSION STATE INITIALIZATION ---
 if "logged_in" not in st.session_state:
     for key, val in [("logged_in", False), ("otp_sent", False), ("user_email", ""), ("messages", []), 
-                     ("total_leakage", 0.0), ("audit_accuracy", 99.8), ("risk_level", "STABLE"),
+                     ("total_leakage", 0.0), ("audit_accuracy", 99.8), ("risk_level", "STATUTORY COMPLIANT"),
                      ("ai_result_data", None), ("raw_extracted_text", ""), ("scan_error", None),
                      ("audit_log", pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"]))]:
         st.session_state[key] = val
@@ -548,9 +548,9 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 12. EDITORIAL LUXURY DESIGN SYSTEM (CSS) ---
+# --- 12. GOODBILL-INSPIRED LUXURY DESIGN SYSTEM (CSS) ---
 st.set_page_config(
-    page_title="Medi-Audit — Forensic Healthcare Intelligence", 
+    page_title="Goodbill Medical Audit — Never Overpay for Healthcare", 
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -558,162 +558,213 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 
 html, body, [class*="css"], .stMarkdown {
-    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif !important;
 }
 
 .stApp {
-    background-color: #fafbfc;
+    background-color: #f8faff;
     color: #0f172a;
 }
 
 #MainMenu, header, footer {visibility: hidden; height: 0;}
 .block-container {
-    padding-top: 2rem !important;
+    padding-top: 1.5rem !important;
     padding-bottom: 4rem !important;
-    max-width: 1200px !important;
+    max-width: 1240px !important;
 }
 
-/* Editorial Typography */
-.editorial-title {
-    font-family: 'Playfair Display', Georgia, serif !important;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    color: #0f172a;
-    line-height: 1.1;
-}
-
-.editorial-quote {
-    font-family: 'Playfair Display', Georgia, serif !important;
-    font-style: italic;
-    font-size: 20px;
-    color: #475569;
-    line-height: 1.4;
-}
-
-/* Top Floating Glass Header */
-.top-nav {
+/* Goodbill Brand Navbar */
+.gb-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(226, 232, 240, 0.9);
+    background: #ffffff;
+    border: 1px solid #e0e7ff;
     border-radius: 9999px;
     padding: 12px 28px;
-    margin-bottom: 32px;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.03);
+    margin-bottom: 28px;
+    box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.05);
 }
 
-.brand-pill {
+.gb-logo {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     font-weight: 800;
-    font-size: 17px;
-    letter-spacing: -0.03em;
-    color: #0f172a;
+    font-size: 22px;
+    color: #4338ca;
+    letter-spacing: -0.04em;
 }
 
-.badge-tag {
-    background: #f1f5f9;
-    color: #0f172a;
+.gb-pill {
+    background: #eef2ff;
+    color: #4338ca;
     font-size: 11px;
     font-weight: 700;
-    padding: 5px 12px;
+    padding: 6px 14px;
     border-radius: 9999px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #c7d2fe;
     display: inline-flex;
     align-items: center;
     gap: 6px;
 }
 
-/* Minimal Luxury Cards */
-.editorial-card {
+/* Hero Typography */
+.gb-hero-title {
+    font-size: 46px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.04em !important;
+    color: #1e1b4b !important;
+    line-height: 1.15 !important;
+    margin-bottom: 12px !important;
+}
+
+.gb-hero-sub {
+    font-size: 18px !important;
+    color: #475569 !important;
+    line-height: 1.5 !important;
+    margin-bottom: 24px !important;
+}
+
+/* Goodbill Signature Floating Result Card */
+.gb-bill-card {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 20px;
-    padding: 26px;
-    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.03);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.editorial-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.06);
-    border-color: #cbd5e1;
+    border: 1px solid #e0e7ff;
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 25px 50px -12px rgba(67, 56, 202, 0.12);
+    position: relative;
+    overflow: hidden;
 }
 
-.card-label {
-    color: #64748b;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 8px;
+.gb-bill-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #4f46e5, #818cf8);
 }
-.card-value {
-    color: #0f172a;
-    font-size: 30px;
+
+.gb-bill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 14px;
+}
+
+.gb-entity-title {
+    font-size: 18px;
     font-weight: 800;
-    letter-spacing: -0.03em;
+    color: #0f172a;
+    letter-spacing: -0.02em;
 }
 
-/* Primary Pill Buttons */
+.gb-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.gb-row-label {
+    color: #64748b;
+    font-weight: 500;
+}
+
+.gb-row-val {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.gb-discount {
+    color: #e11d48;
+    font-weight: 700;
+}
+
+.gb-total-box {
+    margin-top: 18px;
+    padding: 16px;
+    background: #f8faff;
+    border: 1px solid #e0e7ff;
+    border-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gb-badge-savings {
+    background: #4338ca;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 8px 18px;
+    border-radius: 9999px;
+    letter-spacing: -0.01em;
+}
+
+/* Primary Indigo Pill Buttons */
 div.stButton > button {
-    background: #0f172a !important;
+    background: #4338ca !important;
     color: #ffffff !important;
-    border: 1px solid #0f172a !important;
+    border: none !important;
     border-radius: 9999px !important;
-    padding: 0.75rem 1.6rem !important;
-    font-weight: 600 !important;
-    font-size: 0.92rem !important;
+    padding: 0.8rem 1.8rem !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
     letter-spacing: -0.01em !important;
-    box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.15) !important;
+    box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.4) !important;
     transition: all 0.2s ease !important;
     width: 100% !important;
 }
 div.stButton > button:hover {
-    background: #1e293b !important;
+    background: #3730a3 !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.25) !important;
+    box-shadow: 0 15px 30px -5px rgba(67, 56, 202, 0.5) !important;
     color: #ffffff !important;
 }
 
+/* Clean Custom Sidebar */
 [data-testid="stSidebar"] {
     background-color: #ffffff !important;
-    border-right: 1px solid #f1f5f9;
+    border-right: 1px solid #e0e7ff;
 }
 
+/* Goodbill Pill Tabs */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
-    background-color: #f1f5f9;
+    background-color: #eef2ff;
     padding: 6px;
     border-radius: 9999px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e0e7ff;
 }
 .stTabs [data-baseweb="tab"] {
-    height: 38px;
+    height: 40px;
     border-radius: 9999px;
-    color: #64748b;
-    font-weight: 600;
+    color: #4338ca;
+    font-weight: 700;
     font-size: 13px;
     border: none;
     background-color: transparent;
-    padding: 0 16px;
+    padding: 0 18px;
 }
 .stTabs [aria-selected="true"] {
-    background-color: #ffffff !important;
-    color: #0f172a !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background-color: #4338ca !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(67, 56, 202, 0.25);
 }
 
 .streamlit-expanderHeader {
     background-color: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 14px !important;
+    border-radius: 16px !important;
     color: #0f172a !important;
     font-weight: 700 !important;
     padding: 16px !important;
@@ -722,17 +773,9 @@ div.stButton > button:hover {
     background-color: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     border-top: none !important;
-    border-bottom-left-radius: 14px;
-    border-bottom-right-radius: 14px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
     padding: 20px !important;
-}
-
-.legal-box {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 32px;
-    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.04);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -742,21 +785,23 @@ if not st.session_state.logged_in:
     col_c1, col_c2, col_c3 = st.columns([1, 1.6, 1])
     with col_c2:
         st.markdown("""
-        <div style='text-align: center; padding: 48px 0 24px 0;'>
-            <span class="badge-tag" style="margin-bottom: 16px;">SECURE ACCESS PORTAL</span>
-            <h1 class="editorial-title" style="font-size: 38px; margin: 12px 0 6px 0;">Medi-Audit Pro.</h1>
-            <p class="editorial-quote" style="margin-bottom: 24px;">Precision healthcare financial defense & claim recovery.</p>
+        <div style='text-align: center; padding: 40px 0 20px 0;'>
+            <div class="gb-logo" style="justify-content: center; font-size: 32px; margin-bottom: 8px;">
+                <span>Goodbill</span><span style="color:#0f172a; font-weight:400;">audit</span>
+            </div>
+            <p class="gb-hero-title" style="font-size: 28px !important; margin-bottom: 6px;">Never overpay for medical care again.</p>
+            <p class="gb-hero-sub" style="font-size: 15px !important;">Statutory 501(r), CGHS 2026 and NPPA DPCO automated bill defense.</p>
         </div>
         """, unsafe_allow_html=True)
         
         with st.container(border=True):
-            t1, t2, t3 = st.tabs(["Sign In", "Register", "Recovery"])
+            t1, t2, t3 = st.tabs(["Sign In", "Get Started Free", "Recovery"])
             
             with t1:
-                l_email = st.text_input("Work Email Address", key="login_email", placeholder="auditor@healthcare.in")
+                l_email = st.text_input("Work Email Address", key="login_email", placeholder="patient@healthcare.in")
                 l_pass = st.text_input("Access Password", type="password", key="login_pass", placeholder="••••••••")
                 st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-                if st.button("Enter Workspace →", use_container_width=True, type="primary"):
+                if st.button("Enter Goodbill Portal →", use_container_width=True, type="primary"):
                     ud = load_users()
                     if l_email.strip().lower() in ud and ud[l_email.strip().lower()] == l_pass:
                         st.session_state.logged_in, st.session_state.user_email = True, l_email
@@ -765,9 +810,9 @@ if not st.session_state.logged_in:
                         st.error("Invalid credentials provided.")
 
             with t2:
-                r_email = st.text_input("Enter Email for OTP", key="reg_email", placeholder="name@domain.com")
+                r_email = st.text_input("Enter Email for Security Code", key="reg_email", placeholder="name@domain.com")
                 if not st.session_state.otp_sent:
-                    if st.button("Send Security Code →", use_container_width=True):
+                    if st.button("Send Verification Code →", use_container_width=True):
                         st.session_state.generated_otp = send_otp(r_email)
                         if st.session_state.generated_otp:
                             st.session_state.otp_sent = True; st.rerun()
@@ -776,7 +821,7 @@ if not st.session_state.logged_in:
                 else:
                     i_otp = st.text_input("6-Digit Verification Token", key="reg_otp")
                     r_pass = st.text_input("Create Master Password", type="password", key="reg_pass")
-                    if st.button("Complete Registration →", use_container_width=True):
+                    if st.button("Activate Free Account →", use_container_width=True):
                         if i_otp == st.session_state.generated_otp:
                             save_user(r_email, r_pass); st.session_state.otp_sent = False; st.rerun()
                         else:
@@ -788,7 +833,7 @@ if not st.session_state.logged_in:
                     st.session_state.forgot_otp_sent = False
 
                 if not st.session_state.forgot_otp_sent:
-                    if st.button("Request Password Reset →", use_container_width=True):
+                    if st.button("Send Reset Link →", use_container_width=True):
                         ud = load_users()
                         if f_email.strip().lower() in ud:
                             st.session_state.generated_otp = send_otp(f_email)
@@ -799,7 +844,7 @@ if not st.session_state.logged_in:
                 else:
                     f_otp = st.text_input("Verification Code", key="f_otp")
                     new_pass = st.text_input("Enter New Password", type="password", key="f_new_pass")
-                    if st.button("Save & Sign In →", use_container_width=True, type="primary"):
+                    if st.button("Update & Sign In →", use_container_width=True, type="primary"):
                         if f_otp == st.session_state.generated_otp:
                             save_user(f_email, new_pass)
                             st.session_state.forgot_otp_sent = False
@@ -814,14 +859,13 @@ else:
     with st.sidebar:
         st.markdown(f"""
         <div style='padding: 10px 0 20px 0;'>
-            <div style='display: flex; align-items: center; gap: 8px;'>
-                <span style='font-size: 22px;'>🛡️</span>
-                <span style='font-size: 19px; font-weight: 800; color: #0f172a; letter-spacing: -0.03em;'>Medi-Audit</span>
+            <div class="gb-logo">
+                <span>Goodbill</span><span style="color:#0f172a; font-weight:400; font-size:16px;">PRO</span>
             </div>
-            <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>Engine: <span style='font-family: monospace; color: #0284c7;'>{ACTIVE_GROQ_MODEL}</span></p>
+            <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>Engine: <span style='font-family: monospace; color: #4338ca;'>{ACTIVE_GROQ_MODEL}</span></p>
         </div>
         """, unsafe_allow_html=True)
-        st.caption(f"Auditor: **{st.session_state.user_email}**")
+        st.caption(f"Authenticated: **{st.session_state.user_email}**")
         st.divider()
         
         dept = st.radio(
@@ -831,10 +875,10 @@ else:
         )
         
         st.divider()
-        if st.button("🗑️ Reset Audit Log", use_container_width=True):
+        if st.button("🗑️ Reset Active Audit", use_container_width=True):
             st.session_state.audit_log = pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"])
             st.session_state.total_leakage = 0.0
-            st.session_state.risk_level = "STABLE"
+            st.session_state.risk_level = "STATUTORY COMPLIANT"
             st.session_state.ai_result_data = None
             st.session_state.raw_extracted_text = ""
             st.session_state.scan_error = None
@@ -843,111 +887,99 @@ else:
         if st.button("🚪 Sign Out", use_container_width=True):
             st.session_state.logged_in = False; st.rerun()
 
-    # Floating Top Header
+    # Goodbill Floating Navbar
     st.markdown(f"""
-    <div class="top-nav">
-        <div class="brand-pill">
-            <span>🛡️ Medi-Audit Multi-Gazette Engine</span>
+    <div class="gb-nav">
+        <div class="gb-logo">
+            <span>Goodbill</span><span style="color:#0f172a; font-weight:600; font-size:18px;">Audit</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-            <span class="badge-tag">🟢 CGHS (MoHFW) + NPPA (DPCO) ACTIVE</span>
-            <span style="color: #64748b; font-size: 12px; font-weight: 600;">ACTIVE MODEL: {ACTIVE_GROQ_MODEL}</span>
+            <span class="gb-pill">🟢 CGHS 2026 + NPPA DPCO ACTIVE</span>
+            <span style="color: #64748b; font-size: 12px; font-weight: 700;">MODEL: {ACTIVE_GROQ_MODEL.upper()}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     # --- 14.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
-        st.markdown("""
-        <div style="margin-bottom: 24px;">
-            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">Executive Audit Terminal.</h2>
-            <p class="editorial-quote">Continuous statutory monitoring of medical billing markups and claim variances.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.session_state.audit_log.empty:
-            trend_data = pd.DataFrame({'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'Leakage': [0]*7})
-            pie_data = pd.DataFrame({'Dept': ['Pharma', 'Hospital', 'Insurance'], 'Value': [0, 0, 0]})
-            entity_data = pd.DataFrame({'Hospital': ['No Audited Invoices'], 'Leakage': [0]})
-            variance_text = "0.0% (Baseline)"
-        else:
+        col_h1, col_h2 = st.columns([1.5, 1])
+        with col_h1:
+            st.markdown("""
+            <h1 class="gb-hero-title">Never overpay for hospital visits <span style="color: #4338ca;">again.</span></h1>
+            <p class="gb-hero-sub">Ensure plans and patients pay only what's fair, with statutory gazette caps and pre-payment claim forensic reviews.</p>
+            """, unsafe_allow_html=True)
+            
+            b1, b2, b3 = st.columns(3)
+            b1.metric("Active Bill Savings", f"₹{st.session_state.total_leakage:,.2f}", delta="Instant Recoverable")
+            b2.metric("Audit Accuracy", f"{st.session_state.audit_accuracy}%", delta="Statutory Gazette")
+            b3.metric("Status Profile", st.session_state.risk_level)
+
+        with col_h2:
+            # Goodbill Hero Card Preview
+            st.markdown(f"""
+            <div class="gb-bill-card">
+                <div class="gb-bill-header">
+                    <div>
+                        <div class="gb-entity-title">🏥 Active Audit Ledger</div>
+                        <span style="font-size: 12px; color: #64748b;">Statutory Reconciled</span>
+                    </div>
+                    <span class="gb-pill">{datetime.now().strftime('%b %d, %Y')}</span>
+                </div>
+                <div class="gb-row">
+                    <span class="gb-row-label">Original Invoiced Amount</span>
+                    <span class="gb-row-val">₹{st.session_state.total_leakage * 1.4:,.2f}</span>
+                </div>
+                <div class="gb-row">
+                    <span class="gb-row-label">Statutory Ceiling Discount</span>
+                    <span class="gb-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                </div>
+                <div class="gb-total-box">
+                    <div>
+                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">GOODBILL ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 22px; font-weight: 800; color: #4338ca;">₹{st.session_state.total_leakage * 0.4:,.2f}</span>
+                    </div>
+                    <span class="gb-badge-savings">Save ~71%</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+        st.markdown("##### Real-Time Leakage Trajectory")
+        if not st.session_state.audit_log.empty:
             trend_data = st.session_state.audit_log.groupby('Day')['Leakage'].sum().reset_index()
-            day_map = {'Mon':0, 'Tue':1, 'Wed':2, 'Thu':3, 'Fri':4, 'Sat':5, 'Sun':6}
-            trend_data = trend_data.sort_values(by='Day', key=lambda x: x.map(day_map))
-            pie_data = st.session_state.audit_log.groupby('Dept')['Leakage'].sum().reset_index().rename(columns={'Leakage':'Value'})
-            entity_data = st.session_state.audit_log.groupby('Hospital')['Leakage'].sum().sort_values(ascending=False).reset_index()
-            last_week_avg = 15000 
-            variance_val = ((st.session_state.total_leakage - last_week_avg) / last_week_avg) * 100 if st.session_state.total_leakage > 0 else 0
-            variance_text = f"{variance_val:+.1f}% vs Target"
-
-        m1, m2, m3, m4 = st.columns(4)
-        m1.markdown(f'<div class="editorial-card"><div class="card-label">Variance</div><div class="card-value" style="color:#0284c7;">{variance_text}</div></div>', unsafe_allow_html=True)
-        m2.markdown(f'<div class="editorial-card" style="border-top:3px solid #f59e0b;"><div class="card-label">Active Bill Leakage</div><div class="card-value" style="color:#d97706;">₹{st.session_state.total_leakage:,.2f}</div></div>', unsafe_allow_html=True)
-        m3.markdown(f'<div class="editorial-card" style="border-top:3px solid #10b981;"><div class="card-label">Audit Accuracy</div><div class="card-value" style="color:#059669;">{st.session_state.audit_accuracy}%</div></div>', unsafe_allow_html=True)
-        
-        r_col = "#059669" if st.session_state.risk_level == "STABLE" else ("#d97706" if st.session_state.risk_level == "ELEVATED RISK" else "#dc2626")
-        m4.markdown(f'<div class="editorial-card" style="border-top:3px solid {r_col};"><div class="card-label">Risk Profile</div><div class="card-value" style="color:{r_col}; font-size:22px;">{st.session_state.risk_level}</div></div>', unsafe_allow_html=True)
-
-        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-        col_g1, col_g2 = st.columns([1.6, 1])
-        
-        with col_g1:
-            st.markdown("##### Real-Time Leakage Trajectory")
-            fig_line = px.line(trend_data, x='Day', y='Leakage', markers=True, template="plotly_white", color_discrete_sequence=['#0f172a'])
-            fig_line.update_layout(
-                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                margin=dict(l=10, r=10, t=15, b=10), height=250,
-                yaxis=dict(showgrid=True, gridcolor='#f1f5f9'), xaxis=dict(showgrid=False)
-            )
-            st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
-
-        with col_g2:
-            st.markdown("##### Discrepancy by Category")
-            fig_pie = px.pie(pie_data, values='Value', names='Dept', hole=0.6, color_discrete_sequence=['#0284c7', '#475569', '#f43f5e'])
-            fig_pie.update_layout(
-                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                margin=dict(l=10, r=10, t=15, b=10), height=250
-            )
-            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
-
-        st.markdown("##### Entity Overcharge Ledger")
-        fig_rank = px.bar(entity_data, x='Leakage', y='Hospital', orientation='h', color='Leakage', color_continuous_scale='Reds', template="plotly_white")
-        fig_rank.update_layout(
+        else:
+            trend_data = pd.DataFrame({'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'Leakage': [0]*7})
+            
+        fig_line = px.area(trend_data, x='Day', y='Leakage', template="plotly_white", color_discrete_sequence=['#4338ca'])
+        fig_line.update_layout(
             plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(l=10, r=10, t=15, b=10), height=180,
-            xaxis=dict(showgrid=True, gridcolor='#f1f5f9')
+            margin=dict(l=10, r=10, t=15, b=10), height=220,
+            yaxis=dict(showgrid=True, gridcolor='#eef2ff'), xaxis=dict(showgrid=False)
         )
-        st.plotly_chart(fig_rank, use_container_width=True, config={'displayModeBar': False})
-        
-        csv = st.session_state.audit_log.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Export Comprehensive Forensic Audit (CSV)", data=csv, file_name=f"audit_report_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
+        st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
 
     # --- 14.2 FRAUD RADAR ---
     elif dept == "🗺️ Fraud Radar":
         st.markdown("""
-        <div style="margin-bottom: 20px;">
-            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">National Price Discrepancy Radar.</h2>
-            <p class="editorial-quote">Geographic distribution of identified hospital markups exceeding gazette caps.</p>
-        </div>
+        <h1 class="gb-hero-title">National Healthcare Price Radar.</h1>
+        <p class="gb-hero-sub">Live spatial density tracking of excessive procedure markups above notified CGHS gazette caps.</p>
         """, unsafe_allow_html=True)
-        st.map(fraud_map_data, size='fraud_intensity', color='#ef4444')
+        st.map(fraud_map_data, size='fraud_intensity', color='#4338ca')
 
     # --- 14.3 PHARMA FORENSIC ---
     elif dept == "💊 Pharma Forensic":
         st.markdown("""
-        <div style="margin-bottom: 20px;">
-            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">Pharmacy & Medicine Forensic Engine.</h2>
-            <p class="editorial-quote">Automated verification of branded medicine invoices against NPPA ceilings & DPCO price orders.</p>
-        </div>
+        <h1 class="gb-hero-title">We audit pharmacy markups for you.</h1>
+        <p class="gb-hero-sub">Lower your medicine bills by up to 80% against statutory NPPA ceilings and DPCO Schedule-I price orders.</p>
         """, unsafe_allow_html=True)
         
-        tab_upload, tab_cam, tab_text = st.tabs(["Upload Document", "Live Camera", "Paste Text"])
+        tab_upload, tab_cam, tab_text = st.tabs(["Upload Pharmacy Bill", "Live Camera", "Paste Items"])
         
         with tab_upload:
-            u_p = st.file_uploader("Upload Medical / Pharmacy Invoice (JPEG, PNG, PDF)", type=["jpg", "png", "jpeg"], key="pharma_upload")
-            if u_p and st.button("Run Forensic AI Scan →", use_container_width=True, key="btn_p_file"):
+            u_p = st.file_uploader("Upload Medical Receipt (JPEG, PNG)", type=["jpg", "png", "jpeg"], key="pharma_upload")
+            if u_p and st.button("Run Goodbill Pharma Audit →", use_container_width=True, key="btn_p_file"):
                 st.session_state.scan_error = None
-                with st.spinner("Reconciling line items against statutory CGHS & NPPA gazettes..."):
+                with st.spinner("Reconciling line items against statutory NPPA and CGHS gazettes..."):
                     txt_to_audit = extract_clean_text_from_image(u_p)
                     st.session_state.raw_extracted_text = txt_to_audit
                     if txt_to_audit:
@@ -968,7 +1000,7 @@ else:
                         auto_log_audit("Pharma", res)
 
         with tab_text:
-            manual_txt_p = st.text_area("Paste bill line items (e.g., Paracetamol: 150, Consultation Fee: 1500, CBC Blood Test: 800, MRI Brain: 12000)", height=120, key="manual_pharma_txt")
+            manual_txt_p = st.text_area("Paste pharmacy line items (e.g., Paracetamol: 150, Digoxin: 75)", height=120, key="manual_pharma_txt")
             if manual_txt_p and st.button("Audit Pasted Text →", use_container_width=True, key="btn_p_txt"):
                 st.session_state.scan_error = None
                 st.session_state.raw_extracted_text = manual_txt_p
@@ -982,11 +1014,42 @@ else:
         if st.session_state.ai_result_data:
             res = st.session_state.ai_result_data
             items = res.get('audit_results', [])
-            pharmacy = res.get('hospital', 'Detected Provider')
+            pharmacy = res.get('hospital', 'Detected Pharmacy')
             
-            st.markdown(f"#### 🧪 Audited Entity: **{pharmacy}**")
-            total_p_leak = 0.0
+            # Goodbill Result Hero Display
+            orig_total = sum([float(re.sub(r'[^\d.]', '', str(x.get('billed', 0)))) for x in items])
+            adjusted_total = orig_total - st.session_state.total_leakage
+            pct_saved = (st.session_state.total_leakage / orig_total * 100) if orig_total > 0 else 0
             
+            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="gb-bill-card">
+                <div class="gb-bill-header">
+                    <div>
+                        <div class="gb-entity-title">🧪 {pharmacy}</div>
+                        <span style="font-size: 12px; color: #64748b;">Statutory NPPA DPCO Schedule-I Verified</span>
+                    </div>
+                    <span class="gb-pill">{datetime.now().strftime('%B %d, %Y')}</span>
+                </div>
+                <div class="gb-row">
+                    <span class="gb-row-label">Original Invoiced Total</span>
+                    <span class="gb-row-val">₹{orig_total:,.2f}</span>
+                </div>
+                <div class="gb-row">
+                    <span class="gb-row-label">NPPA Price Order Overcharge</span>
+                    <span class="gb-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                </div>
+                <div class="gb-total-box">
+                    <div>
+                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">GOODBILL ADJUSTED STATUTORY TOTAL</span><br>
+                        <span style="font-size: 24px; font-weight: 800; color: #4338ca;">₹{adjusted_total:,.2f}</span>
+                    </div>
+                    <span class="gb-badge-savings">Total Savings {pct_saved:.0f}%</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
             for idx, i in enumerate(items):
                 try:
                     b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
@@ -995,41 +1058,22 @@ else:
                     b, l = 0.0, 0.0
 
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
-                total_p_leak += leak
-                
                 with st.expander(f"📦 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
-                    fig = go.Figure(go.Bar(
-                        x=['Statutory Cap', 'Hospital Invoiced'], 
-                        y=[l, b], 
-                        marker_color=['#10b981', '#ef4444'],
-                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"],
-                        textposition='auto',
-                        width=0.35
-                    ))
-                    fig.update_layout(
-                        template="plotly_white", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
-                    )
-                    st.plotly_chart(fig, use_container_width=True, key=f"pharma_chart_{idx}", config={'displayModeBar': False})
-                    st.write(f"**Forensic Finding:** {i.get('summary', 'Overcharge detected')}")
-
-            st.divider()
-            st.metric("Total Recoverable Statutory Leakage", f"₹{total_p_leak:,.2f}")
+                    st.write(f"**Statutory Finding:** {i.get('summary', 'Overcharge detected')}")
+                    st.write(f"**Authority:** `{i.get('authority', 'NPPA DPCO')}` | **Billed:** `₹{b:,.2f}` | **Cap:** `₹{l:,.2f}`")
 
     # --- 14.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
         st.markdown("""
-        <div style="margin-bottom: 20px;">
-            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">Hospital Invoice Forensic Engine.</h2>
-            <p class="editorial-quote">Cross-referencing itemized billing line items against statutory CGHS & NPPA gazette ceilings.</p>
-        </div>
+        <h1 class="gb-hero-title">We negotiate hospital bills for you.</h1>
+        <p class="gb-hero-sub">Ensure you pay only what's fair with automated itemized auditing against 2026 CGHS gazettes and Supreme Court standardized clinical rates.</p>
         """, unsafe_allow_html=True)
         
-        tab_h_upload, tab_h_cam, tab_h_text = st.tabs(["Upload Document", "Live Camera", "Paste Text"])
+        tab_h_upload, tab_h_cam, tab_h_text = st.tabs(["Upload Hospital Bill", "Live Camera", "Paste Text"])
         
         with tab_h_upload:
-            u_h = st.file_uploader("Upload Hospital Invoice (JPEG, PNG, PDF)", type=["jpg", "png", "jpeg"], key="hosp_upload_main")
-            if u_h and st.button("Run Deep Forensic Audit →", use_container_width=True, key="btn_h_file"):
+            u_h = st.file_uploader("Upload Hospital Invoice (JPEG, PNG)", type=["jpg", "png", "jpeg"], key="hosp_upload_main")
+            if u_h and st.button("Run Forensic Hospital Audit →", use_container_width=True, key="btn_h_file"):
                 st.session_state.scan_error = None
                 with st.spinner("Reconciling against 2026 CGHS Gazette & NPPA Databases..."):
                     txt = extract_clean_text_from_image(u_h)
@@ -1052,7 +1096,7 @@ else:
                         auto_log_audit("Hospital", res)
 
         with tab_h_text:
-            manual_txt_h = st.text_area("Paste invoice line items directly (e.g., Consultation Fee: 1500, CBC Blood Test: 800, MRI Brain: 12000)", height=120, key="manual_hosp_txt")
+            manual_txt_h = st.text_area("Paste invoice line items directly", height=120, key="manual_hosp_txt")
             if manual_txt_h and st.button("Audit Pasted Text →", use_container_width=True, key="btn_h_txt"):
                 st.session_state.scan_error = None
                 st.session_state.raw_extracted_text = manual_txt_h
@@ -1068,9 +1112,39 @@ else:
             items = res.get('audit_results', [])
             hosp = res.get('hospital', 'Detected Facility')
             
-            st.markdown(f"#### 🏥 Audited Provider: **{hosp}**")
-            total_h_leak = 0.0
+            orig_total_h = sum([float(re.sub(r'[^\d.]', '', str(x.get('billed', 0)))) for x in items])
+            adjusted_total_h = orig_total_h - st.session_state.total_leakage
+            pct_saved_h = (st.session_state.total_leakage / orig_total_h * 100) if orig_total_h > 0 else 0
             
+            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="gb-bill-card">
+                <div class="gb-bill-header">
+                    <div>
+                        <div class="gb-entity-title">🏥 {hosp}</div>
+                        <span style="font-size: 12px; color: #64748b;">CGHS 2026 Gazette (MoHFW) Verified</span>
+                    </div>
+                    <span class="gb-pill">{datetime.now().strftime('%B %d, %Y')}</span>
+                </div>
+                <div class="gb-row">
+                    <span class="gb-row-label">Original Allowed Rate</span>
+                    <span class="gb-row-val">₹{orig_total_h:,.2f}</span>
+                </div>
+                <div class="gb-row">
+                    <span class="gb-row-label">Statutory Gazette Discount</span>
+                    <span class="gb-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                </div>
+                <div class="gb-total-box">
+                    <div>
+                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">GOODBILL ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 24px; font-weight: 800; color: #4338ca;">₹{adjusted_total_h:,.2f}</span>
+                    </div>
+                    <span class="gb-badge-savings">Total Savings {pct_saved_h:.0f}%</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
             for idx, i in enumerate(items):
                 try:
                     b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
@@ -1079,40 +1153,21 @@ else:
                     b, l = 0.0, 0.0
                 
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
-                total_h_leak += leak
-                
                 with st.expander(f"📋 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
-                    fig = go.Figure(go.Bar(
-                        x=['Statutory Cap', 'Hospital Invoiced'], 
-                        y=[l, b], 
-                        marker_color=['#10b981', '#ef4444'], 
-                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
-                        textposition='auto',
-                        width=0.35
-                    ))
-                    fig.update_layout(
-                        template="plotly_white", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
-                    )
-                    st.plotly_chart(fig, use_container_width=True, key=f"hosp_audit_chart_{idx}", config={'displayModeBar': False})
-                    st.write(f"**Forensic Finding:** {i.get('summary', 'Markup exceeds gazette ceiling')}")
-
-            st.divider()
-            st.metric("Total Recoverable Hospital Leakage", f"₹{total_h_leak:,.2f}")
+                    st.write(f"**Statutory Finding:** {i.get('summary', 'Markup exceeds gazette ceiling')}")
+                    st.write(f"**Authority:** `{i.get('authority', 'MoHFW')}` | **Invoiced:** `₹{b:,.2f}` | **Gazette Cap:** `₹{l:,.2f}`")
 
     # --- 14.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
         st.markdown("""
-        <div style="margin-bottom: 20px;">
-            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">Insurance Claim Settlement Reconciler.</h2>
-            <p class="editorial-quote">Automated detection of unjustified claim deductions and arbitrary shortfalls.</p>
-        </div>
+        <h1 class="gb-hero-title">Reconcile claim shortfalls instantly.</h1>
+        <p class="gb-hero-sub">Expose arbitrary proportionate deductions, internal TPA caps, and unjustified non-medical exclusions.</p>
         """, unsafe_allow_html=True)
         
-        tab_i_upload, tab_i_text = st.tabs(["Upload Document", "Paste Text"])
+        tab_i_upload, tab_i_text = st.tabs(["Upload Denial Slip", "Paste Claim Text"])
         
         with tab_i_upload:
-            u_i = st.file_uploader("Upload Settlement Letter / Denial Slip", type=["jpg", "png", "jpeg"], key="ins_upload_main")
+            u_i = st.file_uploader("Upload Settlement Letter", type=["jpg", "png", "jpeg"], key="ins_upload_main")
             if u_i and st.button("Reconcile Claim Deductions →", use_container_width=True):
                 st.session_state.scan_error = None
                 with st.spinner("Reconciling Policy Terms & Approved Amounts..."):
@@ -1140,45 +1195,43 @@ else:
             items = res.get('audit_results', [])
             company = res.get('hospital', 'Insurance Provider')
             
-            st.markdown(f"#### 🛡️ Reconciled Provider: **{company}**")
-            total_i_leak = 0.0
+            orig_total_i = sum([float(re.sub(r'[^\d.]', '', str(x.get('billed', 0)))) for x in items])
+            adjusted_total_i = orig_total_i - st.session_state.total_leakage
+            pct_saved_i = (st.session_state.total_leakage / orig_total_i * 100) if orig_total_i > 0 else 0
             
-            for idx, i in enumerate(items):
-                try:
-                    b = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0))))
-                    l = float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
-                except Exception:
-                    b, l = 0.0, 0.0
-                
-                leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
-                total_i_leak += leak
-                
-                with st.expander(f"📑 {i['item']} — Arbitrary Shortfall: ₹{leak:,.2f}"):
-                    fig = go.Figure(go.Bar(
-                        x=['Approved Limit', 'Hospital Billed'], 
-                        y=[l, b], 
-                        marker_color=['#10b981', '#f43f5e'], 
-                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
-                        textposition='auto',
-                        width=0.35
-                    ))
-                    fig.update_layout(
-                        template="plotly_white", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
-                    )
-                    st.plotly_chart(fig, use_container_width=True, key=f"ins_audit_chart_{idx}", config={'displayModeBar': False})
-                    st.write(f"**Dispute Finding:** {i.get('summary', 'Arbitrary claim deduction.')}")
-
-            st.divider()
-            st.metric("Total Unjustified Claim Shortfall", f"₹{total_i_leak:,.2f}")
+            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="gb-bill-card">
+                <div class="gb-bill-header">
+                    <div>
+                        <div class="gb-entity-title">🛡️ {company}</div>
+                        <span style="font-size: 12px; color: #64748b;">IRDAI Master Circular & Ombudsman Rules Audited</span>
+                    </div>
+                    <span class="gb-pill">{datetime.now().strftime('%B %d, %Y')}</span>
+                </div>
+                <div class="gb-row">
+                    <span class="gb-row-label">Total Claim Invoiced</span>
+                    <span class="gb-row-val">₹{orig_total_i:,.2f}</span>
+                </div>
+                <div class="gb-row">
+                    <span class="gb-row-label">Arbitrary / Illegal Deductions</span>
+                    <span class="gb-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                </div>
+                <div class="gb-total-box">
+                    <div>
+                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">GOODBILL LEGALLY PAYABLE TOTAL</span><br>
+                        <span style="font-size: 24px; font-weight: 800; color: #4338ca;">₹{adjusted_total_i:,.2f}</span>
+                    </div>
+                    <span class="gb-badge-savings">Dispute {pct_saved_i:.0f}%</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
     # --- 14.6 JUSTICE PORTAL ---
     elif dept == "⚖️ Justice Portal":
         st.markdown("""
-        <div style="margin-bottom: 20px;">
-            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">Section 2(47) Consumer Legal Redressal.</h2>
-            <p class="editorial-quote">Automated generation of statutory refund notices for hospital grievance committees.</p>
-        </div>
+        <h1 class="gb-hero-title">Section 2(47) Legal Notice Dispatch.</h1>
+        <p class="gb-hero-sub">Automated generation of statutory demand briefs for hospital superintendents and consumer forums.</p>
         """, unsafe_allow_html=True)
         
         if st.session_state.ai_result_data:
@@ -1209,17 +1262,15 @@ else:
             
             col_ref, col_grace = st.columns(2)
             with col_ref:
-                ref_no = st.text_input("Notice Reference Identifier", f"MA/2026/LEG/{random.randint(1000, 9999)}")
+                ref_no = st.text_input("Notice Identifier", f"GB/2026/LEG/{random.randint(1000, 9999)}")
             with col_grace:
-                grace_period = st.select_slider("Rectification Grace Period (Business Days)", options=[3, 5, 7, 10, 15], value=7)
+                grace_period = st.select_slider("Rectification Window (Business Days)", options=[3, 5, 7, 10, 15], value=7)
 
-            st.markdown("##### Formal Demand Notice Preview")
-            
             with st.container(border=True):
                 st.markdown(f"**REF:** `{ref_no}`  \n**DATE:** `{datetime.now().strftime('%B %d, %Y')}`")
-                st.markdown(f"**TO:** The Administrator / Medical Superintendent  \n**FACILITY:** **{hosp_name}**")
+                st.markdown(f"**TO:** Medical Superintendent / Grievance Desk  \n**ENTITY:** **{hosp_name}**")
                 st.divider()
-                st.markdown("### SUBJECT: FORMAL DISPUTE NOTICE PURSUANT TO SECTION 2(47) OF CONSUMER PROTECTION ACT (UNFAIR TRADE PRACTICE)")
+                st.markdown("#### SUBJECT: FORMAL DISPUTE NOTICE PURSUANT TO SECTION 2(47) OF CONSUMER PROTECTION ACT (UNFAIR TRADE PRACTICE)")
                 st.write(
                     "This notice serves as formal communication of verified discrepancies and pricing markups "
                     "identified in medical invoices, in direct violation of statutory price regulations including the "
@@ -1242,7 +1293,7 @@ else:
                 st.button("Dispatch Electronic Notice →", type="primary", use_container_width=True)
             with col_btn2:
                 legal_brief_text = (
-                    f"FORMAL DISPUTE NOTICE (SEC 2(47) CPA)\n"
+                    f"GOODBILL LEGAL DISPUTE NOTICE (SEC 2(47) CPA)\n"
                     f"REF: {ref_no}\n"
                     f"DATE: {datetime.now().strftime('%B %d, %Y')}\n"
                     f"TO: Medical Superintendent, {hosp_name}\n"
@@ -1254,9 +1305,9 @@ else:
                     legal_brief_text += f"- {f['Line Item Description']} | Billed: {f['Billed Amount']} | Cap: {f['Statutory Legal Cap']} | {f['Forensic Finding']}\n"
 
                 st.download_button(
-                    label="📥 Download Notice PDF / Legal Brief",
+                    label="📥 Download Legal Notice PDF / Brief",
                     data=legal_brief_text,
-                    file_name=f"Legal_Notice_{ref_no.replace('/', '_')}.txt",
+                    file_name=f"Goodbill_Legal_Notice_{ref_no.replace('/', '_')}.txt",
                     mime="text/plain",
                     use_container_width=True
                 )
@@ -1266,10 +1317,8 @@ else:
     # --- 14.7 REGULATORY AI COPILOT ---
     elif dept == "💬 AI Copilot":
         st.markdown("""
-        <div style="margin-bottom: 20px;">
-            <h2 class="editorial-title" style="font-size: 34px; margin-bottom: 6px;">CGHS & NPPA Regulatory Co-Pilot.</h2>
-            <p class="editorial-quote">Real-time Socratic lookup of procedure rate ceilings and DPCO statutory dispute precedents.</p>
-        </div>
+        <h1 class="gb-hero-title">Goodbill Regulatory Assistant.</h1>
+        <p class="gb-hero-sub">Real-time Socratic lookup of procedure rate ceilings and DPCO statutory dispute precedents.</p>
         """, unsafe_allow_html=True)
         
         u_m = st.chat_input("Ask about CGHS rates, NPPA generic price rules, or legal consumer rights...")

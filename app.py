@@ -181,7 +181,7 @@ def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
 
     return {"matched_name": item_name, "code": "UNLISTED", "legal_cap": 0.0, "category": "Unlisted Charge", "authority": "Facility Tariff Schedule"}
 
-# --- 6. ADVANCED SCANNER ENGINE ---
+# --- 6. SCANNER ENGINE ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
@@ -372,7 +372,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 12. ENHANCED DESIGN SYSTEM (CSS) ---
+# --- 12. MIDNIGHT ROYAL VIOLET THEME (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Automated Healthcare Forensic Defense", 
     page_icon="🛡️", layout="wide", initial_sidebar_state="expanded"
@@ -386,240 +386,166 @@ html, body, [class*="css"], .stMarkdown {
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif !important;
 }
 
+/* Deep Midnight Royal Violet Canvas */
 .stApp {
-    background: radial-gradient(circle at 10% 20%, rgba(238, 242, 255, 0.7) 0%, rgba(248, 250, 255, 1) 90%);
-    color: #0f172a;
+    background: radial-gradient(circle at 85% 15%, #251b4e 0%, #130d2a 45%, #0a0618 100%) !important;
+    color: #f1f5f9 !important;
 }
 
 #MainMenu, header, footer {visibility: hidden; height: 0;}
 .block-container {
-    padding-top: 1.2rem !important;
-    padding-bottom: 4rem !important;
-    max-width: 1260px !important;
+    padding-top: 1rem !important;
+    padding-bottom: 5rem !important;
+    max-width: 1280px !important;
 }
 
-@keyframes floatSlow {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-8px); }
-    100% { transform: translateY(0px); }
-}
-
-@keyframes pulseGlow {
-    0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
-    70% { box-shadow: 0 0 0 12px rgba(79, 70, 229, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
-}
-
-@keyframes shimmerEffect {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
-
-.ma-ticker-bar {
-    background: linear-gradient(90deg, #4f46e5, #7c3aed, #4f46e5);
-    background-size: 200% auto;
-    animation: shimmerEffect 6s linear infinite;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 7px 20px;
-    border-radius: 9999px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 18px;
-    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25);
-}
-
-.ma-nav {
+/* Mac OS Style Window Control Frame */
+.window-frame {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid #e0e7ff;
+    background: rgba(26, 19, 56, 0.85);
+    border: 1px solid rgba(168, 85, 247, 0.25);
     border-radius: 9999px;
-    padding: 12px 28px;
+    padding: 10px 24px;
     margin-bottom: 24px;
-    box-shadow: 0 10px 30px -5px rgba(79, 70, 229, 0.06);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
-.ma-logo {
+.window-dots {
     display: flex;
-    align-items: center;
     gap: 8px;
-    font-weight: 800;
-    font-size: 22px;
-    color: #4f46e5;
-    letter-spacing: -0.04em;
 }
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+.dot-red { background: #ff5f56; box-shadow: 0 0 8px rgba(255, 95, 86, 0.6); }
+.dot-yellow { background: #ffbd2e; box-shadow: 0 0 8px rgba(255, 189, 46, 0.6); }
+.dot-green { background: #27c93f; box-shadow: 0 0 8px rgba(39, 201, 63, 0.6); }
 
-.ma-pill {
-    background: #eef2ff;
-    color: #4338ca;
+/* Glowing Neon Pills */
+.neon-badge {
+    background: rgba(236, 72, 153, 0.15);
+    border: 1px solid rgba(236, 72, 153, 0.4);
+    color: #f472b6;
     font-size: 11px;
     font-weight: 700;
-    padding: 6px 14px;
+    padding: 5px 14px;
     border-radius: 9999px;
-    border: 1px solid #c7d2fe;
+    letter-spacing: 0.04em;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    animation: pulseGlow 2.5s infinite;
 }
 
-.ma-hero-title {
-    font-size: 46px !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.04em !important;
-    color: #1e1b4b !important;
-    line-height: 1.15 !important;
-    margin-bottom: 12px !important;
-}
-
-.ma-hero-sub {
-    font-size: 17px !important;
-    color: #475569 !important;
-    line-height: 1.5 !important;
-    margin-bottom: 24px !important;
-}
-
-.ma-bill-card {
-    background: #ffffff;
-    border: 1px solid #e0e7ff;
+/* Glassmorphic Media Cards */
+.dark-media-card {
+    background: linear-gradient(135deg, rgba(55, 37, 107, 0.75) 0%, rgba(26, 18, 54, 0.85) 100%);
+    border: 1px solid rgba(168, 85, 247, 0.35);
     border-radius: 24px;
-    padding: 28px;
-    box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.15);
+    padding: 26px;
+    backdrop-filter: blur(25px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
-    animation: floatSlow 5s ease-in-out infinite;
-    transition: transform 0.3s ease;
 }
-.ma-bill-card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 6px;
-    background: linear-gradient(90deg, #4f46e5, #818cf8, #c084fc);
+.dark-media-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(236, 72, 153, 0.6);
+    box-shadow: 0 25px 60px rgba(236, 72, 153, 0.25);
 }
 
-.ma-bill-header {
+.card-title-lg {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.track-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 18px;
-    border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 14px;
-}
-
-.ma-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.12);
     font-size: 14px;
 }
-.ma-row-label { color: #64748b; font-weight: 500; }
-.ma-row-val { font-weight: 700; color: #0f172a; }
-.ma-discount { color: #e11d48; font-weight: 700; }
+.track-label { color: #94a3b8; font-weight: 500; }
+.track-val { font-weight: 700; color: #ffffff; }
+.track-discount { color: #f43f5e; font-weight: 800; }
 
-.ma-total-box {
+.total-pill-box {
     margin-top: 18px;
-    padding: 16px;
-    background: #f8faff;
-    border: 1px solid #e0e7ff;
-    border-radius: 16px;
+    padding: 16px 20px;
+    background: rgba(15, 10, 35, 0.8);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.ma-badge-savings {
-    background: #4f46e5;
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 800;
-    padding: 8px 18px;
+/* Floating Bottom Player Dock */
+.bottom-dock {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92%;
+    max-width: 1180px;
+    background: rgba(22, 15, 48, 0.9);
+    border: 1px solid rgba(168, 85, 247, 0.35);
     border-radius: 9999px;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-}
-
-.step-card {
-    background: #ffffff;
-    border: 1px solid #e0e7ff;
-    border-radius: 20px;
-    padding: 22px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%;
-}
-.step-card:hover {
-    transform: translateY(-5px);
-    border-color: #818cf8;
-    box-shadow: 0 20px 35px -10px rgba(79, 70, 229, 0.12);
-}
-.step-number {
-    display: inline-flex;
+    padding: 10px 24px;
+    backdrop-filter: blur(25px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    display: flex;
     align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 12px;
-    background: #eef2ff;
-    color: #4f46e5;
-    font-weight: 800;
-    font-size: 15px;
-    margin-bottom: 12px;
+    justify-content: space-between;
+    z-index: 999;
 }
 
-.terminal-box {
-    background: #0f172a;
-    color: #38bdf8;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    border-radius: 16px;
-    padding: 20px;
-    line-height: 1.7;
-    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-    border: 1px solid #1e293b;
-    margin: 16px 0;
+/* Sidebar Dark Theme */
+[data-testid="stSidebar"] {
+    background-color: #0c081d !important;
+    border-right: 1px solid rgba(168, 85, 247, 0.2);
 }
 
+/* Primary Electric Neon Buttons */
 div.stButton > button {
-    background: #4f46e5 !important;
+    background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%) !important;
     color: #ffffff !important;
     border: none !important;
     border-radius: 9999px !important;
-    padding: 0.8rem 1.8rem !important;
+    padding: 0.75rem 1.8rem !important;
     font-weight: 700 !important;
     font-size: 0.95rem !important;
-    letter-spacing: -0.01em !important;
-    box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4) !important;
-    transition: all 0.2s ease !important;
+    box-shadow: 0 8px 25px rgba(236, 72, 153, 0.35) !important;
+    transition: all 0.25s ease !important;
     width: 100% !important;
 }
 div.stButton > button:hover {
-    background: #4338ca !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.5) !important;
-    color: #ffffff !important;
+    transform: translateY(-2px) scale(1.01) !important;
+    box-shadow: 0 12px 30px rgba(236, 72, 153, 0.5) !important;
 }
 
-[data-testid="stSidebar"] {
-    background-color: #ffffff !important;
-    border-right: 1px solid #e0e7ff;
-}
-
+/* Tabs */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
-    background-color: #eef2ff;
+    background-color: rgba(26, 18, 54, 0.7);
     padding: 6px;
     border-radius: 9999px;
-    border: 1px solid #e0e7ff;
+    border: 1px solid rgba(168, 85, 247, 0.25);
 }
 .stTabs [data-baseweb="tab"] {
-    height: 40px;
+    height: 38px;
     border-radius: 9999px;
-    color: #4338ca;
+    color: #a78bfa;
     font-weight: 700;
     font-size: 13px;
     border: none;
@@ -627,9 +553,38 @@ div.stButton > button:hover {
     padding: 0 18px;
 }
 .stTabs [aria-selected="true"] {
-    background-color: #4f46e5 !important;
+    background: linear-gradient(90deg, #ec4899, #8b5cf6) !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+}
+
+/* Expanders */
+.streamlit-expanderHeader {
+    background-color: rgba(30, 21, 62, 0.8) !important;
+    border: 1px solid rgba(168, 85, 247, 0.25) !important;
+    border-radius: 16px !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+.streamlit-expanderContent {
+    background-color: rgba(20, 14, 45, 0.9) !important;
+    border: 1px solid rgba(168, 85, 247, 0.25) !important;
+    border-top: none !important;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+/* Dark Terminal Box */
+.terminal-box {
+    background: #080413;
+    color: #38bdf8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    border-radius: 18px;
+    padding: 20px;
+    line-height: 1.7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    margin: 16px 0;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -640,14 +595,13 @@ if not st.session_state.logged_in:
     with col_c2:
         st.markdown("""
         <div style='text-align: center; padding: 40px 0 20px 0;'>
-            <div class="ma-ticker-bar">
+            <div class="neon-badge" style="margin-bottom: 12px;">
                 ⚡ SECTION 2(47) CPA & CGHS 2026 STATUTORY ENGINE ACTIVE
             </div>
-            <div class="ma-logo" style="justify-content: center; font-size: 34px; margin-bottom: 6px;">
-                <span>Medi-Audit</span><span style="color:#0f172a; font-weight:400;">Pro</span>
-            </div>
-            <p class="ma-hero-title" style="font-size: 28px !important; margin-bottom: 6px;">Never overpay for medical care again.</p>
-            <p class="ma-hero-sub" style="font-size: 15px !important;">Automated statutory verification against CGHS 2026 Gazettes and NPPA DPCO Ceilings.</p>
+            <h1 style="font-size: 40px; font-weight: 800; letter-spacing: -0.04em; color: #ffffff; margin-bottom: 6px;">
+                Medi-Audit<span style="color: #ec4899;">Pro</span>
+            </h1>
+            <p style="font-size: 16px; color: #94a3b8; margin-bottom: 24px;">Automated statutory healthcare overcharge defense.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -705,10 +659,12 @@ else:
     with st.sidebar:
         st.markdown(f"""
         <div style='padding: 10px 0 20px 0;'>
-            <div class="ma-logo">
-                <span>Medi-Audit</span><span style="color:#0f172a; font-weight:400; font-size:16px;">PRO</span>
+            <div style='display: flex; align-items: center; gap: 8px;'>
+                <span style='font-size: 24px;'>🛡️</span>
+                <span style='font-size: 20px; font-weight: 800; color: #ffffff;'>Medi-Audit</span>
+                <span style='color: #ec4899; font-size: 11px; font-weight: 800; background: rgba(236,72,153,0.2); padding: 2px 8px; border-radius: 9999px;'>PRO</span>
             </div>
-            <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>Active AI Core: <span style='font-family: monospace; color: #4f46e5;'>{ACTIVE_GROQ_MODEL}</span></p>
+            <p style='color: #94a3b8; font-size: 11px; margin: 4px 0 0 0;'>Core Engine: <span style='font-family: monospace; color: #a855f7;'>{ACTIVE_GROQ_MODEL}</span></p>
         </div>
         """, unsafe_allow_html=True)
         st.caption(f"Authenticated: **{st.session_state.user_email}**")
@@ -733,14 +689,20 @@ else:
         if st.button("🚪 Sign Out", use_container_width=True):
             st.session_state.logged_in = False; st.rerun()
 
+    # Mac OS Window Chrome Navbar
     st.markdown(f"""
-    <div class="ma-nav">
-        <div class="ma-logo">
-            <span>Medi-Audit</span><span style="color:#0f172a; font-weight:600; font-size:18px;">Forensics</span>
+    <div class="window-frame">
+        <div class="window-dots">
+            <div class="dot dot-red"></div>
+            <div class="dot dot-yellow"></div>
+            <div class="dot dot-green"></div>
         </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <span class="ma-pill">🟢 CGHS (MoHFW) + NPPA (DPCO) ACTIVE</span>
-            <span style="color: #64748b; font-size: 12px; font-weight: 700;">ENGINE: {ACTIVE_GROQ_MODEL.upper()}</span>
+        <div style="font-weight: 800; font-size: 17px; color: #ffffff; letter-spacing: -0.02em;">
+            🛡️ Medi-Audit <span style="color:#ec4899;">Forensic Hub</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="neon-badge">🟢 CGHS (MoHFW) + NPPA (DPCO) ACTIVE</span>
+            <span style="color: #94a3b8; font-size: 12px; font-weight: 600;">{ACTIVE_GROQ_MODEL.upper()}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -794,11 +756,15 @@ else:
         col_h1, col_h2 = st.columns([1.5, 1])
         with col_h1:
             st.markdown("""
-            <div class="ma-ticker-bar">
+            <div class="neon-badge" style="margin-bottom: 12px;">
                 ⚡ REAL-TIME STATUTORY PRICE RECONCILIATION ACTIVE
             </div>
-            <h1 class="ma-hero-title">Never overpay for hospital visits <span style="color: #4f46e5;">again.</span></h1>
-            <p class="ma-hero-sub">Ensure patients and health plans pay only what's legally fair, with statutory gazette price ceilings and automated pre-settlement claim forensic reviews.</p>
+            <h1 style="font-size: 44px; font-weight: 800; letter-spacing: -0.03em; color: #ffffff; line-height: 1.15; margin-bottom: 12px;">
+                Never overpay for medical care <span style="color: #ec4899;">again.</span>
+            </h1>
+            <p style="font-size: 16px; color: #94a3b8; line-height: 1.5; margin-bottom: 24px;">
+                Ensure patients and health plans pay only what's legally fair, with statutory gazette price ceilings and automated pre-settlement claim forensic reviews.
+            </p>
             """, unsafe_allow_html=True)
             
             b1, b2, b3 = st.columns(3)
@@ -808,35 +774,35 @@ else:
 
         with col_h2:
             st.markdown(f"""
-            <div class="ma-bill-card">
-                <div class="ma-bill-header">
+            <div class="dark-media-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                     <div>
-                        <div class="ma-entity-title">🏥 Active Audit Ledger</div>
-                        <span style="font-size: 12px; color: #64748b;">Statutory Reconciled</span>
+                        <div class="card-title-lg">🏥 Active Audit Ledger</div>
+                        <span style="font-size: 12px; color: #a78bfa;">CGHS & NPPA DPCO Reconciled</span>
                     </div>
-                    <span class="ma-pill">{datetime.now().strftime('%b %d, %Y')}</span>
+                    <span class="neon-badge">{datetime.now().strftime('%b %d, %Y')}</span>
                 </div>
-                <div class="ma-row">
-                    <span class="ma-row-label">Original Invoiced Amount</span>
-                    <span class="ma-row-val">₹{st.session_state.total_leakage * 1.36:,.2f}</span>
+                <div class="track-row">
+                    <span class="track-label">Original Invoiced Amount</span>
+                    <span class="track-val">₹{st.session_state.total_leakage * 1.36:,.2f}</span>
                 </div>
-                <div class="ma-row">
-                    <span class="ma-row-label">Statutory Gazette Discount</span>
-                    <span class="ma-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                <div class="track-row">
+                    <span class="track-label">Statutory Gazette Discount</span>
+                    <span class="track-discount">-₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
-                <div class="ma-total-box">
+                <div class="total-pill-box">
                     <div>
-                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
-                        <span style="font-size: 22px; font-weight: 800; color: #4f46e5;">₹{st.session_state.total_leakage * 0.36:,.2f}</span>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 24px; font-weight: 800; color: #38bdf8;">₹{st.session_state.total_leakage * 0.36:,.2f}</span>
                     </div>
-                    <span class="ma-badge-savings">Save ~73%</span>
+                    <span class="neon-badge" style="background: rgba(139, 92, 246, 0.3); color: #c084fc; font-size: 13px;">Save ~73%</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
         st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         
-        # EXECUTIVE TERMINAL PLOTLY GRAPHS
+        # RESTORED EXECUTIVE TERMINAL PLOTLY GRAPHS (DARK THEME)
         col_g1, col_g2 = st.columns([1.6, 1])
         with col_g1:
             st.markdown("##### Real-Time Leakage Trajectory")
@@ -845,11 +811,11 @@ else:
             else:
                 trend_data = pd.DataFrame({'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'Leakage': [0]*7})
                 
-            fig_line = px.area(trend_data, x='Day', y='Leakage', template="plotly_white", color_discrete_sequence=['#4f46e5'])
+            fig_line = px.area(trend_data, x='Day', y='Leakage', template="plotly_dark", color_discrete_sequence=['#ec4899'])
             fig_line.update_layout(
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 margin=dict(l=10, r=10, t=15, b=10), height=240,
-                yaxis=dict(showgrid=True, gridcolor='#eef2ff'), xaxis=dict(showgrid=False)
+                yaxis=dict(showgrid=True, gridcolor='rgba(168, 85, 247, 0.15)'), xaxis=dict(showgrid=False)
             )
             st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
 
@@ -860,9 +826,9 @@ else:
             else:
                 pie_data = pd.DataFrame({'Dept': ['Hospital', 'Pharma', 'Insurance'], 'Value': [26250, 930, 38500]})
                 
-            fig_pie = px.pie(pie_data, values='Value', names='Dept', hole=0.6, color_discrete_sequence=['#4f46e5', '#818cf8', '#f43f5e'])
+            fig_pie = px.pie(pie_data, values='Value', names='Dept', hole=0.6, color_discrete_sequence=['#ec4899', '#8b5cf6', '#38bdf8'])
             fig_pie.update_layout(
-                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 margin=dict(l=10, r=10, t=15, b=10), height=240
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
@@ -873,11 +839,11 @@ else:
         else:
             entity_data = pd.DataFrame({'Hospital': ['Apollo Super Speciality', 'MedPlus Pharmacy', 'Star Health TPA'], 'Leakage': [26250, 930, 38500]})
             
-        fig_rank = px.bar(entity_data, x='Leakage', y='Hospital', orientation='h', color='Leakage', color_continuous_scale='Purples', template="plotly_white")
+        fig_rank = px.bar(entity_data, x='Leakage', y='Hospital', orientation='h', color='Leakage', color_continuous_scale='Purples', template="plotly_dark")
         fig_rank.update_layout(
             plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
             margin=dict(l=10, r=10, t=15, b=10), height=180,
-            xaxis=dict(showgrid=True, gridcolor='#eef2ff')
+            xaxis=dict(showgrid=True, gridcolor='rgba(168, 85, 247, 0.15)')
         )
         st.plotly_chart(fig_rank, use_container_width=True, config={'displayModeBar': False})
         
@@ -891,50 +857,50 @@ else:
         step1, step2, step3, step4 = st.columns(4)
         with step1:
             st.markdown("""
-            <div class="step-card">
-                <div class="step-number">01</div>
-                <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 800;">Vision Ingestion</h4>
-                <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">Multi-modal AI with Tesseract OCR fallback extracts itemized medical codes, room rent, and prices.</p>
+            <div class="dark-media-card" style="padding: 18px;">
+                <span class="neon-badge" style="margin-bottom: 8px;">01</span>
+                <h4 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 800; color: #ffffff;">Vision Ingestion</h4>
+                <p style="color: #94a3b8; font-size: 13px; line-height: 1.4; margin: 0;">Multi-modal AI with Tesseract OCR fallback extracts itemized codes, room rent, and prices.</p>
             </div>
             """, unsafe_allow_html=True)
         with step2:
             st.markdown("""
-            <div class="step-card">
-                <div class="step-number">02</div>
-                <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 800;">Multi-Gazette RAG</h4>
-                <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">Live PyMuPDF search queries official CGHS 2026 Gazettes and NPPA DPCO Schedule-I price orders.</p>
+            <div class="dark-media-card" style="padding: 18px;">
+                <span class="neon-badge" style="margin-bottom: 8px;">02</span>
+                <h4 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 800; color: #ffffff;">Multi-Gazette RAG</h4>
+                <p style="color: #94a3b8; font-size: 13px; line-height: 1.4; margin: 0;">Live PyMuPDF search queries official CGHS 2026 Gazettes and NPPA DPCO Schedule-I price orders.</p>
             </div>
             """, unsafe_allow_html=True)
         with step3:
             st.markdown("""
-            <div class="step-card">
-                <div class="step-number">03</div>
-                <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 800;">Deterministic Audit</h4>
-                <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">Zero LLM math hallucination. Python calculates exact overcharges against Gazette caps (e.g. CON01, RI089).</p>
+            <div class="dark-media-card" style="padding: 18px;">
+                <span class="neon-badge" style="margin-bottom: 8px;">03</span>
+                <h4 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 800; color: #ffffff;">Deterministic Audit</h4>
+                <p style="color: #94a3b8; font-size: 13px; line-height: 1.4; margin: 0;">Zero LLM math hallucination. Python calculates exact overcharges against Gazette caps (CON01, RI089).</p>
             </div>
             """, unsafe_allow_html=True)
         with step4:
             st.markdown("""
-            <div class="step-card">
-                <div class="step-number">04</div>
-                <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 800;">Section 2(47) Notice</h4>
-                <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">Automated generation of formal demand notices for hospital grievance desks and Consumer Forums.</p>
+            <div class="dark-media-card" style="padding: 18px;">
+                <span class="neon-badge" style="margin-bottom: 8px;">04</span>
+                <h4 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 800; color: #ffffff;">Section 2(47) Notice</h4>
+                <p style="color: #94a3b8; font-size: 13px; line-height: 1.4; margin: 0;">Automated generation of formal demand notices for hospital grievance desks and Consumer Forums.</p>
             </div>
             """, unsafe_allow_html=True)
 
     # --- 14.2 FRAUD RADAR ---
     elif dept == "🗺️ Fraud Radar":
         st.markdown("""
-        <h1 class="ma-hero-title">National Healthcare Price Radar.</h1>
-        <p class="ma-hero-sub">Live spatial density tracking of excessive procedure markups above notified CGHS gazette caps.</p>
+        <h1 style="font-size: 40px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">National Healthcare Price Radar.</h1>
+        <p style="font-size: 16px; color: #94a3b8; margin-bottom: 24px;">Live spatial density tracking of excessive procedure markups above notified CGHS gazette caps.</p>
         """, unsafe_allow_html=True)
-        st.map(fraud_map_data, size='fraud_intensity', color='#4f46e5')
+        st.map(fraud_map_data, size='fraud_intensity', color='#ec4899')
 
     # --- 14.3 PHARMA FORENSIC ---
     elif dept == "💊 Pharma Forensic":
         st.markdown("""
-        <h1 class="ma-hero-title">We audit pharmacy markups for you.</h1>
-        <p class="ma-hero-sub">Lower your medicine bills by up to 80% against statutory NPPA ceilings and DPCO Schedule-I price orders.</p>
+        <h1 style="font-size: 40px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">We audit pharmacy markups for you.</h1>
+        <p style="font-size: 16px; color: #94a3b8; margin-bottom: 24px;">Lower your medicine bills by up to 80% against statutory NPPA ceilings and DPCO Schedule-I price orders.</p>
         """, unsafe_allow_html=True)
         
         tab_upload, tab_cam, tab_text = st.tabs(["Upload Pharmacy Bill", "Live Camera", "Paste Items"])
@@ -994,28 +960,28 @@ else:
             """, unsafe_allow_html=True)
             
             st.markdown(f"""
-            <div class="ma-bill-card">
-                <div class="ma-bill-header">
+            <div class="dark-media-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                     <div>
-                        <div class="ma-entity-title">🧪 {pharmacy}</div>
-                        <span style="font-size: 12px; color: #64748b;">Statutory NPPA DPCO Schedule-I Verified</span>
+                        <div class="card-title-lg">🧪 {pharmacy}</div>
+                        <span style="font-size: 12px; color: #a78bfa;">Statutory NPPA DPCO Schedule-I Verified</span>
                     </div>
-                    <span class="ma-pill">{datetime.now().strftime('%B %d, %Y')}</span>
+                    <span class="neon-badge">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
-                <div class="ma-row">
-                    <span class="ma-row-label">Original Invoiced Total</span>
-                    <span class="ma-row-val">₹{orig_total:,.2f}</span>
+                <div class="track-row">
+                    <span class="track-label">Original Invoiced Total</span>
+                    <span class="track-val">₹{orig_total:,.2f}</span>
                 </div>
-                <div class="ma-row">
-                    <span class="ma-row-label">NPPA Price Order Overcharge</span>
-                    <span class="ma-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                <div class="track-row">
+                    <span class="track-label">NPPA Price Order Overcharge</span>
+                    <span class="track-discount">-₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
-                <div class="ma-total-box">
+                <div class="total-pill-box">
                     <div>
-                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">MEDI-AUDIT ADJUSTED STATUTORY TOTAL</span><br>
-                        <span style="font-size: 24px; font-weight: 800; color: #4f46e5;">₹{adjusted_total:,.2f}</span>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED STATUTORY TOTAL</span><br>
+                        <span style="font-size: 24px; font-weight: 800; color: #38bdf8;">₹{adjusted_total:,.2f}</span>
                     </div>
-                    <span class="ma-badge-savings">Total Savings {pct_saved:.0f}%</span>
+                    <span class="neon-badge" style="background: rgba(139, 92, 246, 0.3); color: #c084fc;">Total Savings {pct_saved:.0f}%</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -1030,14 +996,14 @@ else:
                     fig_p = go.Figure(go.Bar(
                         x=['Statutory NPPA Cap', 'Retail Invoiced'], 
                         y=[l, b], 
-                        marker_color=['#10b981', '#ef4444'],
+                        marker_color=['#10b981', '#f43f5e'],
                         text=[f"₹{l:,.2f}", f"₹{b:,.2f}"],
                         textposition='auto',
                         width=0.35
                     ))
                     fig_p.update_layout(
-                        template="plotly_white", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
+                        template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='rgba(168,85,247,0.15)')
                     )
                     st.plotly_chart(fig_p, use_container_width=True, key=f"pharma_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Statutory Finding:** {i.get('summary', 'Overcharge detected')}")
@@ -1049,8 +1015,8 @@ else:
     # --- 14.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
         st.markdown("""
-        <h1 class="ma-hero-title">We negotiate hospital bills for you.</h1>
-        <p class="ma-hero-sub">Ensure you pay only what's fair with automated itemized auditing against 2026 CGHS gazettes and Supreme Court standardized clinical rates.</p>
+        <h1 style="font-size: 40px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">We negotiate hospital bills for you.</h1>
+        <p style="font-size: 16px; color: #94a3b8; margin-bottom: 24px;">Ensure you pay only what's fair with automated itemized auditing against 2026 CGHS gazettes and Supreme Court standardized clinical rates.</p>
         """, unsafe_allow_html=True)
         
         tab_h_upload, tab_h_cam, tab_h_text = st.tabs(["Upload Hospital Bill", "Live Camera", "Paste Text"])
@@ -1110,28 +1076,28 @@ else:
             """, unsafe_allow_html=True)
             
             st.markdown(f"""
-            <div class="ma-bill-card">
-                <div class="ma-bill-header">
+            <div class="dark-media-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                     <div>
-                        <div class="ma-entity-title">🏥 {hosp}</div>
-                        <span style="font-size: 12px; color: #64748b;">CGHS 2026 Gazette (MoHFW) Verified</span>
+                        <div class="card-title-lg">🏥 {hosp}</div>
+                        <span style="font-size: 12px; color: #a78bfa;">CGHS 2026 Gazette (MoHFW) Verified</span>
                     </div>
-                    <span class="ma-pill">{datetime.now().strftime('%B %d, %Y')}</span>
+                    <span class="neon-badge">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
-                <div class="ma-row">
-                    <span class="ma-row-label">Original Invoiced Rate</span>
-                    <span class="ma-row-val">₹{orig_total_h:,.2f}</span>
+                <div class="track-row">
+                    <span class="track-label">Original Invoiced Rate</span>
+                    <span class="track-val">₹{orig_total_h:,.2f}</span>
                 </div>
-                <div class="ma-row">
-                    <span class="ma-row-label">Statutory Gazette Discount</span>
-                    <span class="ma-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                <div class="track-row">
+                    <span class="track-label">Statutory Gazette Discount</span>
+                    <span class="track-discount">-₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
-                <div class="ma-total-box">
+                <div class="total-pill-box">
                     <div>
-                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
-                        <span style="font-size: 24px; font-weight: 800; color: #4f46e5;">₹{adjusted_total_h:,.2f}</span>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 24px; font-weight: 800; color: #38bdf8;">₹{adjusted_total_h:,.2f}</span>
                     </div>
-                    <span class="ma-badge-savings">Total Savings {pct_saved_h:.0f}%</span>
+                    <span class="neon-badge" style="background: rgba(139, 92, 246, 0.3); color: #c084fc;">Total Savings {pct_saved_h:.0f}%</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -1146,14 +1112,14 @@ else:
                     fig_h = go.Figure(go.Bar(
                         x=['Statutory CGHS Cap', 'Hospital Invoiced'], 
                         y=[l, b], 
-                        marker_color=['#10b981', '#ef4444'], 
+                        marker_color=['#10b981', '#f43f5e'], 
                         text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
                         textposition='auto',
                         width=0.35
                     ))
                     fig_h.update_layout(
-                        template="plotly_white", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
+                        template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='rgba(168,85,247,0.15)')
                     )
                     st.plotly_chart(fig_h, use_container_width=True, key=f"hosp_audit_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Statutory Finding:** {i.get('summary', 'Markup exceeds gazette ceiling')}")
@@ -1165,8 +1131,8 @@ else:
     # --- 14.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
         st.markdown("""
-        <h1 class="ma-hero-title">Reconcile claim shortfalls instantly.</h1>
-        <p class="ma-hero-sub">Expose arbitrary proportionate deductions, internal TPA caps, and unjustified non-medical exclusions.</p>
+        <h1 style="font-size: 40px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">Reconcile claim shortfalls instantly.</h1>
+        <p style="font-size: 16px; color: #94a3b8; margin-bottom: 24px;">Expose arbitrary proportionate deductions, internal TPA caps, and unjustified non-medical exclusions.</p>
         """, unsafe_allow_html=True)
         
         tab_i_upload, tab_i_text = st.tabs(["Upload Denial Slip", "Paste Claim Text"])
@@ -1205,28 +1171,28 @@ else:
             pct_saved_i = (st.session_state.total_leakage / orig_total_i * 100) if orig_total_i > 0 else 0
             
             st.markdown(f"""
-            <div class="ma-bill-card">
-                <div class="ma-bill-header">
+            <div class="dark-media-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                     <div>
-                        <div class="ma-entity-title">🛡️ {company}</div>
-                        <span style="font-size: 12px; color: #64748b;">IRDAI Master Circular & Ombudsman Rules Audited</span>
+                        <div class="card-title-lg">🛡️ {company}</div>
+                        <span style="font-size: 12px; color: #a78bfa;">IRDAI Master Circular & Ombudsman Rules Audited</span>
                     </div>
-                    <span class="ma-pill">{datetime.now().strftime('%B %d, %Y')}</span>
+                    <span class="neon-badge">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
-                <div class="ma-row">
-                    <span class="ma-row-label">Total Claim Invoiced</span>
-                    <span class="ma-row-val">₹{orig_total_i:,.2f}</span>
+                <div class="track-row">
+                    <span class="track-label">Total Claim Invoiced</span>
+                    <span class="track-val">₹{orig_total_i:,.2f}</span>
                 </div>
-                <div class="ma-row">
-                    <span class="ma-row-label">Arbitrary / Illegal Deductions</span>
-                    <span class="ma-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                <div class="track-row">
+                    <span class="track-label">Arbitrary / Illegal Deductions</span>
+                    <span class="track-discount">-₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
-                <div class="ma-total-box">
+                <div class="total-pill-box">
                     <div>
-                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">MEDI-AUDIT LEGALLY PAYABLE TOTAL</span><br>
-                        <span style="font-size: 24px; font-weight: 800; color: #4f46e5;">₹{adjusted_total_i:,.2f}</span>
+                        <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">MEDI-AUDIT LEGALLY PAYABLE TOTAL</span><br>
+                        <span style="font-size: 24px; font-weight: 800; color: #38bdf8;">₹{adjusted_total_i:,.2f}</span>
                     </div>
-                    <span class="ma-badge-savings">Dispute {pct_saved_i:.0f}%</span>
+                    <span class="neon-badge" style="background: rgba(139, 92, 246, 0.3); color: #c084fc;">Dispute {pct_saved_i:.0f}%</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -1247,8 +1213,8 @@ else:
                         width=0.35
                     ))
                     fig_i.update_layout(
-                        template="plotly_white", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
+                        template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='rgba(168,85,247,0.15)')
                     )
                     st.plotly_chart(fig_i, use_container_width=True, key=f"ins_audit_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Dispute Finding:** {i.get('summary', 'Arbitrary claim deduction.')}")
@@ -1259,8 +1225,8 @@ else:
     # --- 14.6 JUSTICE PORTAL ---
     elif dept == "⚖️ Justice Portal":
         st.markdown("""
-        <h1 class="ma-hero-title">Section 2(47) Legal Notice Dispatch.</h1>
-        <p class="ma-hero-sub">Automated generation of statutory demand briefs for hospital superintendents and consumer forums.</p>
+        <h1 style="font-size: 40px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">Section 2(47) Legal Notice Dispatch.</h1>
+        <p style="font-size: 16px; color: #94a3b8; margin-bottom: 24px;">Automated generation of statutory demand briefs for hospital superintendents and consumer forums.</p>
         """, unsafe_allow_html=True)
         
         if st.session_state.ai_result_data:
@@ -1289,12 +1255,12 @@ else:
 
             with st.container(border=True):
                 st.markdown(f"""
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ec4899; padding-bottom: 12px; margin-bottom: 16px;">
                     <div>
-                        <span style="font-size: 20px; font-weight: 800; color: #4f46e5;">🛡️ MEDI-AUDIT STATUTORY NOTICE</span><br>
-                        <span style="font-size: 11px; color: #64748b;">CERTIFIED UNDER SECTION 2(47) OF CONSUMER PROTECTION ACT, 2019</span>
+                        <span style="font-size: 20px; font-weight: 800; color: #ffffff;">🛡️ MEDI-AUDIT STATUTORY NOTICE</span><br>
+                        <span style="font-size: 11px; color: #ec4899;">CERTIFIED UNDER SECTION 2(47) OF CONSUMER PROTECTION ACT, 2019</span>
                     </div>
-                    <div style="text-align: right; font-family: monospace; font-size: 11px; color: #64748b;">
+                    <div style="text-align: right; font-family: monospace; font-size: 11px; color: #94a3b8;">
                         REF: {ref_no}<br>DATE: {datetime.now().strftime('%B %d, %Y')}
                     </div>
                 </div>
@@ -1347,8 +1313,8 @@ else:
     # --- 14.7 REGULATORY AI COPILOT ---
     elif dept == "💬 AI Copilot":
         st.markdown("""
-        <h1 class="ma-hero-title">Medi-Audit Regulatory Assistant.</h1>
-        <p class="ma-hero-sub">Real-time Socratic lookup of procedure rate ceilings and DPCO statutory dispute precedents.</p>
+        <h1 style="font-size: 40px; font-weight: 800; color: #ffffff; margin-bottom: 6px;">Medi-Audit Regulatory Assistant.</h1>
+        <p style="font-size: 16px; color: #94a3b8; margin-bottom: 24px;">Real-time Socratic lookup of procedure rate ceilings and DPCO statutory dispute precedents.</p>
         """, unsafe_allow_html=True)
         
         u_m = st.chat_input("Ask about CGHS rates, NPPA generic price rules, or legal consumer rights...")

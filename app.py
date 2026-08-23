@@ -440,7 +440,7 @@ h1, h2, h3, h4, h5, h6, p, .stMarkdown p {
 [data-testid="stFileUploader"] section,
 [data-testid="stFileUploaderDropzone"],
 div[data-testid="stFileUploaderDropzone"] {
-    background-color: #11141d !important;
+    background-color: #111726 !important;
     border: 2px dashed rgba(0, 163, 255, 0.4) !important;
     border-radius: 18px !important;
     padding: 24px !important;
@@ -457,17 +457,22 @@ div[data-testid="stFileUploaderDropzone"] {
 [data-testid="stFileUploaderDropzoneInstructions"] *,
 [data-testid="stFileUploader"] small,
 [data-testid="stFileUploader"] span,
-[data-testid="stFileUploader"] p {
+[data-testid="stFileUploader"] p,
+[data-testid="stFileUploader"] div {
     color: #ffffff !important;
     opacity: 1 !important;
 }
 
-[data-testid="stFileUploader"] button {
-    background: rgba(0, 102, 255, 0.3) !important;
+[data-testid="stFileUploader"] button,
+[data-testid="stFileUploaderDropzone"] button,
+div[data-testid="stFileUploaderDropzone"] button {
+    background: linear-gradient(90deg, #0066ff, #00d2ff) !important;
     color: #ffffff !important;
-    border: 1px solid #0066ff !important;
+    border: none !important;
     border-radius: 9999px !important;
     font-weight: 700 !important;
+    padding: 6px 18px !important;
+    box-shadow: 0 4px 14px rgba(0, 102, 255, 0.4) !important;
 }
 
 /* 3. EXPANDERS & CONSULTATION FEE PERMANENTLY VISIBLE WHITE TEXT (NO HOVER REQUIRED) */

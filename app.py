@@ -372,7 +372,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 12. HIGH-CONTRAST DATACORE THEME STYLING (CSS) ---
+# --- 12. DATACORE THEME WITH RESTORED EMOJIS & HIGH-CONTRAST SIDEBAR (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Automated Healthcare Forensic Defense", 
     page_icon="🛡️", layout="wide", initial_sidebar_state="expanded"
@@ -382,49 +382,54 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
-/* Global Font & High-Contrast White Text Rule */
-html, body, [class*="css"], .stMarkdown, p, span, label, div, [data-testid="stMarkdownContainer"] p {
-    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif !important;
-    color: #f8fafc !important;
+/* Robust Font Stack with Native Emoji Support */
+html, body, [class*="css"], .stMarkdown {
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif !important;
 }
 
-/* Deep Obsidian Space Background */
+/* Deep Obsidian Background */
 .stApp {
     background-color: #080c14 !important;
     background-image: 
         radial-gradient(circle at 85% 15%, rgba(0, 102, 255, 0.22) 0%, transparent 45%),
         radial-gradient(circle at 15% 75%, rgba(0, 210, 255, 0.15) 0%, transparent 40%),
         radial-gradient(circle at 50% 50%, rgba(13, 22, 38, 0.9) 0%, #080c14 100%) !important;
-    color: #f8fafc !important;
+    color: #ffffff !important;
 }
 
-#MainMenu, header, footer {visibility: hidden; height: 0;}
+/* Make All Headings & Paragraphs Crisp White */
+h1, h2, h3, h4, h5, h6, p, label, .stMarkdown p {
+    color: #ffffff !important;
+}
+
+.stCaption, [data-testid="stCaptionContainer"] {
+    color: #e2e8f0 !important;
+    font-weight: 500 !important;
+}
+
+#MainMenu, footer {visibility: hidden; height: 0;}
 .block-container {
     padding-top: 1.2rem !important;
     padding-bottom: 4rem !important;
     max-width: 1260px !important;
 }
 
-/* Captions & Subtitles in High-Contrast Silver-White */
-.stCaption, [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] *, p.stCaption {
-    color: #e2e8f0 !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
+/* High-Contrast Always-Visible Sidebar */
+[data-testid="stSidebar"] {
+    background-color: #0d1322 !important;
+    border-right: 1px solid rgba(0, 163, 255, 0.25) !important;
+    visibility: visible !important;
+    display: block !important;
 }
 
-/* Streamlit Native Metric Overrides */
-[data-testid="stMetricLabel"], [data-testid="stMetricLabel"] * {
+[data-testid="stSidebar"] * {
     color: #ffffff !important;
-    font-weight: 700 !important;
+}
+
+[data-testid="stSidebar"] .stRadio label {
+    color: #ffffff !important;
+    font-weight: 600 !important;
     font-size: 14px !important;
-}
-[data-testid="stMetricValue"], [data-testid="stMetricValue"] * {
-    color: #ffffff !important;
-    font-weight: 800 !important;
-}
-[data-testid="stMetricDelta"], [data-testid="stMetricDelta"] * {
-    color: #00d2ff !important;
-    font-weight: 700 !important;
 }
 
 /* Navbar */
@@ -432,13 +437,13 @@ html, body, [class*="css"], .stMarkdown, p, span, label, div, [data-testid="stMa
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(13, 19, 33, 0.85);
+    background: rgba(13, 19, 33, 0.9);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(0, 163, 255, 0.25);
     border-radius: 9999px;
     padding: 12px 28px;
     margin-bottom: 28px;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
 }
 
 .dc-logo {
@@ -459,7 +464,6 @@ html, body, [class*="css"], .stMarkdown, p, span, label, div, [data-testid="stMa
     padding: 6px 16px;
     border-radius: 9999px;
     border: 1px solid rgba(0, 210, 255, 0.4);
-    box-shadow: 0 0 12px rgba(0, 210, 255, 0.25);
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -482,24 +486,17 @@ html, body, [class*="css"], .stMarkdown, p, span, label, div, [data-testid="stMa
     margin-bottom: 24px !important;
 }
 
-/* DataCore Glass Cards */
+/* Glass Cards */
 .dc-card {
-    background: linear-gradient(135deg, rgba(16, 24, 40, 0.85) 0%, rgba(11, 17, 30, 0.95) 100%);
+    background: linear-gradient(135deg, rgba(16, 24, 40, 0.9) 0%, rgba(11, 17, 30, 0.95) 100%);
     border: 1px solid rgba(0, 163, 255, 0.25);
     border-radius: 24px;
     padding: 26px;
     backdrop-filter: blur(25px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transition: all 0.25s ease;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
     position: relative;
     overflow: hidden;
     margin-bottom: 20px;
-}
-
-.dc-card:hover {
-    border-color: rgba(0, 210, 255, 0.5);
-    box-shadow: 0 25px 60px rgba(0, 102, 255, 0.25);
-    transform: translateY(-2px);
 }
 
 .dc-card-glow {
@@ -519,18 +516,9 @@ html, body, [class*="css"], .stMarkdown, p, span, label, div, [data-testid="stMa
     font-size: 14px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.dc-row-label { 
-    color: #ffffff !important; 
-    font-weight: 600 !important; 
-}
-.dc-row-val { 
-    font-weight: 700; 
-    color: #ffffff !important; 
-}
-.dc-discount { 
-    color: #f43f5e !important; 
-    font-weight: 800 !important; 
-}
+.dc-row-label { color: #ffffff !important; font-weight: 600 !important; }
+.dc-row-val { font-weight: 700; color: #ffffff !important; }
+.dc-discount { color: #f43f5e !important; font-weight: 800 !important; }
 
 .dc-adjusted-box {
     margin-top: 18px;
@@ -543,19 +531,12 @@ html, body, [class*="css"], .stMarkdown, p, span, label, div, [data-testid="stMa
     align-items: center;
 }
 
-/* Metric Pods */
-.dc-metric-pod {
-    background: rgba(13, 19, 33, 0.85);
-    border: 1px solid rgba(0, 163, 255, 0.2);
-    border-radius: 18px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-}
+/* Metrics */
+[data-testid="stMetricLabel"] * { color: #ffffff !important; font-weight: 700 !important; }
+[data-testid="stMetricValue"] * { color: #ffffff !important; font-weight: 800 !important; }
+[data-testid="stMetricDelta"] * { color: #00d2ff !important; font-weight: 700 !important; }
 
-/* Primary Cyan/Blue Pill Buttons */
+/* Buttons */
 div.stButton > button {
     background: linear-gradient(90deg, #0066ff 0%, #00d2ff 100%) !important;
     color: #ffffff !important;
@@ -564,21 +545,13 @@ div.stButton > button {
     padding: 0.75rem 1.8rem !important;
     font-weight: 700 !important;
     font-size: 0.95rem !important;
-    letter-spacing: -0.01em !important;
     box-shadow: 0 10px 25px -5px rgba(0, 102, 255, 0.45) !important;
-    transition: all 0.2s ease !important;
     width: 100% !important;
 }
 div.stButton > button:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 15px 30px -5px rgba(0, 210, 255, 0.6) !important;
     color: #ffffff !important;
-}
-
-/* Sidebar */
-[data-testid="stSidebar"] {
-    background-color: #090d16 !important;
-    border-right: 1px solid rgba(0, 163, 255, 0.15);
 }
 
 /* Tabs */
@@ -602,7 +575,6 @@ div.stButton > button:hover {
 .stTabs [aria-selected="true"] {
     background: linear-gradient(90deg, #0066ff, #00d2ff) !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(0, 102, 255, 0.35);
 }
 
 /* Expanders */
@@ -697,16 +669,15 @@ else:
             <div class="dc-logo">
                 <span>🛡️ Medi-Audit</span><span style="color:#00d2ff; font-weight:400; font-size:15px;">PRO</span>
             </div>
-            <p style='color: #ffffff; font-size: 12px; margin: 4px 0 0 0;'>AI Engine: <span style='font-family: monospace; color: #00d2ff;'>{ACTIVE_GROQ_MODEL}</span></p>
+            <p style='color: #ffffff !important; font-size: 12px; margin: 4px 0 0 0;'>AI Engine: <span style='font-family: monospace; color: #00d2ff;'>{ACTIVE_GROQ_MODEL}</span></p>
         </div>
         """, unsafe_allow_html=True)
-        st.caption(f"Authenticated: **{st.session_state.user_email}**")
+        st.markdown(f"<p style='color:#e2e8f0;'>Authenticated: <strong>{st.session_state.user_email}</strong></p>", unsafe_allow_html=True)
         st.divider()
         
         dept = st.radio(
             "FORENSIC DEPARTMENTS", 
-            ["📊 Executive Terminal", "🗺️ Fraud Radar", "💊 Pharma Forensic", "🛡️ Insurance Armor", "🏥 Hospital Audit", "⚖️ Negotiation & Legal Dispatch", "💬 AI Copilot"],
-            label_visibility="collapsed"
+            ["📊 Executive Terminal", "🗺️ Fraud Radar", "💊 Pharma Forensic", "🛡️ Insurance Armor", "🏥 Hospital Audit", "⚖️ Negotiation & Legal Dispatch", "💬 AI Copilot"]
         )
         
         st.divider()

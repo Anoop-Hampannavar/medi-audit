@@ -372,175 +372,272 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 12. HIGH-CONTRAST DATACORE THEME STYLING (CSS) ---
+# --- 12. CORPORATE SKYLINE THEME WITH TOP NAVIGATION (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Automated Healthcare Forensic Defense", 
-    page_icon="🛡️", layout="wide", initial_sidebar_state="expanded"
+    page_icon="🧬", layout="wide", initial_sidebar_state="collapsed"
 )
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 /* Base Font with Native Emoji Fallback Support */
 html, body, [class*="css"], .stMarkdown {
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
 }
 
-/* FIX: Completely Remove Top White Header & Toolbars */
+/* Hide Streamlit Native Top Header & Collapse Sidebar Completely */
 header, [data-testid="stHeader"], [data-testid="stToolbar"], .stAppHeader, #MainMenu, footer {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
-    background: transparent !important;
 }
 
-/* Deep Obsidian Background */
+[data-testid="stSidebar"] {
+    display: none !important;
+}
+
+/* Deep Skyline Navy Background with Atmospheric Glows */
 .stApp {
-    background-color: #080c14 !important;
+    background-color: #0b1426 !important;
     background-image: 
-        radial-gradient(circle at 85% 15%, rgba(0, 102, 255, 0.22) 0%, transparent 45%),
-        radial-gradient(circle at 15% 75%, rgba(0, 210, 255, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(13, 22, 38, 0.9) 0%, #080c14 100%) !important;
+        radial-gradient(circle at 50% 10%, rgba(0, 163, 255, 0.22) 0%, transparent 50%),
+        radial-gradient(circle at 10% 90%, rgba(13, 27, 54, 0.95) 0%, transparent 60%),
+        linear-gradient(180deg, #070d1a 0%, #0d1a33 50%, #080f1e 100%) !important;
     color: #ffffff !important;
 }
 
 .block-container {
     padding-top: 1.5rem !important;
     padding-bottom: 4rem !important;
-    max-width: 1260px !important;
+    max-width: 1240px !important;
 }
 
-/* All Headings & General Paragraphs in High-Contrast White */
+/* All Headings & Paragraphs in High-Contrast White */
 h1, h2, h3, h4, h5, h6, p, .stMarkdown p {
     color: #ffffff !important;
 }
 
-.stCaption, [data-testid="stCaptionContainer"] p {
-    color: #e2e8f0 !important;
-    font-weight: 500 !important;
+/* Hero Display Banner */
+.dna-hero {
+    text-align: center;
+    padding: 30px 20px 20px 20px;
 }
 
-/* 1. SIDEBAR TEXT VISIBILITY FIX */
-[data-testid="stSidebar"] {
-    background-color: #0d1322 !important;
-    border-right: 1px solid rgba(0, 163, 255, 0.25) !important;
+.dna-logo-container {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
 }
 
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
-[data-testid="stSidebar"] label,
-[data-testid="stSidebar"] span,
-[data-testid="stSidebar"] div[data-testid="stRadio"] label p,
-[data-testid="stSidebar"] div[data-testid="stRadio"] label span,
-[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] label {
+.dna-icon-glyph {
+    font-size: 52px;
+    background: linear-gradient(135deg, #00d2ff 0%, #3b82f6 50%, #10b981 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 16px rgba(0, 210, 255, 0.5));
+}
+
+.dna-brand-title {
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.18em !important;
     color: #ffffff !important;
-    font-weight: 600 !important;
-    font-size: 14px !important;
-    opacity: 1 !important;
+    margin: 6px 0 2px 0 !important;
 }
 
-/* 2. FILE UPLOADER DARK GLASS STYLING */
-[data-testid="stFileUploader"] {
-    background: transparent !important;
-}
-
-[data-testid="stFileUploader"] section,
-[data-testid="stFileUploaderDropzone"],
-div[data-testid="stFileUploaderDropzone"] {
-    background-color: #111726 !important;
-    border: 2px dashed rgba(0, 163, 255, 0.4) !important;
-    border-radius: 18px !important;
-    padding: 24px !important;
-}
-
-[data-testid="stFileUploader"] section:hover,
-[data-testid="stFileUploaderDropzone"]:hover {
-    border-color: #00d2ff !important;
-    box-shadow: 0 0 20px rgba(0, 210, 255, 0.25) !important;
-}
-
-[data-testid="stFileUploader"] *,
-[data-testid="stFileUploaderDropzone"] *,
-[data-testid="stFileUploaderDropzoneInstructions"] *,
-[data-testid="stFileUploader"] small,
-[data-testid="stFileUploader"] span,
-[data-testid="stFileUploader"] p,
-[data-testid="stFileUploader"] div {
-    color: #ffffff !important;
-    opacity: 1 !important;
-}
-
-[data-testid="stFileUploader"] button,
-[data-testid="stFileUploaderDropzone"] button,
-div[data-testid="stFileUploaderDropzone"] button {
-    background: linear-gradient(90deg, #0066ff, #00d2ff) !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 9999px !important;
+.dna-brand-sub {
+    font-size: 11px !important;
     font-weight: 700 !important;
-    padding: 6px 18px !important;
-    box-shadow: 0 4px 14px rgba(0, 102, 255, 0.4) !important;
+    letter-spacing: 0.3em !important;
+    color: #00d2ff !important;
+    text-transform: uppercase !important;
+    margin-bottom: 18px !important;
 }
 
-/* 3. EXPANDERS & CONSULTATION FEE FIX: SOLID DARK CARD WITH HIGH-CONTRAST VISIBLE TEXT AT ALL TIMES */
+.hero-statement-main {
+    font-size: 42px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+    color: #ffffff !important;
+    line-height: 1.18 !important;
+    margin-bottom: 8px !important;
+}
+
+.hero-statement-sub {
+    font-size: 15px !important;
+    color: #cbd5e1 !important;
+    max-width: 760px;
+    margin: 0 auto 24px auto !important;
+    line-height: 1.5 !important;
+}
+
+/* Top Horizontal Department Navigation Bar */
+.top-nav-container {
+    background: rgba(13, 27, 54, 0.9);
+    border: 1px solid rgba(0, 163, 255, 0.25);
+    border-radius: 9999px;
+    padding: 8px 16px;
+    backdrop-filter: blur(20px);
+    margin-bottom: 26px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+div[data-testid="stRadio"] > div[role="radiogroup"] {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
+div[data-testid="stRadio"] label {
+    background: rgba(18, 35, 70, 0.75) !important;
+    border: 1px solid rgba(0, 163, 255, 0.2) !important;
+    border-radius: 9999px !important;
+    padding: 6px 16px !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    transition: all 0.2s ease !important;
+}
+
+div[data-testid="stRadio"] label:hover {
+    border-color: #00d2ff !important;
+    background: rgba(0, 102, 255, 0.3) !important;
+}
+
+/* White Corporate Breakout Card */
+.white-breakout-card {
+    background: #ffffff !important;
+    color: #0b1426 !important;
+    border-radius: 20px;
+    padding: 26px 32px;
+    margin: 24px 0;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.white-breakout-card h2, .white-breakout-card h3 {
+    color: #0b1426 !important;
+    font-weight: 800 !important;
+    margin-top: 0 !important;
+}
+
+.white-breakout-card p {
+    color: #334155 !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+}
+
+/* Dark Corporate Glass Cards */
+.navy-card {
+    background: linear-gradient(135deg, rgba(16, 32, 64, 0.85) 0%, rgba(10, 20, 42, 0.95) 100%);
+    border: 1px solid rgba(0, 163, 255, 0.22);
+    border-radius: 22px;
+    padding: 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    margin-bottom: 20px;
+}
+
+.navy-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.navy-row-label { color: #ffffff !important; font-weight: 600 !important; }
+.navy-row-val { font-weight: 700; color: #ffffff !important; }
+.navy-discount { color: #f43f5e !important; font-weight: 800 !important; }
+
+.navy-adjusted-box {
+    margin-top: 18px;
+    padding: 16px 20px;
+    background: rgba(7, 13, 26, 0.95);
+    border: 1px solid rgba(0, 163, 255, 0.3);
+    border-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Pill Badges */
+.navy-pill-badge {
+    background: rgba(0, 163, 255, 0.15);
+    color: #00d2ff !important;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 9999px;
+    border: 1px solid rgba(0, 210, 255, 0.4);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Metrics */
+.metric-pod-skyline {
+    background: rgba(14, 28, 56, 0.8);
+    border: 1px solid rgba(0, 163, 255, 0.2);
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+/* Expanders */
 [data-testid="stExpander"] {
-    background-color: #111726 !important;
+    background-color: #0f1e3d !important;
     border: 1px solid rgba(0, 163, 255, 0.3) !important;
     border-radius: 16px !important;
     margin-bottom: 12px !important;
 }
-
-[data-testid="stExpander"] details {
-    background-color: transparent !important;
-}
-
 [data-testid="stExpander"] summary,
 .streamlit-expanderHeader {
-    background-color: #162035 !important;
+    background-color: #15274d !important;
     border-radius: 16px !important;
     padding: 12px 18px !important;
 }
-
-[data-testid="stExpander"] summary:hover,
-.streamlit-expanderHeader:hover {
-    background-color: #1c2b47 !important;
-}
-
 [data-testid="stExpander"] summary *,
-[data-testid="stExpander"] summary p,
-[data-testid="stExpander"] summary span,
-.streamlit-expanderHeader,
 .streamlit-expanderHeader * {
     color: #ffffff !important;
     font-weight: 700 !important;
-    font-size: 14px !important;
     opacity: 1 !important;
 }
-
-[data-testid="stExpander"] summary svg,
-.streamlit-expanderHeader svg {
-    fill: #00d2ff !important;
-    color: #00d2ff !important;
-}
-
 [data-testid="stExpander"] div[role="region"],
 .streamlit-expanderContent {
-    background-color: #0c121e !important;
+    background-color: #0a1429 !important;
     padding: 16px !important;
     border-top: 1px solid rgba(0, 163, 255, 0.15) !important;
-    border-bottom-left-radius: 16px !important;
-    border-bottom-right-radius: 16px !important;
 }
-
-[data-testid="stExpander"] div[role="region"] *,
-.streamlit-expanderContent * {
+[data-testid="stExpander"] div[role="region"] * {
     color: #ffffff !important;
 }
 
-/* 4. TEXT AREA PASTE TEXT: CRISP BLACK TYPED LETTERS ON CLEAN SOLID WHITE BACKGROUND */
+/* File Uploader Dark Dropzone */
+[data-testid="stFileUploader"] section,
+[data-testid="stFileUploaderDropzone"],
+div[data-testid="stFileUploaderDropzone"] {
+    background-color: #0e1d3b !important;
+    border: 2px dashed rgba(0, 163, 255, 0.45) !important;
+    border-radius: 18px !important;
+    padding: 24px !important;
+}
+[data-testid="stFileUploader"] *,
+[data-testid="stFileUploaderDropzone"] * {
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+/* Text Area (Paste Text): Black Text on Solid White Background */
 textarea, 
 [data-baseweb="textarea"] textarea,
-[data-baseweb="base-input"] textarea,
 .stTextArea textarea {
     color: #000000 !important;
     -webkit-text-fill-color: #000000 !important;
@@ -550,119 +647,13 @@ textarea,
     border: 1px solid #cbd5e1 !important;
     border-radius: 12px !important;
 }
-
 textarea::placeholder, 
-[data-baseweb="textarea"] textarea::placeholder,
 .stTextArea textarea::placeholder {
     color: #64748b !important;
     -webkit-text-fill-color: #64748b !important;
 }
 
-/* Navbar */
-.dc-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(13, 19, 33, 0.9);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 163, 255, 0.25);
-    border-radius: 9999px;
-    padding: 12px 28px;
-    margin-bottom: 28px;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
-}
-
-.dc-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 800;
-    font-size: 20px;
-    color: #ffffff !important;
-    letter-spacing: -0.03em;
-}
-
-.dc-pill-badge {
-    background: rgba(0, 163, 255, 0.15);
-    color: #00d2ff !important;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 6px 16px;
-    border-radius: 9999px;
-    border: 1px solid rgba(0, 210, 255, 0.4);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* Hero Typography */
-.dc-hero-title {
-    font-size: 46px !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.04em !important;
-    color: #ffffff !important;
-    line-height: 1.15 !important;
-    margin-bottom: 12px !important;
-}
-
-.dc-hero-sub {
-    font-size: 16px !important;
-    color: #f1f5f9 !important;
-    line-height: 1.6 !important;
-    margin-bottom: 24px !important;
-}
-
-/* Glass Cards */
-.dc-card {
-    background: linear-gradient(135deg, rgba(16, 24, 40, 0.9) 0%, rgba(11, 17, 30, 0.95) 100%);
-    border: 1px solid rgba(0, 163, 255, 0.25);
-    border-radius: 24px;
-    padding: 26px;
-    backdrop-filter: blur(25px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-
-.dc-card-glow {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #0066ff, #00d2ff, #3b82f6);
-}
-
-.dc-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    font-size: 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-.dc-row-label { color: #ffffff !important; font-weight: 600 !important; }
-.dc-row-val { font-weight: 700; color: #ffffff !important; }
-.dc-discount { color: #f43f5e !important; font-weight: 800 !important; }
-
-.dc-adjusted-box {
-    margin-top: 18px;
-    padding: 16px 20px;
-    background: rgba(8, 12, 20, 0.95);
-    border: 1px solid rgba(0, 163, 255, 0.3);
-    border-radius: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* Metrics */
-[data-testid="stMetricLabel"] * { color: #ffffff !important; font-weight: 700 !important; }
-[data-testid="stMetricValue"] * { color: #ffffff !important; font-weight: 800 !important; }
-[data-testid="stMetricDelta"] * { color: #00d2ff !important; font-weight: 700 !important; }
-
-/* Buttons */
+/* Primary Electric Blue Buttons */
 div.stButton > button {
     background: linear-gradient(90deg, #0066ff 0%, #00d2ff 100%) !important;
     color: #ffffff !important;
@@ -677,13 +668,12 @@ div.stButton > button {
 div.stButton > button:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 15px 30px -5px rgba(0, 210, 255, 0.6) !important;
-    color: #ffffff !important;
 }
 
 /* Tabs */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
-    background-color: rgba(13, 19, 33, 0.85);
+    background-color: rgba(14, 28, 56, 0.85);
     padding: 6px;
     border-radius: 9999px;
     border: 1px solid rgba(0, 163, 255, 0.2);
@@ -707,18 +697,17 @@ div.stButton > button:hover {
 
 # --- 13. AUTHENTICATION MODULE ---
 if not st.session_state.logged_in:
-    col_c1, col_c2, col_c3 = st.columns([1, 1.6, 1])
+    col_c1, col_c2, col_c3 = st.columns([1, 1.8, 1])
     with col_c2:
         st.markdown("""
-        <div style='text-align: center; padding: 40px 0 20px 0;'>
-            <div class="dc-pill-badge" style="margin-bottom: 12px;">
-                ⚡ SECTION 2(47) CPA & CGHS 2026 STATUTORY ENGINE
+        <div class="dna-hero">
+            <div class="dna-logo-container">
+                <div class="dna-icon-glyph">🧬</div>
+                <div class="dna-brand-title">MEDI-AUDIT</div>
+                <div class="dna-brand-sub">STATUTORY HEALTHCARE FORENSICS</div>
             </div>
-            <div class="dc-logo" style="justify-content: center; font-size: 32px; margin-bottom: 8px;">
-                <span>🛡️ Medi-Audit</span><span style="color:#00d2ff; font-weight:400;">Core</span>
-            </div>
-            <p class="dc-hero-title" style="font-size: 28px !important; margin-bottom: 6px;">Never overpay for medical care again.</p>
-            <p class="dc-hero-sub" style="font-size: 15px !important;">Automated statutory verification against CGHS 2026 Gazettes and NPPA DPCO Ceilings.</p>
+            <h1 class="hero-statement-main">Simplify Your Medical Bills.<br>Maximize Your Defense.</h1>
+            <p class="hero-statement-sub">Automated statutory tariff verification against CGHS 2026 Gazettes (MoHFW) and NPPA DPCO Ceilings under the Essential Commodities Act.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -773,49 +762,34 @@ if not st.session_state.logged_in:
 
 # --- 14. MAIN APPLICATION WORKSPACE ---
 else:
-    with st.sidebar:
-        st.markdown(f"""
-        <div style='padding: 10px 0 20px 0;'>
-            <div class="dc-logo">
-                <span>🛡️ Medi-Audit</span><span style="color:#00d2ff; font-weight:400; font-size:15px;">PRO</span>
-            </div>
-            <p style='color: #ffffff !important; font-size: 12px; margin: 4px 0 0 0;'>AI Engine: <span style='font-family: monospace; color: #00d2ff;'>{ACTIVE_GROQ_MODEL}</span></p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown(f"<p style='color:#ffffff !important; font-weight:600;'>Authenticated: {st.session_state.user_email}</p>", unsafe_allow_html=True)
-        st.divider()
-        
-        dept = st.radio(
-            "FORENSIC DEPARTMENTS", 
-            ["📊 Executive Terminal", "🗺️ Fraud Radar", "💊 Pharma Forensic", "🛡️ Insurance Armor", "🏥 Hospital Audit", "⚖️ Negotiation & Legal Dispatch", "💬 AI Copilot"]
-        )
-        
-        st.divider()
-        if st.button("🗑️ Clear Active Audit", use_container_width=True):
-            st.session_state.audit_log = pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"])
-            st.session_state.total_leakage = 0.0
-            st.session_state.risk_level = "STATUTORY COMPLIANT (GRADE A+)"
-            st.session_state.ai_result_data = None
-            st.session_state.raw_extracted_text = ""
-            st.session_state.scan_error = None
-            st.rerun()
-            
-        if st.button("🚪 Sign Out", use_container_width=True):
-            st.session_state.logged_in = False; st.rerun()
-
-    # DataCore Floating Navbar
+    # 1. TOP GLOWING DNA BRAND HEADER
     st.markdown(f"""
-    <div class="dc-nav">
-        <div class="dc-logo">
-            <span>🛡️ Medi-Audit</span>
-            <span style="color: #00d2ff; font-size: 14px; font-weight: 600;">| Statutory Bill Defense</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <span class="dc-pill-badge">🟢 CGHS 2026 + NPPA DPCO ACTIVE</span>
-            <span style="color: #ffffff; font-size: 12px; font-weight: 700;">{ACTIVE_GROQ_MODEL.upper()}</span>
+    <div class="dna-hero" style="padding-top: 10px; padding-bottom: 10px;">
+        <div class="dna-logo-container">
+            <div class="dna-icon-glyph">🧬</div>
+            <div class="dna-brand-title">MEDI-AUDIT</div>
+            <div class="dna-brand-sub">STATUTORY HEALTHCARE DEFENSE PLATFORM</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # 2. TOP HORIZONTAL NAVIGATION BAR (MOVED OUT OF SIDEBAR TO UPSIDE)
+    col_nav, col_usr = st.columns([4.2, 1.2])
+    with col_nav:
+        dept = st.radio(
+            "FORENSIC DEPARTMENTS", 
+            ["📊 Executive Terminal", "🗺️ Fraud Radar", "💊 Pharma Forensic", "🛡️ Insurance Armor", "🏥 Hospital Audit", "⚖️ Legal Dispatch", "💬 AI Copilot"],
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+    with col_usr:
+        st.markdown(f"""
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; padding-top:4px;">
+            <span class="navy-pill-badge">🟢 LIVE: {ACTIVE_GROQ_MODEL.split('-')[0].upper()}</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
     # Real-Time Computation Layer
     active_items = st.session_state.ai_result_data.get('audit_results', []) if st.session_state.ai_result_data else []
@@ -832,6 +806,20 @@ else:
 
     # --- 14.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
+        # White Breakout Section (Matches Screenshot 2)
+        st.markdown("""
+        <div class="white-breakout-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                <div style="flex: 1; min-width: 280px;">
+                    <h2 style="font-size: 28px; line-height: 1.15; margin-bottom: 6px;">Expert Tariff Solutions.<br>Peace of Mind.</h2>
+                </div>
+                <div style="flex: 2; min-width: 320px;">
+                    <p style="margin: 0;">With statutory rate benchmarking against MoHFW CGHS Gazettes and NPPA Drug Price Orders, Medi-Audit provides proactive financial defense, ensuring full transparency, maximum overcharge recovery, and legal compliance under Section 2(47) CPA.</p>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
         st.markdown("##### ⚡ Quick Load Verified Demo Bills:")
         col_demo1, col_demo2, col_demo3 = st.columns(3)
         with col_demo1:
@@ -878,44 +866,42 @@ else:
 
         col_h1, col_h2 = st.columns([1.5, 1])
         with col_h1:
-            st.markdown("""
-            <div class="dc-pill-badge" style="margin-bottom: 12px;">
-                ⚡ REAL-TIME STATUTORY PRICE RECONCILIATION ACTIVE
-            </div>
-            <h1 class="dc-hero-title">Never overpay for hospital visits <span style="color: #00d2ff;">again.</span></h1>
-            <p class="dc-hero-sub">Ensure plans and members pay only what's legally fair, with statutory gazette price ceilings and automated pre-settlement claim forensic reviews.</p>
+            st.markdown(f"""
+            <h1 class="hero-statement-main" style="font-size: 34px !important;">Never Overpay for Medical Visits <span style="color: #00d2ff;">Again.</span></h1>
+            <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5; margin-bottom: 20px;">
+                Ensure patients, insurance plans, and enterprises pay only statutory gazette benchmark rates, preventing hospital tariff inflation and claim leakage.
+            </p>
             """, unsafe_allow_html=True)
             
             b1, b2, b3 = st.columns(3)
             b1.metric("Statutory Discount", f"₹{st.session_state.total_leakage:,.2f}", delta="Recoverable")
-            b2.metric("Audit Accuracy", f"{st.session_state.audit_accuracy}%", delta="Statutory Gazette")
+            b2.metric("Audit Accuracy", f"{st.session_state.audit_accuracy}%", delta="Gazette Verified")
             b3.metric("Gouging Index (PGI)", st.session_state.risk_level)
 
         with col_h2:
             st.markdown(f"""
-            <div class="dc-card">
-                <div class="dc-card-glow"></div>
+            <div class="navy-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                     <div>
-                        <strong style="font-size: 18px; color: #ffffff;">🏥 Active Audit Ledger</strong><br>
-                        <span style="font-size: 12px; color: #00d2ff; font-weight: 600;">Real-Time Statutory Price Reconciliation</span>
+                        <strong style="font-size: 17px; color: #ffffff;">🏥 Active Forensic Ledger</strong><br>
+                        <span style="font-size: 11px; color: #00d2ff; font-weight: 600;">CGHS 2026 & NPPA DPCO Reconciled</span>
                     </div>
-                    <span class="dc-pill-badge">{datetime.now().strftime('%b %d, %Y')}</span>
+                    <span class="navy-pill-badge">{datetime.now().strftime('%b %d, %Y')}</span>
                 </div>
-                <div class="dc-row">
-                    <span class="dc-row-label">Original Billed Amount</span>
-                    <span class="dc-row-val">₹{realtime_orig_total:,.2f}</span>
+                <div class="navy-row">
+                    <span class="navy-row-label">Original Billed Amount</span>
+                    <span class="navy-row-val">₹{realtime_orig_total:,.2f}</span>
                 </div>
-                <div class="dc-row">
-                    <span class="dc-row-label">Statutory Benchmark Discount</span>
-                    <span class="dc-discount">-₹{realtime_discount:,.2f}</span>
+                <div class="navy-row">
+                    <span class="navy-row-label">Statutory Benchmark Discount</span>
+                    <span class="navy-discount">-₹{realtime_discount:,.2f}</span>
                 </div>
-                <div class="dc-adjusted-box">
+                <div class="navy-adjusted-box">
                     <div>
-                        <span style="font-size: 12px; color: #ffffff; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 11px; color: #ffffff; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{realtime_adjusted_total:,.2f}</strong>
                     </div>
-                    <span class="dc-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-size: 12px; font-weight: 800;">
+                    <span class="navy-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-size: 12px; font-weight: 800;">
                         Save {realtime_pct_saved:.0f}%
                     </span>
                 </div>
@@ -924,7 +910,7 @@ else:
 
         st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
         
-        # Plotly Visualizations (Dark Cyan Palette)
+        # Plotly Charts
         col_g1, col_g2 = st.columns([1.6, 1])
         with col_g1:
             st.markdown("##### Real-Time Leakage Trajectory")
@@ -957,37 +943,56 @@ else:
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
-        st.markdown("##### Hospital Overcharge Ranking Ledger")
-        if not st.session_state.audit_log.empty and st.session_state.audit_log['Leakage'].sum() > 0:
-            entity_data = st.session_state.audit_log.groupby('Hospital')['Leakage'].sum().sort_values(ascending=False).reset_index()
-        else:
-            entity_data = pd.DataFrame({'Hospital': ['Apollo Super Speciality', 'MedPlus Pharmacy', 'Star Health TPA'], 'Leakage': [26250, 930, 38500]})
-            
-        fig_rank = px.bar(entity_data, x='Leakage', y='Hospital', orientation='h', color='Leakage', color_continuous_scale='Blues', template="plotly_dark")
-        fig_rank.update_layout(
-            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(l=10, r=10, t=15, b=10), height=180,
-            xaxis=dict(showgrid=True, gridcolor='rgba(0, 163, 255, 0.15)', tickfont=dict(color='#ffffff')),
-            yaxis=dict(tickfont=dict(color='#ffffff'))
-        )
-        st.plotly_chart(fig_rank, use_container_width=True, config={'displayModeBar': False})
-        
-        csv_data = st.session_state.audit_log.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Export Comprehensive Forensic Ledger (CSV)", data=csv_data, file_name=f"MediAudit_Ledger_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
+        # 3-Column Services Grid (Matches Screenshot 3)
+        st.markdown("<h2 style='text-align: center; margin: 30px 0 16px 0;'>What We Provide</h2>", unsafe_allow_html=True)
+        s1, s2, s3 = st.columns(3)
+        with s1:
+            st.markdown("""
+            <div class="navy-card" style="text-align: center; height: 100%;">
+                <div style="font-size: 36px; margin-bottom: 8px;">📋</div>
+                <h4 style="margin: 0 0 6px 0;">Preparation & Compliance</h4>
+                <p style="color: #cbd5e1; font-size: 13px; line-height: 1.4;">Automated OCR extraction and line-by-line reconciliation against MoHFW statutory gazettes.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with s2:
+            st.markdown("""
+            <div class="navy-card" style="text-align: center; height: 100%;">
+                <div style="font-size: 36px; margin-bottom: 8px;">📊</div>
+                <h4 style="margin: 0 0 6px 0;">Planning & Advisory</h4>
+                <p style="color: #cbd5e1; font-size: 13px; line-height: 1.4;">Identification of unbundled fees, unauthorized ICU surcharges, and drug price gouging.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with s3:
+            st.markdown("""
+            <div class="navy-card" style="text-align: center; height: 100%;">
+                <div style="font-size: 36px; margin-bottom: 8px;">⚖️</div>
+                <h4 style="margin: 0 0 6px 0;">Tariff Impact Analysis</h4>
+                <p style="color: #cbd5e1; font-size: 13px; line-height: 1.4;">Automated Section 2(47) CPA legal notice generation for hospital grievance escalation.</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+        col_exp1, col_exp2 = st.columns(2)
+        with col_exp1:
+            csv_data = st.session_state.audit_log.to_csv(index=False).encode('utf-8')
+            st.download_button("📥 Export Comprehensive Forensic Ledger (CSV)", data=csv_data, file_name=f"MediAudit_Ledger_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
+        with col_exp2:
+            if st.button("🚪 Sign Out Workspace", use_container_width=True):
+                st.session_state.logged_in = False; st.rerun()
 
     # --- 14.2 FRAUD RADAR ---
     elif dept == "🗺️ Fraud Radar":
         st.markdown("""
-        <h1 class="dc-hero-title">National Healthcare Price Radar.</h1>
-        <p class="dc-hero-sub">Live spatial density tracking of excessive procedure markups above notified CGHS gazette caps.</p>
+        <h1 class="hero-statement-main">National Healthcare Price Radar.</h1>
+        <p class="hero-statement-sub" style="margin-left: 0;">Live spatial density tracking of excessive procedure markups above notified CGHS gazette caps.</p>
         """, unsafe_allow_html=True)
         st.map(fraud_map_data, size='fraud_intensity', color='#00d2ff')
 
     # --- 14.3 PHARMA FORENSIC ---
     elif dept == "💊 Pharma Forensic":
         st.markdown("""
-        <h1 class="dc-hero-title">We audit pharmacy markups for you.</h1>
-        <p class="dc-hero-sub">Lower your medicine bills by up to 80% against statutory NPPA ceilings and DPCO Schedule-I price orders.</p>
+        <h1 class="hero-statement-main">We Audit Pharmacy Markups for You.</h1>
+        <p class="hero-statement-sub" style="margin-left: 0;">Lower your medicine bills by up to 80% against statutory NPPA ceilings and DPCO Schedule-I price orders.</p>
         """, unsafe_allow_html=True)
         
         tab_upload, tab_cam, tab_text = st.tabs(["Upload Pharmacy Bill", "Live Camera", "Paste Items"])
@@ -1017,7 +1022,7 @@ else:
                         auto_log_audit("Pharma", res)
 
         with tab_text:
-            manual_txt_p = st.text_area("Paste pharmacy line items", height=120, key="manual_pharma_txt")
+            manual_txt_p = st.text_area("Paste pharmacy line items directly", height=120, key="manual_pharma_txt")
             if manual_txt_p and st.button("Audit Pasted Text →", use_container_width=True, key="btn_p_txt"):
                 st.session_state.scan_error = None
                 st.session_state.raw_extracted_text = manual_txt_p
@@ -1038,29 +1043,28 @@ else:
             pct_saved = (st.session_state.total_leakage / orig_total * 100) if orig_total > 0 else 0
             
             st.markdown(f"""
-            <div class="dc-card">
-                <div class="dc-card-glow"></div>
+            <div class="navy-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🧪 {pharmacy}</strong><br>
                         <span style="font-size: 12px; color: #00d2ff; font-weight: 600;">Statutory NPPA DPCO Schedule-I Verified</span>
                     </div>
-                    <span class="dc-pill-badge">{datetime.now().strftime('%B %d, %Y')}</span>
+                    <span class="navy-pill-badge">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
-                <div class="dc-row">
-                    <span class="dc-row-label">Original Billed Amount</span>
-                    <span class="dc-row-val">₹{orig_total:,.2f}</span>
+                <div class="navy-row">
+                    <span class="navy-row-label">Original Billed Amount</span>
+                    <span class="navy-row-val">₹{orig_total:,.2f}</span>
                 </div>
-                <div class="dc-row">
-                    <span class="dc-row-label">Statutory Benchmark Discount</span>
-                    <span class="dc-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                <div class="navy-row">
+                    <span class="navy-row-label">Statutory Benchmark Discount</span>
+                    <span class="navy-discount">-₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
-                <div class="dc-adjusted-box">
+                <div class="navy-adjusted-box">
                     <div>
                         <span style="font-size: 12px; color: #ffffff; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{adjusted_total:,.2f}</strong>
                     </div>
-                    <span class="dc-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-weight: 800;">
+                    <span class="navy-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-weight: 800;">
                         Save {pct_saved:.0f}%
                     </span>
                 </div>
@@ -1097,8 +1101,8 @@ else:
     # --- 14.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
         st.markdown("""
-        <h1 class="dc-hero-title">We negotiate hospital bills for you.</h1>
-        <p class="dc-hero-sub">Ensure you pay only what's fair with automated itemized auditing against 2026 CGHS gazettes and Supreme Court standardized clinical rates.</p>
+        <h1 class="hero-statement-main">We Negotiate Hospital Bills for You.</h1>
+        <p class="hero-statement-sub" style="margin-left: 0;">Ensure you pay only what's fair with automated itemized auditing against 2026 CGHS gazettes and Supreme Court standardized clinical rates.</p>
         """, unsafe_allow_html=True)
         
         tab_h_upload, tab_h_cam, tab_h_text = st.tabs(["Upload Hospital Bill", "Live Camera", "Paste Text"])
@@ -1149,29 +1153,28 @@ else:
             pct_saved_h = (st.session_state.total_leakage / orig_total_h * 100) if orig_total_h > 0 else 0
             
             st.markdown(f"""
-            <div class="dc-card">
-                <div class="dc-card-glow"></div>
+            <div class="navy-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🏥 {hosp}</strong><br>
                         <span style="font-size: 12px; color: #00d2ff; font-weight: 600;">CGHS 2026 Gazette (MoHFW) Verified</span>
                     </div>
-                    <span class="dc-pill-badge">{datetime.now().strftime('%B %d, %Y')}</span>
+                    <span class="navy-pill-badge">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
-                <div class="dc-row">
-                    <span class="dc-row-label">Original Billed Amount</span>
-                    <span class="dc-row-val">₹{orig_total_h:,.2f}</span>
+                <div class="navy-row">
+                    <span class="navy-row-label">Original Billed Amount</span>
+                    <span class="navy-row-val">₹{orig_total_h:,.2f}</span>
                 </div>
-                <div class="dc-row">
-                    <span class="dc-row-label">Statutory Benchmark Discount</span>
-                    <span class="dc-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                <div class="navy-row">
+                    <span class="navy-row-label">Statutory Benchmark Discount</span>
+                    <span class="navy-discount">-₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
-                <div class="dc-adjusted-box">
+                <div class="navy-adjusted-box">
                     <div>
                         <span style="font-size: 12px; color: #ffffff; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{adjusted_total_h:,.2f}</strong>
                     </div>
-                    <span class="dc-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-weight: 800;">
+                    <span class="navy-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-weight: 800;">
                         Save {pct_saved_h:.0f}%
                     </span>
                 </div>
@@ -1208,8 +1211,8 @@ else:
     # --- 14.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
         st.markdown("""
-        <h1 class="dc-hero-title">Reconcile claim shortfalls instantly.</h1>
-        <p class="dc-hero-sub">Expose arbitrary proportionate deductions, internal TPA caps, and unjustified non-medical exclusions.</p>
+        <h1 class="hero-statement-main">Reconcile Claim Shortfalls Instantly.</h1>
+        <p class="hero-statement-sub" style="margin-left: 0;">Expose arbitrary proportionate deductions, internal TPA caps, and unjustified non-medical exclusions.</p>
         """, unsafe_allow_html=True)
         
         tab_i_upload, tab_i_text = st.tabs(["Upload Denial Slip", "Paste Claim Text"])
@@ -1248,29 +1251,28 @@ else:
             pct_saved_i = (st.session_state.total_leakage / orig_total_i * 100) if orig_total_i > 0 else 0
             
             st.markdown(f"""
-            <div class="dc-card">
-                <div class="dc-card-glow"></div>
+            <div class="navy-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div>
                         <strong style="font-size: 20px; color: #ffffff;">🛡️ {company}</strong><br>
                         <span style="font-size: 12px; color: #00d2ff; font-weight: 600;">IRDAI Master Circular & Ombudsman Rules Audited</span>
                     </div>
-                    <span class="dc-pill-badge">{datetime.now().strftime('%B %d, %Y')}</span>
+                    <span class="navy-pill-badge">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
-                <div class="dc-row">
-                    <span class="dc-row-label">Original Invoiced Claim</span>
-                    <span class="dc-row-val">₹{orig_total_i:,.2f}</span>
+                <div class="navy-row">
+                    <span class="navy-row-label">Original Invoiced Claim</span>
+                    <span class="navy-row-val">₹{orig_total_i:,.2f}</span>
                 </div>
-                <div class="dc-row">
-                    <span class="dc-row-label">Arbitrary / Disputed Deduction</span>
-                    <span class="dc-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                <div class="navy-row">
+                    <span class="navy-row-label">Arbitrary / Disputed Deduction</span>
+                    <span class="navy-discount">-₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
-                <div class="dc-adjusted-box">
+                <div class="navy-adjusted-box">
                     <div>
                         <span style="font-size: 12px; color: #ffffff; font-weight: 700;">MEDI-AUDIT LEGALLY RECOVERABLE TOTAL</span><br>
                         <strong style="font-size: 24px; color: #00d2ff;">₹{adjusted_total_i:,.2f}</strong>
                     </div>
-                    <span class="dc-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-weight: 800;">
+                    <span class="navy-pill-badge" style="background: #0066ff; color: #ffffff; border: none; font-weight: 800;">
                         Dispute {pct_saved_i:.0f}%
                     </span>
                 </div>
@@ -1303,11 +1305,11 @@ else:
             st.divider()
             st.metric("Statutory Benchmark Discount", f"₹{st.session_state.total_leakage:,.2f}")
 
-    # --- 14.6 NEGOTIATION & LEGAL DISPATCH ---
-    elif dept == "⚖️ Negotiation & Legal Dispatch":
+    # --- 14.6 LEGAL DISPATCH ---
+    elif dept == "⚖️ Legal Dispatch":
         st.markdown("""
-        <h1 class="dc-hero-title">Negotiation & Legal Dispatch.</h1>
-        <p class="dc-hero-sub">1-Click automated generation and dispatch of statutory demand briefs for hospital superintendents and consumer forums.</p>
+        <h1 class="hero-statement-main">Negotiation & Legal Notice Dispatch.</h1>
+        <p class="hero-statement-sub" style="margin-left: 0;">1-Click automated generation and dispatch of statutory demand briefs for hospital superintendents and consumer forums.</p>
         """, unsafe_allow_html=True)
         
         if st.session_state.ai_result_data:
@@ -1395,8 +1397,8 @@ else:
     # --- 14.7 REGULATORY AI COPILOT ---
     elif dept == "💬 AI Copilot":
         st.markdown("""
-        <h1 class="dc-hero-title">Medi-Audit Regulatory Assistant.</h1>
-        <p class="dc-hero-sub">Real-time Socratic lookup of procedure rate ceilings and DPCO statutory dispute precedents.</p>
+        <h1 class="hero-statement-main">Medi-Audit Regulatory Assistant.</h1>
+        <p class="hero-statement-sub" style="margin-left: 0;">Real-time Socratic lookup of procedure rate ceilings and DPCO statutory dispute precedents.</p>
         """, unsafe_allow_html=True)
         
         u_m = st.chat_input("Ask about CGHS rates, NPPA generic price rules, or legal consumer rights...")

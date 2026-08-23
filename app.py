@@ -24,7 +24,7 @@ load_dotenv()
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
 
 if not GROQ_API_KEY:
-    st.error("⚠️ GROQ_API_KEY is missing! Configure it in Streamlit Secrets or your .env file.")
+    st.error("⚠️ GROQ_API_KEY is missing! Please configure it in Streamlit Secrets or your .env file.")
     st.stop()
 
 groq_client = Groq(api_key=GROQ_API_KEY)
@@ -181,7 +181,7 @@ def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
 
     return {"matched_name": item_name, "code": "UNLISTED", "legal_cap": 0.0, "category": "Unlisted Charge", "authority": "Facility Tariff Schedule"}
 
-# --- 6. SCANNER ENGINE ---
+# --- 6. ADVANCED SCANNER ENGINE ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
@@ -398,7 +398,6 @@ html, body, [class*="css"], .stMarkdown {
     max-width: 1260px !important;
 }
 
-/* Animations */
 @keyframes floatSlow {
     0% { transform: translateY(0px); }
     50% { transform: translateY(-8px); }
@@ -416,7 +415,6 @@ html, body, [class*="css"], .stMarkdown {
     100% { background-position: 200% 0; }
 }
 
-/* Live Ticker */
 .ma-ticker-bar {
     background: linear-gradient(90deg, #4f46e5, #7c3aed, #4f46e5);
     background-size: 200% auto;
@@ -433,7 +431,6 @@ html, body, [class*="css"], .stMarkdown {
     box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25);
 }
 
-/* Navbar */
 .ma-nav {
     display: flex;
     justify-content: space-between;
@@ -471,7 +468,6 @@ html, body, [class*="css"], .stMarkdown {
     animation: pulseGlow 2.5s infinite;
 }
 
-/* Typography */
 .ma-hero-title {
     font-size: 46px !important;
     font-weight: 800 !important;
@@ -488,7 +484,6 @@ html, body, [class*="css"], .stMarkdown {
     margin-bottom: 24px !important;
 }
 
-/* Floating Card */
 .ma-bill-card {
     background: #ffffff;
     border: 1px solid #e0e7ff;
@@ -549,7 +544,6 @@ html, body, [class*="css"], .stMarkdown {
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
-/* How It Works Card */
 .step-card {
     background: #ffffff;
     border: 1px solid #e0e7ff;
@@ -577,7 +571,6 @@ html, body, [class*="css"], .stMarkdown {
     margin-bottom: 12px;
 }
 
-/* Live Terminal Log Box */
 .terminal-box {
     background: #0f172a;
     color: #38bdf8;
@@ -591,7 +584,6 @@ html, body, [class*="css"], .stMarkdown {
     margin: 16px 0;
 }
 
-/* Buttons */
 div.stButton > button {
     background: #4f46e5 !important;
     color: #ffffff !important;
@@ -844,7 +836,7 @@ else:
 
         st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         
-        # RESTORED EXECUTIVE TERMINAL PLOTLY GRAPHS
+        # EXECUTIVE TERMINAL PLOTLY GRAPHS
         col_g1, col_g2 = st.columns([1.6, 1])
         with col_g1:
             st.markdown("##### Real-Time Leakage Trajectory")
@@ -1035,7 +1027,6 @@ else:
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 
                 with st.expander(f"📦 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
-                    # RESTORED PLOTLY ITEM COMPARISON BAR CHART
                     fig_p = go.Figure(go.Bar(
                         x=['Statutory NPPA Cap', 'Retail Invoiced'], 
                         y=[l, b], 
@@ -1050,7 +1041,10 @@ else:
                     )
                     st.plotly_chart(fig_p, use_container_width=True, key=f"pharma_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Statutory Finding:** {i.get('summary', 'Overcharge detected')}")
-                    st.write(f"**Authority:** `{i.get('authority', 'NPPA DPCO')}`")
+                    st.write(f"**Authority:** `{i.get('authority', 'NPPA DPCO')}` | **Billed:** `₹{b:,.2f}` | **Cap:** `₹{l:,.2f}`")
+
+            st.divider()
+            st.metric("Total Recoverable Statutory Leakage", f"₹{st.session_state.total_leakage:,.2f}")
 
     # --- 14.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
@@ -1149,7 +1143,6 @@ else:
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 
                 with st.expander(f"📋 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
-                    # RESTORED PLOTLY HOSPITAL COMPARISON BAR CHART
                     fig_h = go.Figure(go.Bar(
                         x=['Statutory CGHS Cap', 'Hospital Invoiced'], 
                         y=[l, b], 
@@ -1164,7 +1157,10 @@ else:
                     )
                     st.plotly_chart(fig_h, use_container_width=True, key=f"hosp_audit_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Statutory Finding:** {i.get('summary', 'Markup exceeds gazette ceiling')}")
-                    st.write(f"**Authority:** `{i.get('authority', 'MoHFW')}`")
+                    st.write(f"**Authority:** `{i.get('authority', 'MoHFW')}` | **Invoiced:** `₹{b:,.2f}` | **Gazette Cap:** `₹{l:,.2f}`")
+
+            st.divider()
+            st.metric("Total Recoverable Hospital Leakage", f"₹{st.session_state.total_leakage:,.2f}")
 
     # --- 14.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
@@ -1242,7 +1238,6 @@ else:
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
                 
                 with st.expander(f"📑 {i['item']} — Arbitrary Shortfall: ₹{leak:,.2f}"):
-                    # RESTORED PLOTLY INSURANCE DEDUCTION COMPARISON BAR CHART
                     fig_i = go.Figure(go.Bar(
                         x=['Approved Limit', 'Hospital Billed'], 
                         y=[l, b], 
@@ -1257,6 +1252,9 @@ else:
                     )
                     st.plotly_chart(fig_i, use_container_width=True, key=f"ins_audit_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Dispute Finding:** {i.get('summary', 'Arbitrary claim deduction.')}")
+
+            st.divider()
+            st.metric("Total Unjustified Claim Shortfall", f"₹{st.session_state.total_leakage:,.2f}")
 
     # --- 14.6 JUSTICE PORTAL ---
     elif dept == "⚖️ Justice Portal":

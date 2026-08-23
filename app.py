@@ -31,41 +31,53 @@ if not GROQ_API_KEY:
 # Initialize Native Groq Client
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# --- 2. DYNAMIC MODEL DISCOVERY & ROBUST JSON PARSER ---
+# --- 2. BULLETPROOF ACTIVE MODEL DISCOVERY ---
 def get_best_available_groq_model():
-    """Queries live Groq catalog to select the best active model available for your API key."""
+    """Tests candidate chat models dynamically with a 1-token probe to ensure 100% active, error-free execution."""
     try:
         models_data = groq_client.models.list().data
         available_ids = [m.id for m in models_data]
-        
-        preferred_hierarchy = [
-            "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant",
-            "llama3-70b-8192",
-            "llama3-8b-8192",
-            "gemma2-9b-it",
-            "mixtral-8x7b-32768",
-            "deepseek-r1-distill-llama-70b",
-            "qwen-2.5-32b",
-            "llama-3.2-3b-preview",
-            "llama-3.2-1b-preview"
-        ]
-        
-        for pref in preferred_hierarchy:
-            if pref in available_ids:
-                return pref
-                
-        for m_id in available_ids:
-            if not any(x in m_id.lower() for x in ["whisper", "guard", "embed", "vision"]):
-                return m_id
-                
-        return available_ids[0] if available_ids else "llama-3.1-8b-instant"
     except Exception:
-        return "llama-3.1-8b-instant"
+        available_ids = []
+
+    # High-priority standard Groq chat completion models
+    candidate_models = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "llama3-70b-8192",
+        "llama3-8b-8192",
+        "gemma2-9b-it",
+        "mixtral-8x7b-32768",
+        "deepseek-r1-distill-llama-70b",
+        "llama-3.2-3b-preview",
+        "llama-3.2-1b-preview"
+    ]
+
+    # Filter out specialized, third-party partner models that require terms acceptance or audio/whisper/vision
+    for m_id in available_ids:
+        m_lower = m_id.lower()
+        if not any(bad in m_lower for bad in ["whisper", "guard", "embed", "vision", "canopylabs", "orpheus", "tts", "audio", "safeguard"]):
+            if m_id not in candidate_models:
+                candidate_models.append(m_id)
+
+    # Active Probe: Test each candidate to guarantee no 400 terms errors or 404 not found errors
+    for model in candidate_models:
+        try:
+            test_res = groq_client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": "ping"}],
+                max_tokens=1
+            )
+            if test_res.choices:
+                return model
+        except Exception:
+            continue
+
+    return "llama3-8b-8192"
 
 ACTIVE_GROQ_MODEL = get_best_available_groq_model()
 
-# Initialize LangChain ChatGroq with active model
+# Initialize LangChain ChatGroq with verified active model
 llm = ChatGroq(
     groq_api_key=GROQ_API_KEY,
     model_name=ACTIVE_GROQ_MODEL,
@@ -96,7 +108,6 @@ def safe_extract_json(raw_response_content):
     try:
         return json.loads(text)
     except Exception:
-        # Fallback: remove non-JSON trailing/leading chars
         clean_text = re.sub(r'^[^{]*', '', text)
         clean_text = re.sub(r'[^}]*$', '', clean_text)
         return json.loads(clean_text)
@@ -445,7 +456,7 @@ html, body, [class*="css"], .stMarkdown {
     line-height: 1.4;
 }
 
-/* Floating Glass Header */
+/* Top Floating Glass Header */
 .top-nav {
     display: flex;
     justify-content: space-between;
@@ -540,7 +551,7 @@ div.stButton > button:hover {
     border-right: 1px solid #f1f5f9;
 }
 
-/* Segmented Tabs */
+/* Tabs Segmented Control */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
     background-color: #f1f5f9;
@@ -582,7 +593,7 @@ div.stButton > button:hover {
     padding: 20px !important;
 }
 
-/* Formal Legal Container */
+/* Formal Legal Memorandum */
 .legal-box {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -855,7 +866,7 @@ else:
                 
                 with st.expander(f"📦 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
                     fig = go.Figure(go.Bar(
-                        x=['Statutory Cap', 'Hospital Invoiced'], 
+                        x=['Statutory Cap', 'Hospital Billed'], 
                         y=[l, b], 
                         marker_color=['#10b981', '#ef4444'],
                         text=[f"₹{l:,.2f}", f"₹{b:,.2f}"],

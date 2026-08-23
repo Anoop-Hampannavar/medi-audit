@@ -728,6 +728,17 @@ div.stButton > button:hover {
 
 # --- 13. AUTHENTICATION MODULE ---
 if not st.session_state.logged_in:
+    # MEDICAL BILLING & CLINICAL ANALYTICS BACKGROUND FOR LOGIN & REGISTER
+    st.markdown("""
+    <style>
+    .stApp {
+        background: linear-gradient(180deg, rgba(7, 13, 26, 0.84) 0%, rgba(11, 20, 38, 0.94) 100%),
+                    url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed !important;
+        background-size: cover !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     col_c1, col_c2, col_c3 = st.columns([1, 1.8, 1])
     with col_c2:
         st.markdown("""

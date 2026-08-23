@@ -181,7 +181,7 @@ def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
 
     return {"matched_name": item_name, "code": "UNLISTED", "legal_cap": 0.0, "category": "Unlisted Charge", "authority": "Facility Tariff Schedule"}
 
-# --- 6. ADVANCED SCANNER ENGINE ---
+# --- 6. SCANNER ENGINE ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
@@ -372,7 +372,7 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 12. PURE OBSIDIAN CYBER-HEALTH UI/UX (CSS) ---
+# --- 12. PURE CYBER-HEALTH UI/UX (CSS) ---
 st.set_page_config(
     page_title="Medi-Audit — Automated Healthcare Forensic Defense", 
     page_icon="🛡️", layout="wide", initial_sidebar_state="expanded"
@@ -386,7 +386,6 @@ html, body, [class*="css"], .stMarkdown {
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif !important;
 }
 
-/* Deep Pure Obsidian Black Background */
 .stApp {
     background: #080a0f !important;
     background-image: 
@@ -403,7 +402,6 @@ html, body, [class*="css"], .stMarkdown {
     max-width: 1280px !important;
 }
 
-/* Top Status Bar */
 .dark-top-bar {
     display: flex;
     justify-content: space-between;
@@ -437,7 +435,6 @@ html, body, [class*="css"], .stMarkdown {
     box-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
 }
 
-/* Dark Minimal Hero Glass Container */
 .cyber-panel {
     background: #11141d;
     border: 1px solid #1f2633;
@@ -447,17 +444,6 @@ html, body, [class*="css"], .stMarkdown {
     margin-bottom: 20px;
 }
 
-/* Vibrant Solid Action Cards */
-.blue-card {
-    background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
-    border-radius: 20px;
-    padding: 20px 22px;
-    color: #ffffff;
-    box-shadow: 0 15px 35px rgba(0, 102, 255, 0.35);
-    margin-bottom: 14px;
-}
-
-/* Clean Dark Pods */
 .metric-pod {
     background: #151924;
     border: 1px solid #1f2633;
@@ -469,7 +455,6 @@ html, body, [class*="css"], .stMarkdown {
     margin-bottom: 12px;
 }
 
-/* Primary Electric Blue Buttons */
 div.stButton > button {
     background: #0066ff !important;
     color: #ffffff !important;
@@ -488,13 +473,11 @@ div.stButton > button:hover {
     box-shadow: 0 12px 30px rgba(0, 102, 255, 0.6) !important;
 }
 
-/* Sidebar */
 [data-testid="stSidebar"] {
     background-color: #090b10 !important;
     border-right: 1px solid #1a202c;
 }
 
-/* Tabs */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
     background-color: #11141d;
@@ -518,7 +501,6 @@ div.stButton > button:hover {
     box-shadow: 0 4px 15px rgba(0, 102, 255, 0.4);
 }
 
-/* Expanders */
 .streamlit-expanderHeader {
     background-color: #11141d !important;
     border: 1px solid #1f2633 !important;

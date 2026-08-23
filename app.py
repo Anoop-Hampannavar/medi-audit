@@ -21,11 +21,10 @@ else:
 
 load_dotenv()
 
-# Safely fetch API keys
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
 
 if not GROQ_API_KEY:
-    st.error("⚠️ GROQ_API_KEY is missing! Please configure it in Streamlit Secrets or your .env file.")
+    st.error("⚠️ GROQ_API_KEY is missing! Configure it in Streamlit Secrets or your .env file.")
     st.stop()
 
 groq_client = Groq(api_key=GROQ_API_KEY)
@@ -182,7 +181,7 @@ def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
 
     return {"matched_name": item_name, "code": "UNLISTED", "legal_cap": 0.0, "category": "Unlisted Charge", "authority": "Facility Tariff Schedule"}
 
-# --- 6. ADVANCED SCANNER ENGINE ---
+# --- 6. SCANNER ENGINE ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
@@ -742,7 +741,6 @@ else:
         if st.button("🚪 Sign Out", use_container_width=True):
             st.session_state.logged_in = False; st.rerun()
 
-    # Top Navbar
     st.markdown(f"""
     <div class="ma-nav">
         <div class="ma-logo">
@@ -757,7 +755,6 @@ else:
 
     # --- 14.1 EXECUTIVE DASHBOARD ---
     if dept == "📊 Executive Terminal":
-        # 1-CLICK INSTANT DEMO BAR (ZERO FRICTION FOR JUDGES/USERS)
         st.markdown("##### ⚡ Quick Load Verified Demo Bills:")
         col_demo1, col_demo2, col_demo3 = st.columns(3)
         with col_demo1:
@@ -847,7 +844,55 @@ else:
 
         st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         
-        # HOW IT WORKS PIPELINE
+        # RESTORED EXECUTIVE TERMINAL PLOTLY GRAPHS
+        col_g1, col_g2 = st.columns([1.6, 1])
+        with col_g1:
+            st.markdown("##### Real-Time Leakage Trajectory")
+            if not st.session_state.audit_log.empty:
+                trend_data = st.session_state.audit_log.groupby('Day')['Leakage'].sum().reset_index()
+            else:
+                trend_data = pd.DataFrame({'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'Leakage': [0]*7})
+                
+            fig_line = px.area(trend_data, x='Day', y='Leakage', template="plotly_white", color_discrete_sequence=['#4f46e5'])
+            fig_line.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                margin=dict(l=10, r=10, t=15, b=10), height=240,
+                yaxis=dict(showgrid=True, gridcolor='#eef2ff'), xaxis=dict(showgrid=False)
+            )
+            st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
+
+        with col_g2:
+            st.markdown("##### Discrepancy by Category")
+            if not st.session_state.audit_log.empty and st.session_state.audit_log['Leakage'].sum() > 0:
+                pie_data = st.session_state.audit_log.groupby('Dept')['Leakage'].sum().reset_index().rename(columns={'Leakage':'Value'})
+            else:
+                pie_data = pd.DataFrame({'Dept': ['Hospital', 'Pharma', 'Insurance'], 'Value': [26250, 930, 38500]})
+                
+            fig_pie = px.pie(pie_data, values='Value', names='Dept', hole=0.6, color_discrete_sequence=['#4f46e5', '#818cf8', '#f43f5e'])
+            fig_pie.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                margin=dict(l=10, r=10, t=15, b=10), height=240
+            )
+            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+
+        st.markdown("##### Hospital Overcharge Ranking Ledger")
+        if not st.session_state.audit_log.empty and st.session_state.audit_log['Leakage'].sum() > 0:
+            entity_data = st.session_state.audit_log.groupby('Hospital')['Leakage'].sum().sort_values(ascending=False).reset_index()
+        else:
+            entity_data = pd.DataFrame({'Hospital': ['Apollo Super Speciality', 'MedPlus Pharmacy', 'Star Health TPA'], 'Leakage': [26250, 930, 38500]})
+            
+        fig_rank = px.bar(entity_data, x='Leakage', y='Hospital', orientation='h', color='Leakage', color_continuous_scale='Purples', template="plotly_white")
+        fig_rank.update_layout(
+            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(l=10, r=10, t=15, b=10), height=180,
+            xaxis=dict(showgrid=True, gridcolor='#eef2ff')
+        )
+        st.plotly_chart(fig_rank, use_container_width=True, config={'displayModeBar': False})
+        
+        csv_data = st.session_state.audit_log.to_csv(index=False).encode('utf-8')
+        st.download_button("📥 Export Comprehensive Forensic Ledger (CSV)", data=csv_data, file_name=f"MediAudit_Ledger_{datetime.now().strftime('%Y%m%d')}.csv", mime='text/csv', use_container_width=True)
+
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         st.markdown("### How Medi-Audit Works")
         st.caption("A 4-step deterministic pipeline bridging Vision OCR, statutory gazette RAG, and legal consumer enforcement.")
         
@@ -947,7 +992,6 @@ else:
             adjusted_total = orig_total - st.session_state.total_leakage
             pct_saved = (st.session_state.total_leakage / orig_total * 100) if orig_total > 0 else 0
             
-            # LIVE FORENSIC TERMINAL LOG
             st.markdown(f"""
             <div class="terminal-box">
                 > [FORENSIC INGESTION COMPLETE] Detected Entity: {pharmacy}<br>
@@ -989,9 +1033,24 @@ else:
                 try: b, l = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0)))), float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except Exception: b, l = 0.0, 0.0
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
+                
                 with st.expander(f"📦 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
+                    # RESTORED PLOTLY ITEM COMPARISON BAR CHART
+                    fig_p = go.Figure(go.Bar(
+                        x=['Statutory NPPA Cap', 'Retail Invoiced'], 
+                        y=[l, b], 
+                        marker_color=['#10b981', '#ef4444'],
+                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"],
+                        textposition='auto',
+                        width=0.35
+                    ))
+                    fig_p.update_layout(
+                        template="plotly_white", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
+                    )
+                    st.plotly_chart(fig_p, use_container_width=True, key=f"pharma_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Statutory Finding:** {i.get('summary', 'Overcharge detected')}")
-                    st.write(f"**Authority:** `{i.get('authority', 'NPPA DPCO')}` | **Billed:** `₹{b:,.2f}` | **Cap:** `₹{l:,.2f}`")
+                    st.write(f"**Authority:** `{i.get('authority', 'NPPA DPCO')}`")
 
     # --- 14.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
@@ -1088,9 +1147,24 @@ else:
                 try: b, l = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0)))), float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
                 except Exception: b, l = 0.0, 0.0
                 leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
+                
                 with st.expander(f"📋 {i['item']} — Discrepancy: ₹{leak:,.2f}"):
+                    # RESTORED PLOTLY HOSPITAL COMPARISON BAR CHART
+                    fig_h = go.Figure(go.Bar(
+                        x=['Statutory CGHS Cap', 'Hospital Invoiced'], 
+                        y=[l, b], 
+                        marker_color=['#10b981', '#ef4444'], 
+                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
+                        textposition='auto',
+                        width=0.35
+                    ))
+                    fig_h.update_layout(
+                        template="plotly_white", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
+                    )
+                    st.plotly_chart(fig_h, use_container_width=True, key=f"hosp_audit_chart_{idx}", config={'displayModeBar': False})
                     st.write(f"**Statutory Finding:** {i.get('summary', 'Markup exceeds gazette ceiling')}")
-                    st.write(f"**Authority:** `{i.get('authority', 'MoHFW')}` | **Invoiced:** `₹{b:,.2f}` | **Gazette Cap:** `₹{l:,.2f}`")
+                    st.write(f"**Authority:** `{i.get('authority', 'MoHFW')}`")
 
     # --- 14.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
@@ -1160,6 +1234,29 @@ else:
                 </div>
             </div>
             """, unsafe_allow_html=True)
+            
+            st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+            for idx, i in enumerate(items):
+                try: b, l = float(re.sub(r'[^\d.]', '', str(i.get('billed', 0)))), float(re.sub(r'[^\d.]', '', str(i.get('legal', 0))))
+                except Exception: b, l = 0.0, 0.0
+                leak = round(b - l, 2) if (l > 0 and b > l) else 0.0
+                
+                with st.expander(f"📑 {i['item']} — Arbitrary Shortfall: ₹{leak:,.2f}"):
+                    # RESTORED PLOTLY INSURANCE DEDUCTION COMPARISON BAR CHART
+                    fig_i = go.Figure(go.Bar(
+                        x=['Approved Limit', 'Hospital Billed'], 
+                        y=[l, b], 
+                        marker_color=['#10b981', '#f43f5e'], 
+                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
+                        textposition='auto',
+                        width=0.35
+                    ))
+                    fig_i.update_layout(
+                        template="plotly_white", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=180, margin=dict(l=0, r=0, t=10, b=0), yaxis=dict(showgrid=True, gridcolor='#f1f5f9')
+                    )
+                    st.plotly_chart(fig_i, use_container_width=True, key=f"ins_audit_chart_{idx}", config={'displayModeBar': False})
+                    st.write(f"**Dispute Finding:** {i.get('summary', 'Arbitrary claim deduction.')}")
 
     # --- 14.6 JUSTICE PORTAL ---
     elif dept == "⚖️ Justice Portal":

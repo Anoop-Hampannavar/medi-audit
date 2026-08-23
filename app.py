@@ -473,7 +473,6 @@ def auto_log_audit(department_name, result_json):
         if l > 0 and b > l:
             scan_leakage += round(b - l, 2)
             
-    # Set total_leakage strictly to the current active scanned document
     st.session_state.total_leakage = scan_leakage
     
     new_entry = pd.DataFrame([{
@@ -548,9 +547,9 @@ fraud_map_data = pd.DataFrame({
     'city': ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Nagpur', 'Lucknow', 'Hyderabad', 'Ahmedabad', 'Chandigarh']
 })
 
-# --- 12. GOODBILL-INSPIRED LUXURY DESIGN SYSTEM (CSS) ---
+# --- 12. ANIMATED HIGH-TECH DESIGN SYSTEM (CSS) ---
 st.set_page_config(
-    page_title="Goodbill Medical Audit — Never Overpay for Healthcare", 
+    page_title="Medi-Audit — Automated Healthcare Forensic Defense", 
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -558,48 +557,85 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
 html, body, [class*="css"], .stMarkdown {
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif !important;
 }
 
 .stApp {
-    background-color: #f8faff;
+    background: radial-gradient(circle at 10% 20%, rgba(238, 242, 255, 0.7) 0%, rgba(248, 250, 255, 1) 90%);
     color: #0f172a;
 }
 
 #MainMenu, header, footer {visibility: hidden; height: 0;}
 .block-container {
-    padding-top: 1.5rem !important;
+    padding-top: 1.2rem !important;
     padding-bottom: 4rem !important;
     max-width: 1240px !important;
 }
 
-/* Goodbill Brand Navbar */
-.gb-nav {
+/* Animations */
+@keyframes floatSlow {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0px); }
+}
+
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+    70% { box-shadow: 0 0 0 12px rgba(79, 70, 229, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+@keyframes shimmerEffect {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Dynamic Live Ticker */
+.ma-ticker-bar {
+    background: linear-gradient(90deg, #4f46e5, #7c3aed, #4f46e5);
+    background-size: 200% auto;
+    animation: shimmerEffect 6s linear infinite;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 7px 18px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.02em;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25);
+}
+
+/* Medi-Audit Floating Navbar */
+.ma-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
     border: 1px solid #e0e7ff;
     border-radius: 9999px;
     padding: 12px 28px;
-    margin-bottom: 28px;
-    box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.05);
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px -5px rgba(79, 70, 229, 0.06);
 }
 
-.gb-logo {
+.ma-logo {
     display: flex;
     align-items: center;
     gap: 8px;
     font-weight: 800;
     font-size: 22px;
-    color: #4338ca;
+    color: #4f46e5;
     letter-spacing: -0.04em;
 }
 
-.gb-pill {
+.ma-pill {
     background: #eef2ff;
     color: #4338ca;
     font-size: 11px;
@@ -610,10 +646,11 @@ html, body, [class*="css"], .stMarkdown {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    animation: pulseGlow 2.5s infinite;
 }
 
 /* Hero Typography */
-.gb-hero-title {
+.ma-hero-title {
     font-size: 46px !important;
     font-weight: 800 !important;
     letter-spacing: -0.04em !important;
@@ -622,51 +659,57 @@ html, body, [class*="css"], .stMarkdown {
     margin-bottom: 12px !important;
 }
 
-.gb-hero-sub {
-    font-size: 18px !important;
+.ma-hero-sub {
+    font-size: 17px !important;
     color: #475569 !important;
     line-height: 1.5 !important;
     margin-bottom: 24px !important;
 }
 
-/* Goodbill Signature Floating Result Card */
-.gb-bill-card {
+/* Floating Signature Bill Card */
+.ma-bill-card {
     background: #ffffff;
     border: 1px solid #e0e7ff;
     border-radius: 24px;
     padding: 28px;
-    box-shadow: 0 25px 50px -12px rgba(67, 56, 202, 0.12);
+    box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.15);
     position: relative;
     overflow: hidden;
+    animation: floatSlow 5s ease-in-out infinite;
+    transition: transform 0.3s ease;
 }
 
-.gb-bill-card::before {
+.ma-bill-card:hover {
+    transform: translateY(-4px) scale(1.01);
+}
+
+.ma-bill-card::before {
     content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 6px;
-    background: linear-gradient(90deg, #4f46e5, #818cf8);
+    background: linear-gradient(90deg, #4f46e5, #818cf8, #c084fc);
 }
 
-.gb-bill-header {
+.ma-bill-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     border-bottom: 1px solid #f1f5f9;
     padding-bottom: 14px;
 }
 
-.gb-entity-title {
+.ma-entity-title {
     font-size: 18px;
     font-weight: 800;
     color: #0f172a;
     letter-spacing: -0.02em;
 }
 
-.gb-row {
+.ma-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -674,22 +717,22 @@ html, body, [class*="css"], .stMarkdown {
     font-size: 14px;
 }
 
-.gb-row-label {
+.ma-row-label {
     color: #64748b;
     font-weight: 500;
 }
 
-.gb-row-val {
+.ma-row-val {
     font-weight: 700;
     color: #0f172a;
 }
 
-.gb-discount {
+.ma-discount {
     color: #e11d48;
     font-weight: 700;
 }
 
-.gb-total-box {
+.ma-total-box {
     margin-top: 18px;
     padding: 16px;
     background: #f8faff;
@@ -700,19 +743,50 @@ html, body, [class*="css"], .stMarkdown {
     align-items: center;
 }
 
-.gb-badge-savings {
-    background: #4338ca;
+.ma-badge-savings {
+    background: #4f46e5;
     color: #ffffff;
     font-size: 13px;
     font-weight: 800;
     padding: 8px 18px;
     border-radius: 9999px;
-    letter-spacing: -0.01em;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
-/* Primary Indigo Pill Buttons */
+/* Interactive Pipeline: How it Works Cards */
+.step-card {
+    background: #ffffff;
+    border: 1px solid #e0e7ff;
+    border-radius: 20px;
+    padding: 22px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+}
+
+.step-card:hover {
+    transform: translateY(-5px);
+    border-color: #818cf8;
+    box-shadow: 0 20px 35px -10px rgba(79, 70, 229, 0.12);
+}
+
+.step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-weight: 800;
+    font-size: 15px;
+    margin-bottom: 12px;
+}
+
+/* Primary Pill Buttons */
 div.stButton > button {
-    background: #4338ca !important;
+    background: #4f46e5 !important;
     color: #ffffff !important;
     border: none !important;
     border-radius: 9999px !important;
@@ -720,24 +794,22 @@ div.stButton > button {
     font-weight: 700 !important;
     font-size: 0.95rem !important;
     letter-spacing: -0.01em !important;
-    box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.4) !important;
+    box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4) !important;
     transition: all 0.2s ease !important;
     width: 100% !important;
 }
 div.stButton > button:hover {
-    background: #3730a3 !important;
+    background: #4338ca !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 15px 30px -5px rgba(67, 56, 202, 0.5) !important;
+    box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.5) !important;
     color: #ffffff !important;
 }
 
-/* Clean Custom Sidebar */
 [data-testid="stSidebar"] {
     background-color: #ffffff !important;
     border-right: 1px solid #e0e7ff;
 }
 
-/* Goodbill Pill Tabs */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
     background-color: #eef2ff;
@@ -756,9 +828,9 @@ div.stButton > button:hover {
     padding: 0 18px;
 }
 .stTabs [aria-selected="true"] {
-    background-color: #4338ca !important;
+    background-color: #4f46e5 !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(67, 56, 202, 0.25);
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
 }
 
 .streamlit-expanderHeader {
@@ -786,11 +858,14 @@ if not st.session_state.logged_in:
     with col_c2:
         st.markdown("""
         <div style='text-align: center; padding: 40px 0 20px 0;'>
-            <div class="gb-logo" style="justify-content: center; font-size: 32px; margin-bottom: 8px;">
-                <span>Goodbill</span><span style="color:#0f172a; font-weight:400;">audit</span>
+            <div class="ma-ticker-bar">
+                ⚡ SECTION 2(47) CPA & CGHS 2026 STATUTORY ENGINE ACTIVE
             </div>
-            <p class="gb-hero-title" style="font-size: 28px !important; margin-bottom: 6px;">Never overpay for medical care again.</p>
-            <p class="gb-hero-sub" style="font-size: 15px !important;">Statutory 501(r), CGHS 2026 and NPPA DPCO automated bill defense.</p>
+            <div class="ma-logo" style="justify-content: center; font-size: 34px; margin-bottom: 6px;">
+                <span>Medi-Audit</span><span style="color:#0f172a; font-weight:400;">Pro</span>
+            </div>
+            <p class="ma-hero-title" style="font-size: 28px !important; margin-bottom: 6px;">Never overpay for medical care again.</p>
+            <p class="ma-hero-sub" style="font-size: 15px !important;">Automated statutory verification against CGHS 2026 Gazettes and NPPA DPCO Ceilings.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -798,10 +873,10 @@ if not st.session_state.logged_in:
             t1, t2, t3 = st.tabs(["Sign In", "Get Started Free", "Recovery"])
             
             with t1:
-                l_email = st.text_input("Work Email Address", key="login_email", placeholder="patient@healthcare.in")
+                l_email = st.text_input("Work Email Address", key="login_email", placeholder="auditor@healthcare.in")
                 l_pass = st.text_input("Access Password", type="password", key="login_pass", placeholder="••••••••")
                 st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-                if st.button("Enter Goodbill Portal →", use_container_width=True, type="primary"):
+                if st.button("Enter Medi-Audit Workspace →", use_container_width=True, type="primary"):
                     ud = load_users()
                     if l_email.strip().lower() in ud and ud[l_email.strip().lower()] == l_pass:
                         st.session_state.logged_in, st.session_state.user_email = True, l_email
@@ -812,7 +887,7 @@ if not st.session_state.logged_in:
             with t2:
                 r_email = st.text_input("Enter Email for Security Code", key="reg_email", placeholder="name@domain.com")
                 if not st.session_state.otp_sent:
-                    if st.button("Send Verification Code →", use_container_width=True):
+                    if st.button("Send Security Code →", use_container_width=True):
                         st.session_state.generated_otp = send_otp(r_email)
                         if st.session_state.generated_otp:
                             st.session_state.otp_sent = True; st.rerun()
@@ -833,7 +908,7 @@ if not st.session_state.logged_in:
                     st.session_state.forgot_otp_sent = False
 
                 if not st.session_state.forgot_otp_sent:
-                    if st.button("Send Reset Link →", use_container_width=True):
+                    if st.button("Send Password Reset Link →", use_container_width=True):
                         ud = load_users()
                         if f_email.strip().lower() in ud:
                             st.session_state.generated_otp = send_otp(f_email)
@@ -859,23 +934,23 @@ else:
     with st.sidebar:
         st.markdown(f"""
         <div style='padding: 10px 0 20px 0;'>
-            <div class="gb-logo">
-                <span>Goodbill</span><span style="color:#0f172a; font-weight:400; font-size:16px;">PRO</span>
+            <div class="ma-logo">
+                <span>Medi-Audit</span><span style="color:#0f172a; font-weight:400; font-size:16px;">PRO</span>
             </div>
-            <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>Engine: <span style='font-family: monospace; color: #4338ca;'>{ACTIVE_GROQ_MODEL}</span></p>
+            <p style='color: #64748b; font-size: 11px; margin: 4px 0 0 0;'>Active AI Core: <span style='font-family: monospace; color: #4f46e5;'>{ACTIVE_GROQ_MODEL}</span></p>
         </div>
         """, unsafe_allow_html=True)
         st.caption(f"Authenticated: **{st.session_state.user_email}**")
         st.divider()
         
         dept = st.radio(
-            "SELECT WORKSPACE", 
+            "FORENSIC DEPARTMENTS", 
             ["📊 Executive Terminal", "🗺️ Fraud Radar", "💊 Pharma Forensic", "🛡️ Insurance Armor", "🏥 Hospital Audit", "⚖️ Justice Portal", "💬 AI Copilot"],
             label_visibility="collapsed"
         )
         
         st.divider()
-        if st.button("🗑️ Reset Active Audit", use_container_width=True):
+        if st.button("🗑️ Clear Active Audit", use_container_width=True):
             st.session_state.audit_log = pd.DataFrame(columns=["Day", "Dept", "Leakage", "Hospital", "Timestamp"])
             st.session_state.total_leakage = 0.0
             st.session_state.risk_level = "STATUTORY COMPLIANT"
@@ -887,15 +962,15 @@ else:
         if st.button("🚪 Sign Out", use_container_width=True):
             st.session_state.logged_in = False; st.rerun()
 
-    # Goodbill Floating Navbar
+    # Animated Floating Top Navbar
     st.markdown(f"""
-    <div class="gb-nav">
-        <div class="gb-logo">
-            <span>Goodbill</span><span style="color:#0f172a; font-weight:600; font-size:18px;">Audit</span>
+    <div class="ma-nav">
+        <div class="ma-logo">
+            <span>Medi-Audit</span><span style="color:#0f172a; font-weight:600; font-size:18px;">Forensics</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-            <span class="gb-pill">🟢 CGHS 2026 + NPPA DPCO ACTIVE</span>
-            <span style="color: #64748b; font-size: 12px; font-weight: 700;">MODEL: {ACTIVE_GROQ_MODEL.upper()}</span>
+            <span class="ma-pill">🟢 CGHS (MoHFW) + NPPA (DPCO) ACTIVE</span>
+            <span style="color: #64748b; font-size: 12px; font-weight: 700;">ENGINE: {ACTIVE_GROQ_MODEL.upper()}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -905,52 +980,95 @@ else:
         col_h1, col_h2 = st.columns([1.5, 1])
         with col_h1:
             st.markdown("""
-            <h1 class="gb-hero-title">Never overpay for hospital visits <span style="color: #4338ca;">again.</span></h1>
-            <p class="gb-hero-sub">Ensure plans and patients pay only what's fair, with statutory gazette caps and pre-payment claim forensic reviews.</p>
+            <div class="ma-ticker-bar">
+                ⚡ REAL-TIME STATUTORY PRICE RECONCILIATION ACTIVE
+            </div>
+            <h1 class="ma-hero-title">Never overpay for hospital visits <span style="color: #4f46e5;">again.</span></h1>
+            <p class="ma-hero-sub">Ensure patients and health plans pay only what's legally fair, with statutory gazette price ceilings and automated pre-settlement claim forensic reviews.</p>
             """, unsafe_allow_html=True)
             
             b1, b2, b3 = st.columns(3)
-            b1.metric("Active Bill Savings", f"₹{st.session_state.total_leakage:,.2f}", delta="Instant Recoverable")
+            b1.metric("Active Bill Savings", f"₹{st.session_state.total_leakage:,.2f}", delta="Recoverable")
             b2.metric("Audit Accuracy", f"{st.session_state.audit_accuracy}%", delta="Statutory Gazette")
             b3.metric("Status Profile", st.session_state.risk_level)
 
         with col_h2:
-            # Goodbill Hero Card Preview
+            # Floating Animated Medi-Audit Signature Card
             st.markdown(f"""
-            <div class="gb-bill-card">
-                <div class="gb-bill-header">
+            <div class="ma-bill-card">
+                <div class="ma-bill-header">
                     <div>
-                        <div class="gb-entity-title">🏥 Active Audit Ledger</div>
+                        <div class="ma-entity-title">🏥 Active Audit Ledger</div>
                         <span style="font-size: 12px; color: #64748b;">Statutory Reconciled</span>
                     </div>
-                    <span class="gb-pill">{datetime.now().strftime('%b %d, %Y')}</span>
+                    <span class="ma-pill">{datetime.now().strftime('%b %d, %Y')}</span>
                 </div>
-                <div class="gb-row">
-                    <span class="gb-row-label">Original Invoiced Amount</span>
-                    <span class="gb-row-val">₹{st.session_state.total_leakage * 1.4:,.2f}</span>
+                <div class="ma-row">
+                    <span class="ma-row-label">Original Invoiced Amount</span>
+                    <span class="ma-row-val">₹{st.session_state.total_leakage * 1.4:,.2f}</span>
                 </div>
-                <div class="gb-row">
-                    <span class="gb-row-label">Statutory Ceiling Discount</span>
-                    <span class="gb-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                <div class="ma-row">
+                    <span class="ma-row-label">Statutory Gazette Discount</span>
+                    <span class="ma-discount">-₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
-                <div class="gb-total-box">
+                <div class="ma-total-box">
                     <div>
-                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">GOODBILL ADJUSTED TOTAL</span><br>
-                        <span style="font-size: 22px; font-weight: 800; color: #4338ca;">₹{st.session_state.total_leakage * 0.4:,.2f}</span>
+                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 22px; font-weight: 800; color: #4f46e5;">₹{st.session_state.total_leakage * 0.4:,.2f}</span>
                     </div>
-                    <span class="gb-badge-savings">Save ~71%</span>
+                    <span class="ma-badge-savings">Save ~71%</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 32px;'></div>", unsafe_allow_html=True)
+        
+        # --- HOW MEDI-AUDIT WORKS INTERACTIVE PIPELINE ---
+        st.markdown("### How Medi-Audit Works")
+        st.caption("A 4-step deterministic pipeline bridging Vision OCR, statutory gazette RAG, and legal consumer enforcement.")
+        
+        step1, step2, step3, step4 = st.columns(4)
+        with step1:
+            st.markdown("""
+            <div class="step-card">
+                <div class="step-number">01</div>
+                <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 800;">Vision Ingestion</h4>
+                <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">Multi-modal AI with Tesseract OCR fallback extracts itemized medical codes, room rent, and prices.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with step2:
+            st.markdown("""
+            <div class="step-card">
+                <div class="step-number">02</div>
+                <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 800;">Multi-Gazette RAG</h4>
+                <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">Live PyMuPDF search queries official CGHS 2026 Gazettes and NPPA DPCO Schedule-I price orders.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with step3:
+            st.markdown("""
+            <div class="step-card">
+                <div class="step-number">03</div>
+                <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 800;">Deterministic Audit</h4>
+                <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">Zero LLM math hallucination. Python calculates exact overcharges against Gazette caps (e.g. CON01, RI089).</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with step4:
+            st.markdown("""
+            <div class="step-card">
+                <div class="step-number">04</div>
+                <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 800;">Section 2(47) Notice</h4>
+                <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">Automated generation of formal demand notices for hospital grievance desks and Consumer Forums.</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         st.markdown("##### Real-Time Leakage Trajectory")
         if not st.session_state.audit_log.empty:
             trend_data = st.session_state.audit_log.groupby('Day')['Leakage'].sum().reset_index()
         else:
             trend_data = pd.DataFrame({'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'Leakage': [0]*7})
             
-        fig_line = px.area(trend_data, x='Day', y='Leakage', template="plotly_white", color_discrete_sequence=['#4338ca'])
+        fig_line = px.area(trend_data, x='Day', y='Leakage', template="plotly_white", color_discrete_sequence=['#4f46e5'])
         fig_line.update_layout(
             plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
             margin=dict(l=10, r=10, t=15, b=10), height=220,
@@ -961,23 +1079,23 @@ else:
     # --- 14.2 FRAUD RADAR ---
     elif dept == "🗺️ Fraud Radar":
         st.markdown("""
-        <h1 class="gb-hero-title">National Healthcare Price Radar.</h1>
-        <p class="gb-hero-sub">Live spatial density tracking of excessive procedure markups above notified CGHS gazette caps.</p>
+        <h1 class="ma-hero-title">National Healthcare Price Radar.</h1>
+        <p class="ma-hero-sub">Live spatial density tracking of excessive procedure markups above notified CGHS gazette caps.</p>
         """, unsafe_allow_html=True)
-        st.map(fraud_map_data, size='fraud_intensity', color='#4338ca')
+        st.map(fraud_map_data, size='fraud_intensity', color='#4f46e5')
 
     # --- 14.3 PHARMA FORENSIC ---
     elif dept == "💊 Pharma Forensic":
         st.markdown("""
-        <h1 class="gb-hero-title">We audit pharmacy markups for you.</h1>
-        <p class="gb-hero-sub">Lower your medicine bills by up to 80% against statutory NPPA ceilings and DPCO Schedule-I price orders.</p>
+        <h1 class="ma-hero-title">We audit pharmacy markups for you.</h1>
+        <p class="ma-hero-sub">Lower your medicine bills by up to 80% against statutory NPPA ceilings and DPCO Schedule-I price orders.</p>
         """, unsafe_allow_html=True)
         
         tab_upload, tab_cam, tab_text = st.tabs(["Upload Pharmacy Bill", "Live Camera", "Paste Items"])
         
         with tab_upload:
             u_p = st.file_uploader("Upload Medical Receipt (JPEG, PNG)", type=["jpg", "png", "jpeg"], key="pharma_upload")
-            if u_p and st.button("Run Goodbill Pharma Audit →", use_container_width=True, key="btn_p_file"):
+            if u_p and st.button("Run Medi-Audit Pharma Scan →", use_container_width=True, key="btn_p_file"):
                 st.session_state.scan_error = None
                 with st.spinner("Reconciling line items against statutory NPPA and CGHS gazettes..."):
                     txt_to_audit = extract_clean_text_from_image(u_p)
@@ -1016,35 +1134,34 @@ else:
             items = res.get('audit_results', [])
             pharmacy = res.get('hospital', 'Detected Pharmacy')
             
-            # Goodbill Result Hero Display
             orig_total = sum([float(re.sub(r'[^\d.]', '', str(x.get('billed', 0)))) for x in items])
             adjusted_total = orig_total - st.session_state.total_leakage
             pct_saved = (st.session_state.total_leakage / orig_total * 100) if orig_total > 0 else 0
             
             st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
             st.markdown(f"""
-            <div class="gb-bill-card">
-                <div class="gb-bill-header">
+            <div class="ma-bill-card">
+                <div class="ma-bill-header">
                     <div>
-                        <div class="gb-entity-title">🧪 {pharmacy}</div>
+                        <div class="ma-entity-title">🧪 {pharmacy}</div>
                         <span style="font-size: 12px; color: #64748b;">Statutory NPPA DPCO Schedule-I Verified</span>
                     </div>
-                    <span class="gb-pill">{datetime.now().strftime('%B %d, %Y')}</span>
+                    <span class="ma-pill">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
-                <div class="gb-row">
-                    <span class="gb-row-label">Original Invoiced Total</span>
-                    <span class="gb-row-val">₹{orig_total:,.2f}</span>
+                <div class="ma-row">
+                    <span class="ma-row-label">Original Invoiced Total</span>
+                    <span class="ma-row-val">₹{orig_total:,.2f}</span>
                 </div>
-                <div class="gb-row">
-                    <span class="gb-row-label">NPPA Price Order Overcharge</span>
-                    <span class="gb-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                <div class="ma-row">
+                    <span class="ma-row-label">NPPA Price Order Overcharge</span>
+                    <span class="ma-discount">-₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
-                <div class="gb-total-box">
+                <div class="ma-total-box">
                     <div>
-                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">GOODBILL ADJUSTED STATUTORY TOTAL</span><br>
-                        <span style="font-size: 24px; font-weight: 800; color: #4338ca;">₹{adjusted_total:,.2f}</span>
+                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">MEDI-AUDIT ADJUSTED STATUTORY TOTAL</span><br>
+                        <span style="font-size: 24px; font-weight: 800; color: #4f46e5;">₹{adjusted_total:,.2f}</span>
                     </div>
-                    <span class="gb-badge-savings">Total Savings {pct_saved:.0f}%</span>
+                    <span class="ma-badge-savings">Total Savings {pct_saved:.0f}%</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -1065,8 +1182,8 @@ else:
     # --- 14.4 HOSPITAL AUDIT ---
     elif dept == "🏥 Hospital Audit":
         st.markdown("""
-        <h1 class="gb-hero-title">We negotiate hospital bills for you.</h1>
-        <p class="gb-hero-sub">Ensure you pay only what's fair with automated itemized auditing against 2026 CGHS gazettes and Supreme Court standardized clinical rates.</p>
+        <h1 class="ma-hero-title">We negotiate hospital bills for you.</h1>
+        <p class="ma-hero-sub">Ensure you pay only what's fair with automated itemized auditing against 2026 CGHS gazettes and Supreme Court standardized clinical rates.</p>
         """, unsafe_allow_html=True)
         
         tab_h_upload, tab_h_cam, tab_h_text = st.tabs(["Upload Hospital Bill", "Live Camera", "Paste Text"])
@@ -1118,28 +1235,28 @@ else:
             
             st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
             st.markdown(f"""
-            <div class="gb-bill-card">
-                <div class="gb-bill-header">
+            <div class="ma-bill-card">
+                <div class="ma-bill-header">
                     <div>
-                        <div class="gb-entity-title">🏥 {hosp}</div>
+                        <div class="ma-entity-title">🏥 {hosp}</div>
                         <span style="font-size: 12px; color: #64748b;">CGHS 2026 Gazette (MoHFW) Verified</span>
                     </div>
-                    <span class="gb-pill">{datetime.now().strftime('%B %d, %Y')}</span>
+                    <span class="ma-pill">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
-                <div class="gb-row">
-                    <span class="gb-row-label">Original Allowed Rate</span>
-                    <span class="gb-row-val">₹{orig_total_h:,.2f}</span>
+                <div class="ma-row">
+                    <span class="ma-row-label">Original Invoiced Rate</span>
+                    <span class="ma-row-val">₹{orig_total_h:,.2f}</span>
                 </div>
-                <div class="gb-row">
-                    <span class="gb-row-label">Statutory Gazette Discount</span>
-                    <span class="gb-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                <div class="ma-row">
+                    <span class="ma-row-label">Statutory Gazette Discount</span>
+                    <span class="ma-discount">-₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
-                <div class="gb-total-box">
+                <div class="ma-total-box">
                     <div>
-                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">GOODBILL ADJUSTED TOTAL</span><br>
-                        <span style="font-size: 24px; font-weight: 800; color: #4338ca;">₹{adjusted_total_h:,.2f}</span>
+                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">MEDI-AUDIT ADJUSTED TOTAL</span><br>
+                        <span style="font-size: 24px; font-weight: 800; color: #4f46e5;">₹{adjusted_total_h:,.2f}</span>
                     </div>
-                    <span class="gb-badge-savings">Total Savings {pct_saved_h:.0f}%</span>
+                    <span class="ma-badge-savings">Total Savings {pct_saved_h:.0f}%</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -1160,8 +1277,8 @@ else:
     # --- 14.5 INSURANCE ARMOR ---
     elif dept == "🛡️ Insurance Armor":
         st.markdown("""
-        <h1 class="gb-hero-title">Reconcile claim shortfalls instantly.</h1>
-        <p class="gb-hero-sub">Expose arbitrary proportionate deductions, internal TPA caps, and unjustified non-medical exclusions.</p>
+        <h1 class="ma-hero-title">Reconcile claim shortfalls instantly.</h1>
+        <p class="ma-hero-sub">Expose arbitrary proportionate deductions, internal TPA caps, and unjustified non-medical exclusions.</p>
         """, unsafe_allow_html=True)
         
         tab_i_upload, tab_i_text = st.tabs(["Upload Denial Slip", "Paste Claim Text"])
@@ -1201,28 +1318,28 @@ else:
             
             st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
             st.markdown(f"""
-            <div class="gb-bill-card">
-                <div class="gb-bill-header">
+            <div class="ma-bill-card">
+                <div class="ma-bill-header">
                     <div>
-                        <div class="gb-entity-title">🛡️ {company}</div>
+                        <div class="ma-entity-title">🛡️ {company}</div>
                         <span style="font-size: 12px; color: #64748b;">IRDAI Master Circular & Ombudsman Rules Audited</span>
                     </div>
-                    <span class="gb-pill">{datetime.now().strftime('%B %d, %Y')}</span>
+                    <span class="ma-pill">{datetime.now().strftime('%B %d, %Y')}</span>
                 </div>
-                <div class="gb-row">
-                    <span class="gb-row-label">Total Claim Invoiced</span>
-                    <span class="gb-row-val">₹{orig_total_i:,.2f}</span>
+                <div class="ma-row">
+                    <span class="ma-row-label">Total Claim Invoiced</span>
+                    <span class="ma-row-val">₹{orig_total_i:,.2f}</span>
                 </div>
-                <div class="gb-row">
-                    <span class="gb-row-label">Arbitrary / Illegal Deductions</span>
-                    <span class="gb-discount">-₹{st.session_state.total_leakage:,.2f}</span>
+                <div class="ma-row">
+                    <span class="ma-row-label">Arbitrary / Illegal Deductions</span>
+                    <span class="ma-discount">-₹{st.session_state.total_leakage:,.2f}</span>
                 </div>
-                <div class="gb-total-box">
+                <div class="ma-total-box">
                     <div>
-                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">GOODBILL LEGALLY PAYABLE TOTAL</span><br>
-                        <span style="font-size: 24px; font-weight: 800; color: #4338ca;">₹{adjusted_total_i:,.2f}</span>
+                        <span style="font-size: 11px; color: #64748b; font-weight: 700;">MEDI-AUDIT LEGALLY PAYABLE TOTAL</span><br>
+                        <span style="font-size: 24px; font-weight: 800; color: #4f46e5;">₹{adjusted_total_i:,.2f}</span>
                     </div>
-                    <span class="gb-badge-savings">Dispute {pct_saved_i:.0f}%</span>
+                    <span class="ma-badge-savings">Dispute {pct_saved_i:.0f}%</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -1230,8 +1347,8 @@ else:
     # --- 14.6 JUSTICE PORTAL ---
     elif dept == "⚖️ Justice Portal":
         st.markdown("""
-        <h1 class="gb-hero-title">Section 2(47) Legal Notice Dispatch.</h1>
-        <p class="gb-hero-sub">Automated generation of statutory demand briefs for hospital superintendents and consumer forums.</p>
+        <h1 class="ma-hero-title">Section 2(47) Legal Notice Dispatch.</h1>
+        <p class="ma-hero-sub">Automated generation of statutory demand briefs for hospital superintendents and consumer forums.</p>
         """, unsafe_allow_html=True)
         
         if st.session_state.ai_result_data:
@@ -1262,7 +1379,7 @@ else:
             
             col_ref, col_grace = st.columns(2)
             with col_ref:
-                ref_no = st.text_input("Notice Identifier", f"GB/2026/LEG/{random.randint(1000, 9999)}")
+                ref_no = st.text_input("Notice Identifier", f"MA/2026/LEG/{random.randint(1000, 9999)}")
             with col_grace:
                 grace_period = st.select_slider("Rectification Window (Business Days)", options=[3, 5, 7, 10, 15], value=7)
 
@@ -1293,7 +1410,7 @@ else:
                 st.button("Dispatch Electronic Notice →", type="primary", use_container_width=True)
             with col_btn2:
                 legal_brief_text = (
-                    f"GOODBILL LEGAL DISPUTE NOTICE (SEC 2(47) CPA)\n"
+                    f"MEDI-AUDIT LEGAL DISPUTE NOTICE (SEC 2(47) CPA)\n"
                     f"REF: {ref_no}\n"
                     f"DATE: {datetime.now().strftime('%B %d, %Y')}\n"
                     f"TO: Medical Superintendent, {hosp_name}\n"
@@ -1307,7 +1424,7 @@ else:
                 st.download_button(
                     label="📥 Download Legal Notice PDF / Brief",
                     data=legal_brief_text,
-                    file_name=f"Goodbill_Legal_Notice_{ref_no.replace('/', '_')}.txt",
+                    file_name=f"MediAudit_Legal_Notice_{ref_no.replace('/', '_')}.txt",
                     mime="text/plain",
                     use_container_width=True
                 )
@@ -1317,8 +1434,8 @@ else:
     # --- 14.7 REGULATORY AI COPILOT ---
     elif dept == "💬 AI Copilot":
         st.markdown("""
-        <h1 class="gb-hero-title">Goodbill Regulatory Assistant.</h1>
-        <p class="gb-hero-sub">Real-time Socratic lookup of procedure rate ceilings and DPCO statutory dispute precedents.</p>
+        <h1 class="ma-hero-title">Medi-Audit Regulatory Assistant.</h1>
+        <p class="ma-hero-sub">Real-time Socratic lookup of procedure rate ceilings and DPCO statutory dispute precedents.</p>
         """, unsafe_allow_html=True)
         
         u_m = st.chat_input("Ask about CGHS rates, NPPA generic price rules, or legal consumer rights...")

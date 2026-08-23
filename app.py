@@ -439,7 +439,7 @@ h1, h2, h3, h4, h5, h6, p, .stMarkdown p {
     opacity: 1 !important;
 }
 
-/* 2. FILE UPLOADER DARK GLASS STYLING (FIXES THE BLINDING WHITE BOX) */
+/* 2. FILE UPLOADER DARK GLASS STYLING */
 [data-testid="stFileUploader"] {
     background: transparent !important;
 }
@@ -482,32 +482,57 @@ div[data-testid="stFileUploaderDropzone"] button {
     box-shadow: 0 4px 14px rgba(0, 102, 255, 0.4) !important;
 }
 
-/* 3. EXPANDERS & CONSULTATION FEE PERMANENTLY VISIBLE WHITE TEXT (NO HOVER REQUIRED) */
-.streamlit-expanderHeader {
-    background-color: rgba(16, 24, 40, 0.9) !important;
+/* 3. EXPANDERS & CONSULTATION FEE FIX: SOLID DARK CARD WITH HIGH-CONTRAST VISIBLE TEXT AT ALL TIMES */
+[data-testid="stExpander"] {
+    background-color: #111726 !important;
     border: 1px solid rgba(0, 163, 255, 0.3) !important;
     border-radius: 16px !important;
+    margin-bottom: 12px !important;
 }
 
+[data-testid="stExpander"] details {
+    background-color: transparent !important;
+}
+
+[data-testid="stExpander"] summary,
+.streamlit-expanderHeader {
+    background-color: #162035 !important;
+    border-radius: 16px !important;
+    padding: 12px 18px !important;
+}
+
+[data-testid="stExpander"] summary:hover,
+.streamlit-expanderHeader:hover {
+    background-color: #1c2b47 !important;
+}
+
+[data-testid="stExpander"] summary *,
+[data-testid="stExpander"] summary p,
+[data-testid="stExpander"] summary span,
 .streamlit-expanderHeader,
-.streamlit-expanderHeader *,
-.streamlit-expanderHeader p,
-.streamlit-expanderHeader span,
-.streamlit-expanderHeader svg {
+.streamlit-expanderHeader * {
     color: #ffffff !important;
     font-weight: 700 !important;
+    font-size: 14px !important;
     opacity: 1 !important;
-    fill: #ffffff !important;
 }
 
+[data-testid="stExpander"] summary svg,
+.streamlit-expanderHeader svg {
+    fill: #00d2ff !important;
+    color: #00d2ff !important;
+}
+
+[data-testid="stExpander"] div[role="region"],
 .streamlit-expanderContent {
-    background-color: rgba(11, 17, 30, 0.95) !important;
-    border: 1px solid rgba(0, 163, 255, 0.25) !important;
-    border-top: none !important;
-    border-bottom-left-radius: 16px;
-    border-bottom-right-radius: 16px;
+    background-color: #0c121e !important;
+    padding: 16px !important;
+    border-top: 1px solid rgba(0, 163, 255, 0.15) !important;
+    border-bottom-left-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
 }
 
+[data-testid="stExpander"] div[role="region"] *,
 .streamlit-expanderContent * {
     color: #ffffff !important;
 }
@@ -1051,8 +1076,8 @@ else:
                     fig_p = go.Figure(go.Bar(
                         x=['Statutory NPPA Cap', 'Original Billed'], 
                         y=[l, b], 
-                        marker_color=['#10b981', '#ef4444'], 
-                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"], 
+                        marker_color=['#10b981', '#ef4444'],
+                        text=[f"₹{l:,.2f}", f"₹{b:,.2f}"],
                         textposition='auto',
                         width=0.35
                     ))

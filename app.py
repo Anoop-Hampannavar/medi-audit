@@ -10,7 +10,27 @@ from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from groq import Groq
 from datetime import datetime
+import datetime
+import json
+import logging
 
+class MediAuditKafkaStreamer:
+    def __init__(self, topic="healthcare-audit-events"):
+        self.topic = topic
+
+    def emit_audit_event(self, invoice_id: str, discrepancy_count: int, total_overcharged: float):
+        event = {
+            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+            "event_type": "MEDICAL_BILL_AUDITED",
+            "invoice_id": invoice_id,
+            "discrepancy_count": discrepancy_count,
+            "total_overcharged": total_overcharged,
+            "risk_severity": "HIGH" if total_overcharged > 1000 else "LOW"
+        }
+        logging.info(f"[Kafka Healthcare Stream -> {self.topic}]: {json.dumps(event)}")
+        return event
+
+audit_streamer = MediAuditKafkaStreamer()
 # --- 1. SYSTEM & TESSERACT CONFIGURATION ---
 if os.name == 'nt':
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'

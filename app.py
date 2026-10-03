@@ -932,7 +932,7 @@ else:
                         <strong style="font-size: 17px; color: #ffffff;">🏥 Active Forensic Ledger</strong><br>
                         <span style="font-size: 11px; color: #00d2ff; font-weight: 600;">CGHS 2026 & NPPA DPCO Reconciled</span>
                     </div>
-                    <span class="navy-pill-badge">{datetime.datetime.now().strftime('%b %d, %Y')}</span>
+                    <span class="navy-pill-badge">{datetime.now().strftime('%b %d, %Y')}</span>
                 </div>
                 <div class="navy-row">
                     <span class="navy-row-label">Original Billed Amount</span>

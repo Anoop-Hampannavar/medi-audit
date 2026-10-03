@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mediaudit-service:
+    build: .
+    container_name: mediaudit_app
+    ports:
+      - "5000:5000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-mediaudit_secret_2026}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - AUDIT_TOPIC=healthcare-audit-events
+    depends_on:
+      - kafka
+    volumes:
+      - ./data:/app/data
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: mediaudit_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: mediaudit_kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1

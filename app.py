@@ -202,31 +202,61 @@ def match_cghs_rate(item_name: str, fallback_pdf_context: str = "") -> dict:
     return {"matched_name": item_name, "code": "UNLISTED", "legal_cap": 0.0, "category": "Unlisted Charge", "authority": "Facility Tariff Schedule"}
 
 # --- 6. ADVANCED SCANNER ENGINE ---
+# --- 6. ADVANCED SCANNER ENGINE (RESILIENT & SELF-HEALING) ---
 def compress_and_encode_image(uploaded_file, max_size=(1024, 1024)):
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
-    if img.mode != 'RGB': img = img.convert('RGB')
+    if img.mode != 'RGB': 
+        img = img.convert('RGB')
     img.thumbnail(max_size, Image.Resampling.LANCZOS)
     buffered = io.BytesIO()
     img.save(buffered, format="JPEG", quality=85)
     return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
 def extract_clean_text_from_image(uploaded_file):
-    raw_text, error_logs = "", []
+    raw_text = ""
+    error_logs = []
+
+    # Attempt 1: Dynamic Vision Model Extraction via Groq
     try:
         base64_image = compress_and_encode_image(uploaded_file)
-        messages = [{"role": "user", "content": [{"type": "text", "text": "Extract all text, line items, and prices accurately from this medical invoice. Output ONLY the clean transcribed text."}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}]
-        vision_models = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview", "qwen/qwen3.6-27b", "meta-llama/llama-4-scout-17b-16e-instruct"]
-        for vision_model in vision_models:
+        messages = [{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Transcribe all printed line items, procedures, medicines, quantities, and numeric prices from this hospital bill. Return raw text with each item on a new line."},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+            ]
+        }]
+        
+        # Pull live models from Groq account and filter for vision-capable models
+        try:
+            live_models = [m.id for m in groq_client.models.list().data]
+            vision_candidates = [m for m in live_models if "vision" in m.lower() or "vl" in m.lower()]
+        except Exception:
+            vision_candidates = []
+        
+        # Default priority fallback list
+        if not vision_candidates:
+            vision_candidates = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"]
+
+        for v_model in vision_candidates:
             try:
-                response = groq_client.chat.completions.create(messages=messages, model=vision_model, temperature=0.0)
+                response = groq_client.chat.completions.create(
+                    messages=messages,
+                    model=v_model,
+                    temperature=0.0,
+                    max_tokens=1500
+                )
                 res_text = response.choices[0].message.content
                 if res_text and len(res_text.strip()) > 5:
                     raw_text = res_text
                     break
-            except Exception as v_err: error_logs.append(f"Vision ({vision_model}): {str(v_err)[:80]}")
-    except Exception as e: error_logs.append(f"Vision Preprocess: {str(e)[:80]}")
+            except Exception as v_err:
+                error_logs.append(f"{v_model}: {str(v_err)[:60]}")
+    except Exception as prep_err:
+        error_logs.append(f"Image Prep: {str(prep_err)[:60]}")
 
+    # Attempt 2: Local Pytesseract Fallback (with safe system detection)
     if not raw_text:
         try:
             uploaded_file.seek(0)
@@ -234,17 +264,27 @@ def extract_clean_text_from_image(uploaded_file):
             pil_img = ImageOps.autocontrast(pil_img)
             enhancer = ImageEnhance.Contrast(pil_img)
             pil_img = enhancer.enhance(2.0)
-            raw_text = pytesseract.image_to_string(pil_img, config='--psm 6')
-        except Exception as ocr_err: error_logs.append(f"Tesseract OCR: {str(ocr_err)[:80]}")
+            
+            # Verify executable availability before invoking
+            tess_cmd = pytesseract.pytesseract.tesseract_cmd
+            if shutil.which(tess_cmd) or os.path.exists(tess_cmd):
+                ocr_out = pytesseract.image_to_string(pil_img, config='--psm 6')
+                if ocr_out and len(ocr_out.strip()) > 5:
+                    raw_text = ocr_out
+            else:
+                error_logs.append("Tesseract binary not found in system PATH.")
+        except Exception as ocr_err:
+            error_logs.append(f"Tesseract: {str(ocr_err)[:60]}")
 
+    # Text Cleaning & Normalization
     if raw_text and len(raw_text.strip()) > 2:
         cleaned = raw_text.replace('₹', ' ')
         cleaned = re.sub(r'(?i)\b(rs\.?|inr|rupees)\b', ' ', cleaned)
         cleaned = re.sub(r'(\d+),(\d+)', r'\1\2', cleaned)
         return cleaned.strip()
     else:
-        err_msg = " | ".join(error_logs) if error_logs else "Unable to parse image data."
-        st.session_state.scan_error = f"⚠️ Scan Failed: {err_msg}"
+        err_detail = " | ".join(error_logs) if error_logs else "No text extracted."
+        st.session_state.scan_error = f"⚠️ Scan Failed: {err_detail}. Please use the 'Paste Items' / 'Paste Text' tab."
         return ""
 
 # --- 7. UNIVERSAL 3-TIER AUDIT ENGINE ---
